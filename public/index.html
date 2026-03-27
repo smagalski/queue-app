@@ -1,0 +1,2848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Queue</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+  :root {
+    --bg:        #0b0a0f;
+    --surface:   #13111a;
+    --surface2:  #1a1724;
+    --border:    #2e2e38;
+    --text:      #ffffff;
+    --text-dim:  #555566;
+    --text-mid:  #aaaabc;
+    --done-color:#7fd4a8;
+    --p1: #ff6b8a;
+    --p2: #ffaa60;
+    --p3: #f0d060;
+    --p4: #7fd4a8;
+    --sched:  #7ec8e3;
+    --break:  #9863f3;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── TITLEBAR ─────────────────────────────────────────────────────────── */
+  .titlebar {
+    width: 100%; background: var(--surface); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 20px; flex-shrink: 0; user-select: none; z-index: 100;
+  }
+  .app-name { font-weight: 800; font-size: 12px; letter-spacing: 0.2em; color: #fff; text-transform: uppercase; }
+  .titlebar-right { display: flex; align-items: center; gap: 12px; }
+  .queue-count { font-size: 10px; color: var(--text-dim); letter-spacing: 0.06em; }
+
+  /* ── LAYOUT ───────────────────────────────────────────────────────────── */
+  .main-layout { display: flex; flex: 1; min-height: 0; overflow: hidden; }
+
+  /* ── LEFT PANEL ───────────────────────────────────────────────────────── */
+  .left-panel {
+    width: 200px; flex-shrink: 0; border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+
+  .clock-section {
+    flex-shrink: 0; display: flex; flex-direction: column; align-items: center;
+    padding: 28px 12px 20px; border-bottom: 1px solid var(--border);
+  }
+  .clock-time {
+    font-size: 52px; font-weight: 800; line-height: 1;
+    letter-spacing: -0.02em; color: #fff; font-variant-numeric: tabular-nums;
+  }
+  .clock-ampm-row { display: flex; align-items: baseline; justify-content: center; gap: 5px; margin-top: 7px; }
+  .clock-ampm { font-size: 13px; font-weight: 600; letter-spacing: 0.18em; color: var(--text-mid); text-transform: uppercase; }
+  .clock-tz   { font-size: 10px; font-weight: 500; letter-spacing: 0.1em; color: var(--text-dim); }
+  .clock-date {
+    font-size: 12px; font-weight: 600; letter-spacing: 0.1em; color: #c0c0d0;
+    text-align: center; margin-top: 10px; text-transform: uppercase; line-height: 1.7; white-space: pre-line;
+  }
+
+  /* ── CALENDAR ─────────────────────────────────────────────────────────── */
+  .calendar-section { flex: 1; overflow-y: auto; overflow-x: hidden; }
+  .calendar-section::-webkit-scrollbar { width: 3px; }
+  .calendar-section::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .cal-container { position: relative; margin: 0 8px 16px 8px; padding-top: 8px; }
+
+  .cal-hour-row {
+    position: absolute; left: 0; right: 0;
+    display: flex; align-items: flex-start; pointer-events: none;
+  }
+  .cal-hour-label {
+    width: 36px; flex-shrink: 0; font-size: 8px; font-weight: 600;
+    letter-spacing: 0.06em; color: var(--text-dim); text-align: right;
+    padding-right: 6px; line-height: 1; margin-top: -4px;
+  }
+  .cal-hour-line { flex: 1; height: 1px; background: var(--border); }
+
+  .cal-track { position: absolute; left: 42px; right: 0; top: 0; bottom: 0; }
+
+  .cal-block {
+    position: absolute; left: 0; right: 0; border-radius: 4px; padding: 3px 5px;
+    overflow: hidden; cursor: default; border-left: 3px solid transparent; transition: opacity 0.2s;
+  }
+  .cal-block-title {
+    display: block; font-size: 8px; font-weight: 600;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3;
+  }
+  .cal-block-meta {
+    display: block; font-size: 7px; opacity: 0.7;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px;
+  }
+  .cal-block.done-block { opacity: 0.35; filter: grayscale(0.6); cursor: grab; }
+  .cal-block.done-block:hover { opacity: 0.62; filter: grayscale(0.3); }
+  .cal-block.done-block.cal-dragging { opacity: 0.88; filter: none; cursor: grabbing; }
+  .cal-resize-handle {
+    position: absolute; left: 0; right: 0; height: 8px; cursor: ns-resize; z-index: 2;
+  }
+  .cal-resize-handle.cal-resize-top { top: 0; }
+  .cal-resize-handle.cal-resize-bot { bottom: 0; }
+  .cal-block.pc-1 { background: rgba(255,107,138,0.18); border-color: var(--p1); color: var(--p1); }
+  .cal-block.pc-2 { background: rgba(255,170,96,0.18);  border-color: var(--p2); color: var(--p2); }
+  .cal-block.pc-3 { background: rgba(240,208,96,0.18);  border-color: var(--p3); color: var(--p3); }
+  .cal-block.pc-4 { background: rgba(127,212,168,0.18); border-color: var(--p4); color: var(--p4); }
+
+  .cal-now-line {
+    position: absolute; left: 0; right: 0; height: 2px;
+    background: #fff; z-index: 10; box-shadow: 0 0 6px rgba(255,255,255,0.5);
+  }
+  .cal-now-line::before {
+    content: ''; position: absolute; left: -4px; top: -3px;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #fff; box-shadow: 0 0 6px rgba(255,255,255,0.6);
+  }
+
+  /* ── TASK PANEL ───────────────────────────────────────────────────────── */
+  .task-panel {
+    flex: 1; overflow-y: auto; padding: 16px 20px 32px;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+  }
+  .task-panel::-webkit-scrollbar { width: 4px; }
+  .task-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .task-panel > * { width: 100%; max-width: 480px; }
+
+  .sec-hdr { font-weight: 700; font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: #fff; transition: color 0.3s; }
+
+  /* ── TASK CARDS ───────────────────────────────────────────────────────── */
+  .task-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px; position: relative; overflow: hidden; text-align: center; transition: border-color 0.4s;
+  }
+  .task-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0;
+    height: 2px; background: var(--card-bar, transparent); transition: background 0.4s;
+  }
+  .task-card.empty { border-color: var(--border) !important; }
+  .task-card.empty::before { opacity: 0; }
+  .card-task-title { font-weight: 700; font-size: 18px; line-height: 1.3; color: #fff; margin: 8px 0 10px; }
+
+  .task-meta { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; }
+
+  .priority-badge { font-size: 9px; letter-spacing: 0.1em; padding: 2px 7px; border-radius: 3px; text-transform: uppercase; font-weight: 600; cursor: pointer; user-select: none; }
+  .priority-badge:hover { filter: brightness(1.2); }
+  .task-age { font-size: 9px; color: #fff; opacity: 0.45; }
+
+  /* Time display (start/end) */
+  .time-display {
+    font-size: 9px; font-weight: 600; letter-spacing: 0.05em;
+    padding: 2px 8px; border-radius: 3px; background: rgba(255,255,255,0.07); color: #fff;
+  }
+  .time-display.end-warn   { background: rgba(240,208,96,0.15); color: var(--p3); }
+  .time-display.end-urgent { background: rgba(255,107,138,0.2);  color: var(--p1); animation: urgentPulse 1.3s ease-in-out infinite; }
+  .time-display.end-over   { background: rgba(255,107,138,0.25); color: var(--p1); }
+  @keyframes urgentPulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+  /* ── SYNC STATUS ──────────────────────────────────────────────────────── */
+  .sync-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+  .sync-dot.synced  { background: var(--done-color); }
+  .sync-dot.syncing { background: var(--p3); animation: syncPulse 1s ease-in-out infinite; }
+  .sync-dot.error   { background: var(--p1); }
+  .sync-dot.offline { background: var(--text-dim); }
+  @keyframes syncPulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .sync-label { font-size: 10px; color: var(--text-dim); letter-spacing: 0.05em; }
+
+  .duration-display { font-size: 9px; color: #fff; opacity: 0.45; }
+  .escalation-badge { font-size: 9px; color: var(--p3); font-weight: 600; letter-spacing: 0.04em; }
+
+  .done-btn {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 5px; color: #fff; font-family: 'Inter',sans-serif;
+    font-size: 9px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 4px 10px; cursor: pointer; transition: all 0.15s;
+  }
+  .done-btn:hover { background: #fff; color: #0b0a0f; border-color: #fff; }
+
+  .delete-btn {
+    position: absolute; top: 8px; right: 8px; background: none; border: none;
+    color: var(--text-dim); font-size: 12px; line-height: 1; cursor: pointer;
+    padding: 2px 4px; border-radius: 3px; transition: color 0.12s, background 0.12s;
+  }
+  .delete-btn:hover { color: #fff; background: rgba(255,255,255,0.08); }
+
+  /* ── DIVIDERS ─────────────────────────────────────────────────────────── */
+  .divider-row { display: flex; align-items: center; gap: 8px; }
+  .divider-row::before,.divider-row::after { content:''; flex:1; height:1px; background:var(--border); }
+
+
+
+  /* ── COMPLETED ────────────────────────────────────────────────────────── */
+  .done-toggle {
+    background: none; border: none; font-family: 'Inter',sans-serif; font-weight: 700;
+    font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: #fff;
+    cursor: pointer; display: flex; align-items: center; gap: 5px; padding: 0; transition: opacity 0.15s; white-space: nowrap;
+  }
+  .done-toggle:hover { opacity: 0.7; }
+  .done-arrow { display: inline-block; font-size: 8px; transition: transform 0.2s; }
+  .done-arrow.open { transform: rotate(90deg); }
+  .done-list { display: flex; flex-direction: column; gap: 4px; overflow: hidden; max-height: 0; transition: max-height 0.25s ease; }
+  .done-list.open { max-height: 600px; margin-top: 6px; }
+  .done-item {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 6px;
+    padding: 7px 12px; display: flex; align-items: center; gap: 8px; opacity: 0.55;
+  }
+  .done-check { color: var(--done-color); font-size: 10px; flex-shrink: 0; }
+  .done-title { font-size: 10px; color: var(--text-mid); flex: 1; text-decoration: line-through; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .done-age   { font-size: 8px; color: var(--text-dim); flex-shrink: 0; }
+  .undo-btn {
+    background: none; border: 1px solid var(--border); border-radius: 3px;
+    color: var(--text-dim); font-family: 'Inter',sans-serif; font-size: 9px;
+    padding: 2px 6px; cursor: pointer; transition: all 0.12s; flex-shrink: 0;
+  }
+  .undo-btn:hover { border-color: #fff; color: #fff; }
+
+  /* ── ADD TASK ─────────────────────────────────────────────────────────── */
+  .add-toggle-btn {
+    width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 8px; color: #fff; font-family: 'Inter',sans-serif; font-weight: 600;
+    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; padding: 9px 14px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px; transition: all 0.2s;
+  }
+  .add-toggle-btn:hover { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.25); }
+  .add-toggle-btn.open { border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom-color: transparent; }
+  .add-toggle-icon { font-size: 15px; line-height: 1; transition: transform 0.2s; font-weight: 300; }
+  .add-toggle-btn.open .add-toggle-icon { transform: rotate(45deg); }
+  .add-toggle-btn.pcolor-1 { border-color: rgba(255,107,138,0.5); color: var(--p1); background: rgba(255,107,138,0.07); }
+  .add-toggle-btn.pcolor-2 { border-color: rgba(255,170,96,0.5);  color: var(--p2); background: rgba(255,170,96,0.07); }
+  .add-toggle-btn.pcolor-3 { border-color: rgba(240,208,96,0.5);  color: var(--p3); background: rgba(240,208,96,0.07); }
+  .add-toggle-btn.pcolor-4 { border-color: rgba(127,212,168,0.5); color: var(--p4); background: rgba(127,212,168,0.07); }
+
+  .add-form-wrap { overflow: hidden; max-height: 0; transition: max-height 0.3s ease; }
+  .add-form-wrap.open { max-height: 560px; }
+  .add-form {
+    background: var(--surface); border: 1px solid rgba(255,255,255,0.12); border-top: none;
+    border-radius: 0 0 8px 8px; padding: 14px; display: flex; flex-direction: column; gap: 12px;
+    transition: border-color 0.25s;
+  }
+  .add-form.pcolor-1 { border-color: rgba(255,107,138,0.4); }
+  .add-form.pcolor-2 { border-color: rgba(255,170,96,0.4); }
+  .add-form.pcolor-3 { border-color: rgba(240,208,96,0.4); }
+  .add-form.pcolor-4 { border-color: rgba(127,212,168,0.4); }
+
+  .form-label {
+    display: block; font-size: 8px; font-weight: 600; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--text-dim); margin-bottom: 4px;
+  }
+  .task-input, .time-input, .duration-select {
+    width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+    color: #fff; font-family: 'Inter',sans-serif; font-size: 12px; padding: 8px 10px;
+    outline: none; transition: border-color 0.15s;
+  }
+  .task-input:focus, .time-input:focus, .duration-select:focus { border-color: rgba(255,255,255,0.35); }
+  .task-input::placeholder { color: var(--text-dim); }
+  .time-input::-webkit-calendar-picker-indicator { filter: invert(0.35); cursor: pointer; }
+  .duration-select option { background: #1a1724; }
+
+  .form-row-half { display: flex; gap: 12px; align-items: flex-start; }
+  .form-row-half > div { flex: 1; }
+
+  .check-label {
+    display: flex; align-items: center; gap: 7px; cursor: pointer;
+    font-size: 11px; color: var(--text-mid); user-select: none; height: 30px;
+  }
+  .check-label input[type="checkbox"] { width: 14px; height: 14px; accent-color: #fff; cursor: pointer; }
+
+  .priority-group { display: flex; gap: 5px; flex-wrap: wrap; }
+  .p-btn {
+    height: 30px; padding: 0 9px; border-radius: 5px; border: 1px solid var(--border);
+    background: var(--bg); color: var(--text-dim); font-family: 'Inter',sans-serif;
+    font-size: 9px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+    cursor: pointer; transition: all 0.12s; display: flex; align-items: center; justify-content: center; white-space: nowrap;
+  }
+  .p-btn:hover { border-color: var(--text-mid); color: #fff; }
+  .p-btn.sel-1 { background: rgba(255,107,138,0.15); border-color: var(--p1); color: var(--p1); }
+  .p-btn.sel-2 { background: rgba(255,170,96,0.15);  border-color: var(--p2); color: var(--p2); }
+  .p-btn.sel-3 { background: rgba(240,208,96,0.15);  border-color: var(--p3); color: var(--p3); }
+  .p-btn.sel-4 { background: rgba(127,212,168,0.15); border-color: var(--p4); color: var(--p4); }
+
+  .add-btn {
+    width: 100%; height: 34px; background: #fff; border: none; border-radius: 5px;
+    color: #0b0a0f; font-family: 'Inter',sans-serif; font-weight: 700; font-size: 10px;
+    letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; transition: background 0.2s, opacity 0.15s, transform 0.1s;
+  }
+  .add-btn:hover { opacity: 0.85; }
+  .add-btn:active { transform: scale(0.98); }
+  .add-btn:disabled { opacity: 0.2; cursor: default; }
+  .add-btn.pcolor-1 { background: var(--p1); color: #0b0a0f; }
+  .add-btn.pcolor-2 { background: var(--p2); color: #0b0a0f; }
+  .add-btn.pcolor-3 { background: var(--p3); color: #0b0a0f; }
+  .add-btn.pcolor-4 { background: var(--p4); color: #0b0a0f; }
+
+  /* ── PRIORITY BADGE COLORS ────────────────────────────────────────────── */
+  .pc-1 { background: rgba(255,107,138,0.15); color: var(--p1); border: 1px solid rgba(255,107,138,0.3); }
+  .pc-2 { background: rgba(255,170,96,0.15);  color: var(--p2); border: 1px solid rgba(255,170,96,0.3); }
+  .pc-3 { background: rgba(240,208,96,0.15);  color: var(--p3); border: 1px solid rgba(240,208,96,0.3); }
+  .pc-4 { background: rgba(127,212,168,0.15); color: var(--p4); border: 1px solid rgba(127,212,168,0.3); }
+
+  /* ── PRIORITY DROPDOWN ───────────────────────────────────────────────── */
+  .p-dropdown {
+    position: fixed; z-index: 2000;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 5px; box-shadow: 0 8px 28px rgba(0,0,0,0.6);
+    display: none; flex-direction: column; gap: 3px; min-width: 90px;
+  }
+  .p-dropdown.open { display: flex; }
+  .pd-btn {
+    background: none; border: 1px solid transparent; border-radius: 5px;
+    font-family: 'Inter',sans-serif; font-size: 9px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase; padding: 5px 10px;
+    cursor: pointer; text-align: left; transition: background 0.1s, border-color 0.1s;
+  }
+  .pd-btn:hover { border-color: currentColor; background: rgba(255,255,255,0.05); }
+  .pd-btn-1 { color: var(--p1); }
+  .pd-btn-2 { color: var(--p2); }
+  .pd-btn-3 { color: var(--p3); }
+  .pd-btn-4 { color: var(--p4); }
+
+  .p-dropdown.sched-dropdown { min-width: 210px; }
+
+  /* ── SLOT LABELS ───────────────────────────────────────────────────────── */
+  .slot-label { font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-dim); transition: color 0.3s; }
+
+  /* ── CARD SLOTS (drop zones) ─────────────────────────────────────────── */
+  .card-slot { border-radius: 10px; min-height: 90px; position: relative; transition: background 0.12s, outline 0.12s; }
+  .card-slot.drag-over { background: rgba(255,255,255,0.03); outline: 1px dashed rgba(255,255,255,0.22); outline-offset: 3px; }
+
+  /* ── DRAGGABLE FLEX CARDS ────────────────────────────────────────────── */
+  .task-card.flex-card { cursor: grab; user-select: none; }
+  .task-card.flex-card:active { cursor: grabbing; }
+  .task-card.flex-card.dragging { opacity: 0.35; }
+  .task-card.more-drag-over { outline: 2px dashed rgba(255,255,255,0.3); outline-offset: 2px; }
+
+  /* ── SCHEDULED DRAG ERROR ────────────────────────────────────────────── */
+  .task-card.sched-drag-error { opacity: 0.45; transition: opacity 0.15s; }
+  .task-card.sched-drag-error .sched-error-msg { display: flex !important; }
+  .sched-error-msg { display: none; position: absolute; inset: 0; align-items: center; justify-content: center; background: rgba(11,10,15,0.88); font-size: 10px; color: var(--text-mid); text-align: center; padding: 16px; border-radius: 10px; line-height: 1.6; font-weight: 500; z-index: 10; pointer-events: none; }
+
+  /* ── MORE SECTION ────────────────────────────────────────────────────── */
+  .more-header { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 2px; user-select: none; transition: opacity 0.15s; }
+  .more-header:hover { opacity: 0.7; }
+  .more-arrow { font-size: 8px; transition: transform 0.2s; display: inline-block; }
+  .more-arrow.open { transform: rotate(90deg); }
+  .more-count { font-size: 10px; color: var(--text-dim); }
+  .more-cards { display: flex; flex-direction: column; gap: 8px; overflow: hidden; max-height: 0; transition: max-height 0.35s ease; }
+  .more-cards.open { max-height: 9999px; transition: max-height 0.5s ease; }
+  .more-cards.drag-over { padding: 4px 0; background: rgba(255,255,255,0.02); border-radius: 8px; outline: 1px dashed rgba(255,255,255,0.12); outline-offset: 3px; }
+
+  /* ── CALENDAR BLOCK DRAG ─────────────────────────────────────────────── */
+  .cal-block.sched-block  { cursor: ns-resize; background: rgba(126,200,227,0.15); border-color: var(--sched);  color: var(--sched); }
+  .cal-block.break-block  { background: rgba(152,99,243,0.18); border-color: var(--break); color: var(--break); }
+  .cal-block.cal-dragging { opacity: 0.8; z-index: 20; box-shadow: 0 4px 20px rgba(0,0,0,0.6); }
+  .empty-queue { text-align: center; color: var(--text-dim); font-size: 10px; padding: 6px 0; }
+
+  /* ── Two-button add row ───────────────────────────────────────────────── */
+  .add-btns-row { display: flex; gap: 8px; margin-top: 4px; }
+  .add-btns-row > button { flex: 1; }
+  .add-sched-toggle-btn {
+    background: rgba(126,200,227,0.07); border: 1px solid rgba(126,200,227,0.25);
+    border-radius: 8px; color: #fff; font-family: 'Inter',sans-serif; font-weight: 600;
+    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; padding: 9px 14px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px; transition: all 0.2s;
+  }
+  .add-sched-toggle-btn:hover { background: rgba(126,200,227,0.13); border-color: rgba(126,200,227,0.5); }
+  .add-sched-toggle-btn.open { border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom-color: transparent; }
+  .add-sched-toggle-btn.open .add-toggle-icon { transform: rotate(45deg); }
+  .add-sched-form-wrap { overflow: hidden; max-height: 0; transition: max-height 0.3s ease; }
+  .add-sched-form-wrap.open { max-height: 480px; }
+  .add-sched-form {
+    background: var(--surface); border: 1px solid rgba(126,200,227,0.3); border-top: none;
+    border-radius: 0 0 8px 8px; padding: 14px; display: flex; flex-direction: column; gap: 12px;
+  }
+  .add-sched-btn {
+    width: 100%; height: 34px; background: var(--sched); border: none; border-radius: 5px;
+    color: #0b0a0f; font-family: 'Inter',sans-serif; font-weight: 700; font-size: 10px;
+    letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; transition: opacity 0.15s, transform 0.1s;
+  }
+  .add-sched-btn:hover { opacity: 0.85; }
+  .add-sched-btn:active { transform: scale(0.98); }
+  .add-sched-btn:disabled { opacity: 0.2; cursor: default; }
+
+  /* Sign-out button in titlebar */
+  .signout-btn {
+    background: none; border: 1px solid var(--border); border-radius: 4px;
+    color: var(--text-dim); font-family: 'Inter', sans-serif; font-size: 9px;
+    letter-spacing: 0.1em; padding: 3px 8px; cursor: pointer;
+    transition: all 0.15s; text-transform: uppercase;
+  }
+  .signout-btn:hover { border-color: #fff; color: #fff; background: rgba(255,255,255,0.05); }
+
+  /* ── GEAR MENU ────────────────────────────────────────────────────────── */
+  .gear-wrap { position: relative; }
+  .gear-btn {
+    background: none; border: 1px solid var(--border); border-radius: 4px;
+    color: var(--text-dim); font-size: 14px; width: 28px; height: 26px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s; padding: 0;
+  }
+  .gear-btn:hover { border-color: #fff; color: #fff; background: rgba(255,255,255,0.05); }
+  .gear-menu {
+    display: none; position: absolute; top: calc(100% + 6px); right: 0;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    min-width: 148px; padding: 4px; z-index: 500;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  }
+  .gear-menu.open { display: block; }
+  .gear-menu-item {
+    display: block; width: 100%; background: none; border: none;
+    color: var(--text-mid); font-family: 'Inter', sans-serif; font-size: 11px;
+    font-weight: 500; padding: 7px 10px; border-radius: 5px;
+    cursor: pointer; text-align: left; transition: all 0.12s;
+  }
+  .gear-menu-item:hover { background: rgba(255,255,255,0.07); color: #fff; }
+  .gear-menu-divider { height: 1px; background: var(--border); margin: 3px 0; }
+
+  /* ── BLOCK DETAIL MODAL ──────────────────────────────────────────────── */
+  .block-detail-overlay {
+    display: none; position: fixed; inset: 0; z-index: 8000;
+    background: rgba(0,0,0,0.65); align-items: center; justify-content: center;
+  }
+  .block-detail-overlay.active { display: flex; }
+  .block-detail-modal { position: relative; width: 520px; max-width: 95vw; }
+  .block-detail-close {
+    position: absolute; top: -10px; right: -10px; z-index: 10;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 50%; color: var(--text-mid); font-size: 11px;
+    width: 26px; height: 26px; cursor: pointer; display: flex;
+    align-items: center; justify-content: center; transition: all 0.15s;
+  }
+  .block-detail-close:hover { background: rgba(255,255,255,0.1); color: #fff; }
+  .block-detail-time-edit {
+    display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap;
+  }
+  .block-detail-time-edit label {
+    font-size: 8px; font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--text-dim);
+  }
+  .block-detail-time-edit input[type="time"] {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 5px; color: #fff; font-family: 'Inter', sans-serif;
+    font-size: 11px; padding: 3px 7px; outline: none; cursor: pointer;
+  }
+  .block-detail-time-edit input[type="time"]:focus { border-color: rgba(255,255,255,0.35); }
+
+  /* ── PASSWORD MODAL ───────────────────────────────────────────────────── */
+  .pw-modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 9500;
+    background: rgba(0,0,0,0.7); align-items: center; justify-content: center;
+  }
+  .pw-modal-overlay.active { display: flex; }
+  .pw-modal {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 28px 24px; width: 320px; display: flex; flex-direction: column; gap: 16px;
+  }
+  .pw-modal-title { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+  .pw-modal-subtitle { font-size: 10px; color: var(--text-dim); margin-top: -10px; line-height: 1.5; }
+  .pw-modal-fields { display: flex; flex-direction: column; gap: 8px; }
+  .pw-modal-error { font-size: 10px; color: var(--p1); min-height: 14px; }
+  .pw-modal-actions { display: flex; gap: 8px; }
+  .pw-modal-actions button { flex: 1; height: 36px; border-radius: 6px; border: none; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; transition: opacity 0.15s; }
+  .pw-modal-actions button:hover { opacity: 0.85; }
+  .pw-modal-actions button:disabled { opacity: 0.25; cursor: default; }
+  .pw-modal-cancel { background: var(--surface2); color: var(--text-mid); border: 1px solid var(--border) !important; }
+  .pw-modal-submit { background: #fff; color: #0b0a0f; }
+  .view-segment {
+    display: flex; border: 1px solid var(--border); border-radius: 5px; overflow: hidden;
+  }
+  .seg-btn {
+    background: none; border: none; border-radius: 0;
+    color: var(--text-dim); font-family: 'Inter', sans-serif; font-size: 9px;
+    letter-spacing: 0.08em; padding: 3px 9px; cursor: pointer;
+    transition: all 0.15s; text-transform: uppercase; white-space: nowrap;
+  }
+  .seg-btn:first-child { border-right: 1px solid var(--border); }
+  .seg-btn:hover { color: #fff; background: rgba(255,255,255,0.05); }
+  .seg-btn.active { background: rgba(255,255,255,0.12); color: #fff; }
+
+  /* ── MOBILE LAYOUT ────────────────────────────────────────────────────── */
+  body.mobile-view {
+    overflow: auto;
+    height: auto;
+    min-height: 100vh;
+  }
+  body.mobile-view .main-layout {
+    flex-direction: column;
+    overflow: visible;
+    height: auto;
+  }
+
+  /* Mobile left panel becomes a compact header bar */
+  body.mobile-view .left-panel {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    flex-direction: row;
+    overflow: visible;
+    flex-shrink: 0;
+    min-height: 0;
+  }
+
+  /* Clock becomes compact inline */
+  body.mobile-view .clock-section {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 10px 14px;
+    border-bottom: none;
+    border-right: 1px solid var(--border);
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  body.mobile-view .clock-time { font-size: 26px; }
+  body.mobile-view .clock-ampm-row { flex-direction: column; gap: 0; margin-top: 0; align-items: flex-start; }
+  body.mobile-view .clock-ampm { font-size: 10px; }
+  body.mobile-view .clock-tz   { font-size: 8px; }
+  body.mobile-view .clock-date {
+    font-size: 10px; margin-top: 0; line-height: 1.4;
+    text-align: left; white-space: normal;
+  }
+
+  /* Calendar becomes a tap-to-open drawer */
+  body.mobile-view .calendar-section {
+    flex: 1;
+    overflow: visible;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 14px;
+    cursor: pointer;
+  }
+  body.mobile-view .calendar-section .cal-container {
+    display: none;
+  }
+  body.mobile-view .cal-drawer-label {
+    font-size: 9px; font-weight: 600; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--text-dim);
+    display: flex; align-items: center; gap: 5px; user-select: none;
+  }
+  body.mobile-view .calendar-section.cal-open .cal-drawer-label { color: #fff; }
+  .cal-drawer-overlay {
+    display: none;
+    position: fixed; inset: 0; z-index: 490;
+    background: rgba(0,0,0,0.6);
+  }
+  .cal-drawer-panel {
+    display: none;
+    position: fixed; top: 0; right: 0; bottom: 0;
+    width: min(320px, 92vw);
+    background: var(--surface); border-left: 1px solid var(--border);
+    z-index: 500; overflow-y: auto;
+    padding: 48px 12px 24px;
+  }
+  .cal-drawer-close-btn {
+    display: none;
+    position: fixed; top: 10px; right: 10px; z-index: 510;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 5px; color: #fff; font-family: 'Inter', sans-serif;
+    font-size: 9px; font-weight: 600; letter-spacing: 0.1em;
+    text-transform: uppercase; padding: 5px 11px; cursor: pointer;
+  }
+  body.mobile-view.cal-drawer-open .cal-drawer-overlay { display: block; }
+  body.mobile-view.cal-drawer-open .cal-drawer-panel { display: block; }
+  body.mobile-view.cal-drawer-open .cal-drawer-close-btn { display: block; }
+  body.mobile-view.cal-drawer-open .cal-drawer-label { color: #fff; }
+
+  /* Move cal-container into drawer panel */
+  body.mobile-view.cal-drawer-open .cal-drawer-panel .cal-container { display: block; }
+
+  /* Task panel full width */
+  body.mobile-view .task-panel {
+    padding: 12px 14px 100px;
+    overflow-y: visible;
+    height: auto;
+  }
+  body.mobile-view .task-panel > * { max-width: 100%; }
+
+  /* Touch-friendly cards */
+  body.mobile-view .task-card { padding: 18px 16px; }
+  body.mobile-view .card-task-title { font-size: 20px; }
+  body.mobile-view .done-btn { padding: 7px 14px; font-size: 10px; }
+  body.mobile-view .delete-btn { padding: 6px 8px; font-size: 14px; top: 10px; right: 10px; }
+  body.mobile-view .priority-badge { padding: 4px 10px; font-size: 10px; }
+
+  /* Bigger add buttons */
+  body.mobile-view .add-toggle-btn,
+  body.mobile-view .add-sched-toggle-btn,
+  body.mobile-view .break-toggle-btn { padding: 13px 14px; font-size: 12px; }
+  body.mobile-view .break-budget-panel { display: none; }
+  body.mobile-view .add-btn,
+  body.mobile-view .add-sched-btn { height: 42px; font-size: 11px; }
+
+  /* 16px prevents iOS auto-zoom on input focus */
+  body.mobile-view .task-input,
+  body.mobile-view .time-input,
+  body.mobile-view .duration-select { font-size: 16px; padding: 10px 12px; }
+
+  /* More section touch target */
+  body.mobile-view .more-header { padding: 10px 2px; }
+
+  /* ── AUTH SCREEN ──────────────────────────────────────────────────────── */
+  #authScreen {
+    position: fixed; inset: 0; z-index: 9000;
+    background: var(--bg); display: flex; align-items: center; justify-content: center;
+  }
+  #authScreen.hidden { display: none; }
+  .auth-box {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 36px 32px; width: 100%; max-width: 340px; display: flex;
+    flex-direction: column; align-items: center; gap: 20px;
+  }
+  .auth-logo { font-weight: 800; font-size: 18px; letter-spacing: 0.2em; text-transform: uppercase; }
+  .auth-subtitle { font-size: 11px; color: var(--text-dim); letter-spacing: 0.08em; margin-top: -12px; }
+  .auth-divider { width: 100%; display: flex; align-items: center; gap: 10px; }
+  .auth-divider::before, .auth-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .auth-divider span { font-size: 9px; color: var(--text-dim); letter-spacing: 0.1em; text-transform: uppercase; }
+  .auth-fields { width: 100%; display: flex; flex-direction: column; gap: 10px; }
+  .auth-input {
+    width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+    color: #fff; font-family: 'Inter', sans-serif; font-size: 13px; padding: 10px 12px; outline: none;
+    transition: border-color 0.15s;
+  }
+  .auth-input:focus { border-color: rgba(255,255,255,0.35); }
+  .auth-input::placeholder { color: var(--text-dim); }
+  .auth-btn {
+    width: 100%; height: 38px; border: none; border-radius: 6px; cursor: pointer;
+    font-family: 'Inter', sans-serif; font-weight: 700; font-size: 10px;
+    letter-spacing: 0.12em; text-transform: uppercase; transition: opacity 0.15s;
+  }
+  .auth-btn:hover { opacity: 0.85; }
+  .auth-btn:disabled { opacity: 0.25; cursor: default; }
+  .auth-btn.primary { background: #fff; color: #0b0a0f; }
+  .auth-btn.google {
+    background: var(--surface2); color: #fff; border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .auth-btn.google:hover { border-color: #fff; }
+  .auth-error { font-size: 10px; color: var(--p1); text-align: center; min-height: 14px; }
+  .auth-switch { font-size: 10px; color: var(--text-dim); }
+  .auth-switch a { color: var(--text-mid); cursor: pointer; text-decoration: underline; }
+  .auth-keep { font-size: 10px; color: var(--text-dim); }
+  .auth-keep label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+
+  /* ── BREAK BUTTON / CONTROLS ──────────────────────────────────────────── */
+  .slot-label-row { padding: 2px 2px 5px; }
+  .break-toggle-btn {
+    flex: 1; background: rgba(152,99,243,0.07); border: 1px solid rgba(152,99,243,0.28);
+    border-radius: 8px; color: #fff; font-family: 'Inter', sans-serif; font-weight: 600;
+    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; padding: 9px 14px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .break-toggle-btn:hover:not(:disabled) { background: rgba(152,99,243,0.14); border-color: rgba(152,99,243,0.55); }
+  .break-toggle-btn:disabled { opacity: 0.25; cursor: default; }
+  .break-toggle-btn.over { border-color: var(--p1); color: var(--p1); background: rgba(255,107,138,0.07); }
+  /* ── BREAK BUDGET PANEL (left panel, bottom) ─────────────────────────── */
+  .break-budget-panel {
+    flex-shrink: 0; border-top: 1px solid var(--border);
+    padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 7px;
+  }
+  .bbp-header { display: flex; align-items: center; justify-content: space-between; }
+  .bbp-label {
+    font-size: 8px; font-weight: 700; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--text-dim);
+  }
+  .bbp-select {
+    background: transparent; border: none; color: #fff;
+    font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 700;
+    letter-spacing: 0.05em; cursor: pointer; outline: none; padding: 0;
+  }
+  .bbp-select option { background: var(--surface2); color: #fff; }
+  .bbp-bar-wrap {
+    height: 3px; background: rgba(152,99,243,0.18); border-radius: 2px; overflow: hidden;
+  }
+  .bbp-bar-fill {
+    height: 100%; width: 0%; border-radius: 2px;
+    background: var(--break); transition: width 0.4s ease, background 0.3s;
+  }
+  .bbp-bar-fill.over { background: var(--p1); }
+  .bbp-tally {
+    font-size: 9px; font-weight: 600; letter-spacing: 0.04em; color: var(--text-mid);
+    transition: color 0.2s;
+  }
+  .bbp-tally.over { color: var(--p1); }
+  /* ── BREAK OVERLAY ────────────────────────────────────────────────────── */
+  .break-overlay {
+    position: fixed; inset: 0; z-index: 9000;
+    background: rgba(11,10,15,0.92); backdrop-filter: blur(6px);
+    display: none; flex-direction: column; align-items: center; justify-content: center; gap: 28px;
+  }
+  .break-overlay.active { display: flex; }
+  .break-overlay.over { background: rgba(20,5,5,0.94); }
+  .break-heading {
+    font-size: 11px; font-weight: 800; letter-spacing: 0.35em; text-transform: uppercase; color: var(--text-dim);
+  }
+  .break-budget-info {
+    font-size: 11px; color: var(--text-dim); letter-spacing: 0.06em;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .break-budget-info-bar-wrap {
+    width: 120px; height: 3px; background: rgba(152,99,243,0.2); border-radius: 2px; overflow: hidden;
+  }
+  .break-budget-info-bar {
+    height: 100%; border-radius: 2px; background: var(--break); transition: width 0.4s, background 0.3s;
+  }
+  .break-budget-info-bar.over { background: var(--p1); }
+  .break-budget-info-text { transition: color 0.3s; }
+  .break-budget-info-text.over { color: var(--p1); }
+  .break-timer {
+    font-size: 88px; font-weight: 800; letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums; color: #fff; line-height: 1; transition: color 0.4s;
+  }
+  .break-timer.over { color: var(--p1); }
+  .break-status {
+    font-size: 11px; color: var(--text-dim); letter-spacing: 0.06em; text-align: center;
+    line-height: 1.9; transition: color 0.4s;
+  }
+  .break-status.over { color: var(--p1); }
+  .end-break-btn {
+    background: #fff; border: none; border-radius: 6px; color: #0b0a0f;
+    font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase; padding: 13px 36px;
+    cursor: pointer; transition: opacity 0.15s, background 0.3s, color 0.3s;
+  }
+  .end-break-btn:hover { opacity: 0.85; }
+  .end-break-btn.over { background: var(--p1); color: #fff; }
+
+</style>
+<!-- Firebase SDK (compat v9) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+
+<div class="titlebar">
+  <span class="app-name">Queue</span>
+  <div class="titlebar-right">
+    <span class="queue-count" id="queueCount">empty</span>
+    <span class="sync-dot syncing" id="syncDot"></span>
+    <span class="sync-label" id="syncLabel">Connecting…</span>
+    <div class="view-segment" id="viewSegment">
+      <button class="seg-btn" id="segDesktop" onclick="applyViewMode(false)">🖥</button>
+      <button class="seg-btn" id="segMobile"  onclick="applyViewMode(true)">📱</button>
+    </div>
+    <div class="gear-wrap" id="gearWrap" style="display:none">
+      <button class="gear-btn" id="gearBtn" onclick="toggleGearMenu(event)">⚙</button>
+      <div class="gear-menu" id="gearMenu">
+        <button class="gear-menu-item" onclick="openPasswordModal();closeGearMenu()">Change Password</button>
+        <div class="gear-menu-divider"></div>
+        <button class="gear-menu-item" onclick="signOut()">Sign Out</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AUTH SCREEN -->
+<div id="authScreen">
+  <div class="auth-box">
+    <div class="auth-logo">Queue</div>
+    <div class="auth-subtitle">Sign in to access your tasks</div>
+
+    <button class="auth-btn google" onclick="signInWithGoogle()">
+      <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      Continue with Google
+    </button>
+
+    <div class="auth-divider"><span>or</span></div>
+
+    <div class="auth-fields">
+      <input class="auth-input" id="authEmail" type="email" placeholder="Email" autocomplete="email"/>
+      <input class="auth-input" id="authPassword" type="password" placeholder="Password" autocomplete="current-password"
+             onkeydown="if(event.key==='Enter') submitAuth()"/>
+    </div>
+    <div class="auth-error" id="authError"></div>
+    <div class="auth-keep" id="authKeepRow">
+      <label><input type="checkbox" id="keepSignedIn" checked/> Keep me signed in for a week</label>
+    </div>
+    <button class="auth-btn primary" id="authSubmitBtn" onclick="submitAuth()">Sign in</button>
+    <div class="auth-switch" id="authSwitch">No account? <a onclick="toggleAuthMode()">Create one</a></div>
+    <div class="auth-switch" id="authForgot"><a onclick="sendPasswordReset()">Forgot password?</a></div>
+  </div>
+</div>
+
+<!-- PASSWORD MODAL -->
+<div class="pw-modal-overlay" id="pwModalOverlay" onclick="if(event.target===this)closePasswordModal()">
+  <div class="pw-modal">
+    <div class="pw-modal-title" id="pwModalTitle">Set Password</div>
+    <div class="pw-modal-subtitle" id="pwModalSubtitle"></div>
+    <div class="pw-modal-fields" id="pwModalFields"></div>
+    <div class="pw-modal-error" id="pwModalError"></div>
+    <div class="pw-modal-actions">
+      <button class="pw-modal-cancel" onclick="closePasswordModal()">Cancel</button>
+      <button class="pw-modal-submit" id="pwModalSubmit" onclick="submitPasswordModal()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="main-layout">
+
+  <!-- LEFT PANEL -->
+  <div class="left-panel">
+    <div class="clock-section">
+      <div class="clock-time" id="clockTime">--:--</div>
+      <div class="clock-ampm-row">
+        <span class="clock-ampm" id="clockAmpm">--</span>
+        <span class="clock-tz">(PST)</span>
+      </div>
+      <div class="clock-date" id="clockDate">---</div>
+    </div>
+    <div class="calendar-section" id="calendarSection" onclick="toggleCalDrawer(event)">
+<div class="cal-container" id="calContainer"></div>
+    </div>
+    <div class="break-budget-panel" id="breakBudgetPanel">
+      <div class="bbp-header">
+        <span class="bbp-label">Break Budget</span>
+        <select class="bbp-select" id="breakBudgetSelect" onchange="setBreakBudget(this.value)">
+          <option value="15">15 min</option><option value="30">30 min</option>
+          <option value="45">45 min</option><option value="60" selected>1 hr</option>
+          <option value="90">1.5 hr</option><option value="120">2 hr</option>
+        </select>
+      </div>
+      <div class="bbp-bar-wrap">
+        <div class="bbp-bar-fill" id="breakBarFill"></div>
+      </div>
+      <div class="bbp-tally" id="breakTally">0 min used</div>
+    </div>
+  </div>
+
+<!-- Mobile calendar drawer -->
+<div class="cal-drawer-overlay" id="calDrawerOverlay" onclick="closeCalDrawer()"></div>
+<div class="cal-drawer-panel" id="calDrawerPanel"></div>
+<button class="cal-drawer-close-btn" id="calDrawerCloseBtn" onclick="closeCalDrawer()">✕ Close</button>
+
+  <!-- RIGHT: TASK PANEL -->
+  <div class="task-panel">
+
+    <!-- SLOT 0: NOW -->
+    <div class="slot-label-row"><span class="slot-label" id="nowLabel">Now</span></div>
+    <div class="card-slot" id="slot-0"
+         ondragover="slotDragOver(event,0)" ondragleave="slotDragLeave(event,0)" ondrop="slotDrop(event,0)"></div>
+
+    <!-- SLOT 1: UP NEXT -->
+    <div class="slot-label-row"><span class="slot-label" id="upnextLabel">Up Next</span></div>
+    <div class="card-slot" id="slot-1"
+         ondragover="slotDragOver(event,1)" ondragleave="slotDragLeave(event,1)" ondrop="slotDrop(event,1)"></div>
+
+    <!-- SLOT 2: ON DECK -->
+    <div class="slot-label-row"><span class="slot-label" id="deckLabel">On Deck</span></div>
+    <div class="card-slot" id="slot-2"
+         ondragover="slotDragOver(event,2)" ondragleave="slotDragLeave(event,2)" ondrop="slotDrop(event,2)"></div>
+
+    <!-- MORE -->
+    <div class="more-header" id="moreHeader" onclick="toggleMore(event)" style="display:none">
+      <span class="more-arrow" id="moreArrow">▶</span>
+      <span class="sec-hdr">More</span>
+      <span class="more-count" id="moreCount"></span>
+    </div>
+    <div class="more-cards" id="moreCards"
+         ondragover="moreDragOver(event)" ondragleave="moreDragLeave(event)" ondrop="moreDrop(event)"></div>
+
+    <!-- COMPLETED -->
+    <div class="divider-row" style="margin-top:4px;">
+      <button class="done-toggle" onclick="toggleDone()">
+        <span class="done-arrow" id="doneArrow">▶</span>
+        Completed
+      </button>
+    </div>
+    <div class="done-list" id="doneList"></div>
+
+
+    <!-- ADD TASK — three buttons: Flex + Scheduled + Break -->
+    <div class="add-btns-row">
+      <button class="add-toggle-btn" id="addToggleBtn" onclick="toggleAddForm()">
+        <span class="add-toggle-icon">+</span>
+        Flex Task
+      </button>
+      <button class="add-sched-toggle-btn" id="addSchedToggleBtn" onclick="toggleSchedForm()">
+        <span class="add-toggle-icon">+</span>
+        Schedule
+      </button>
+      <button class="break-toggle-btn" id="takeBreakBtn" onclick="takeBreak()" disabled>Take a Break</button>
+    </div>
+
+    <!-- FLEX TASK FORM -->
+    <div class="add-form-wrap" id="addFormWrap">
+      <div class="add-form" id="addFormInner">
+        <div>
+          <label class="form-label">Task Name</label>
+          <input class="task-input" id="taskInput" placeholder="What needs doing?" maxlength="120"
+                 onkeydown="if(event.key==='Enter') addTask()"/>
+        </div>
+        <div>
+          <label class="form-label">Priority</label>
+          <div class="priority-group">
+            <button class="p-btn" id="pb1" onclick="selectP(1)">Urgent</button>
+            <button class="p-btn" id="pb2" onclick="selectP(2)">High</button>
+            <button class="p-btn" id="pb3" onclick="selectP(3)">Medium</button>
+            <button class="p-btn" id="pb4" onclick="selectP(4)">Low</button>
+          </div>
+        </div>
+        <div>
+          <label class="form-label">Duration</label>
+          <select class="duration-select" id="durationInput">
+            <option value="15">15 min</option><option value="30">30 min</option>
+            <option value="45">45 min</option><option value="60" selected>1 hr</option>
+            <option value="90">1 hr 30 min</option><option value="120">2 hr</option>
+            <option value="150">2 hr 30 min</option><option value="180">3 hr</option>
+            <option value="240">4 hr</option><option value="300">5 hr</option>
+            <option value="360">6 hr</option><option value="480">8 hr</option>
+          </select>
+        </div>
+        <button class="add-btn" id="addBtn" onclick="addTask()" disabled>Add Flex Task</button>
+      </div>
+    </div>
+
+    <!-- SCHEDULED TASK FORM -->
+    <div class="add-sched-form-wrap" id="addSchedFormWrap">
+      <div class="add-sched-form" id="addSchedFormInner">
+        <div>
+          <label class="form-label">Task Name</label>
+          <input class="task-input" id="schedTitleInput" placeholder="Meeting, appointment..." maxlength="120"
+                 oninput="checkSchedAdd()" onkeydown="if(event.key==='Enter') addScheduledTask()"/>
+        </div>
+        <!-- Start vs End toggle -->
+        <div>
+          <label class="form-label">Anchor</label>
+          <div style="display:flex;gap:6px;margin-bottom:8px;">
+            <button class="p-btn sel-sched active-anchor" id="anchorStartBtn" onclick="setAnchor('start');checkSchedAdd()" style="flex:1;border-color:var(--sched);color:var(--sched);background:rgba(126,200,227,0.1)">Start time</button>
+            <button class="p-btn" id="anchorEndBtn" onclick="setAnchor('end');checkSchedAdd()" style="flex:1">End time</button>
+          </div>
+          <input class="time-input" id="schedTimeInput" type="time" oninput="checkSchedAdd()" onchange="checkSchedAdd()"/>
+        </div>
+        <div>
+          <label class="form-label">Duration</label>
+          <select class="duration-select" id="schedDurInput" oninput="checkSchedAdd()">
+            <option value="15">15 min</option><option value="30">30 min</option>
+            <option value="45">45 min</option><option value="60" selected>1 hr</option>
+            <option value="90">1 hr 30 min</option><option value="120">2 hr</option>
+            <option value="150">2 hr 30 min</option><option value="180">3 hr</option>
+            <option value="240">4 hr</option><option value="300">5 hr</option>
+            <option value="360">6 hr</option><option value="480">8 hr</option>
+          </select>
+        </div>
+        <button class="add-sched-btn" id="schedAddBtn" onclick="addScheduledTask()" disabled>Schedule It</button>
+      </div>
+    </div>
+
+
+  </div>
+</div>
+
+<!-- BREAK OVERLAY -->
+<div class="break-overlay" id="breakOverlay">
+  <div class="break-heading">Taking a Break</div>
+  <div class="break-timer" id="breakTimerDisplay">0:00</div>
+  <div class="break-budget-info">
+    <div class="break-budget-info-bar-wrap">
+      <div class="break-budget-info-bar" id="breakInfoBar"></div>
+    </div>
+    <span class="break-budget-info-text" id="breakInfoText"></span>
+  </div>
+  <div class="break-status" id="breakStatus"></div>
+  <button class="end-break-btn" id="endBreakBtn" onclick="endBreak()">End Break</button>
+</div>
+
+<!-- BLOCK DETAIL MODAL -->
+<div class="block-detail-overlay" id="blockDetailOverlay" onclick="if(event.target===this)closeBlockDetail()">
+  <div class="block-detail-modal">
+    <button class="block-detail-close" onclick="closeBlockDetail()">✕</button>
+    <div id="blockDetailCard"></div>
+  </div>
+</div>
+
+<!-- PRIORITY DROPDOWN (shared, positioned by JS) -->
+<div class="p-dropdown" id="priorityDropdown" onclick="event.stopPropagation()">
+  <button class="pd-btn pd-btn-1" onclick="changeTaskPriority(1)">Urgent</button>
+  <button class="pd-btn pd-btn-2" onclick="changeTaskPriority(2)">High</button>
+  <button class="pd-btn pd-btn-3" onclick="changeTaskPriority(3)">Medium</button>
+  <button class="pd-btn pd-btn-4" onclick="changeTaskPriority(4)">Low</button>
+</div>
+
+<!-- SCHEDULE EDIT DROPDOWN (shared, positioned by JS) -->
+<div class="p-dropdown sched-dropdown" id="schedDropdown" onclick="event.stopPropagation()">
+  <div style="padding:4px 6px 6px;display:flex;flex-direction:column;gap:6px;min-width:200px;">
+    <div style="display:flex;gap:5px;">
+      <button class="pd-sched-anchor" id="sdAnchorStart" onclick="sdSetAnchor('start')" style="flex:1;font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:4px 0;border-radius:4px;border:1px solid var(--sched);background:rgba(126,200,227,0.15);color:var(--sched);cursor:pointer;">Start</button>
+      <button class="pd-sched-anchor" id="sdAnchorEnd"   onclick="sdSetAnchor('end')"   style="flex:1;font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:4px 0;border-radius:4px;border:1px solid var(--border);background:none;color:var(--text-dim);cursor:pointer;">End</button>
+    </div>
+    <input class="time-input" id="sdTimeInput" type="time" style="font-size:11px;padding:5px 8px;" oninput="sdCheckSave()" onchange="sdCheckSave()"/>
+    <select class="duration-select" id="sdDurInput" style="font-size:11px;padding:5px 8px;">
+      <option value="15">15 min</option><option value="30">30 min</option>
+      <option value="45">45 min</option><option value="60" selected>1 hr</option>
+      <option value="90">1 hr 30 min</option><option value="120">2 hr</option>
+      <option value="150">2 hr 30 min</option><option value="180">3 hr</option>
+      <option value="240">4 hr</option><option value="300">5 hr</option>
+      <option value="360">6 hr</option><option value="480">8 hr</option>
+    </select>
+    <button id="sdSaveBtn" onclick="commitSchedEdit()" style="width:100%;padding:5px 0;border-radius:4px;border:none;background:var(--sched);color:#0b0a0f;font-family:'Inter',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;">Save</button>
+    <button onclick="convertToFlex()" style="width:100%;padding:4px 0;border-radius:4px;border:1px solid var(--border);background:none;color:var(--text-dim);font-family:'Inter',sans-serif;font-size:9px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;">Remove time → Flex</button>
+  </div>
+</div>
+
+<!-- START TIME EDIT DROPDOWN (flex NOW task) -->
+<div class="p-dropdown" id="startTimeDropdown" onclick="event.stopPropagation()" style="min-width:160px;">
+  <div style="padding:4px 6px 6px;display:flex;flex-direction:column;gap:6px;">
+    <div style="font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-dim);padding:2px 0 0">Started at</div>
+    <input class="time-input" id="stTimeInput" type="time" style="font-size:11px;padding:5px 8px;"/>
+    <button onclick="commitStartTimeEdit()" style="width:100%;padding:5px 0;border-radius:4px;border:none;background:#fff;color:#0b0a0f;font-family:'Inter',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;">Save</button>
+  </div>
+</div>
+
+<!-- DURATION EDIT DROPDOWN (shared, positioned by JS) -->
+<div class="p-dropdown" id="durDropdown" onclick="event.stopPropagation()" style="min-width:160px;">
+  <div style="padding:4px 6px 6px;display:flex;flex-direction:column;gap:6px;">
+    <select class="duration-select" id="ddDurInput" style="font-size:11px;padding:5px 8px;">
+      <option value="15">15 min</option><option value="30">30 min</option>
+      <option value="45">45 min</option><option value="60">1 hr</option>
+      <option value="90">1 hr 30 min</option><option value="120">2 hr</option>
+      <option value="150">2 hr 30 min</option><option value="180">3 hr</option>
+      <option value="240">4 hr</option><option value="300">5 hr</option>
+      <option value="360">6 hr</option><option value="480">8 hr</option>
+    </select>
+    <button onclick="commitDurEdit()" style="width:100%;padding:5px 0;border-radius:4px;border:none;background:#fff;color:#0b0a0f;font-family:'Inter',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;">Save</button>
+  </div>
+</div>
+
+<script>
+  // ── Constants ──────────────────────────────────────────────────────────
+  const DONE_TTL   = 48 * 60 * 60 * 1000;
+  const P_LABELS   = ['','URGENT','HIGH','MEDIUM','LOW'];
+  const P_COLORS   = ['','#ff6b8a','#ffaa60','#f0d060','#7fd4a8'];
+  const CAL_START  = 6 * 60;   // 6:00am
+  const CAL_END    = 21 * 60;  // 9:00pm
+  const PX_PER_MIN = 44 / 60;
+  const CAL_H      = (CAL_END - CAL_START) * PX_PER_MIN;
+  const DEFAULT_DUR = 60;
+  const DAYS   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  // ── State ──────────────────────────────────────────────────────────────
+  let tasks           = [];
+  let doneTasks       = [];
+  let selPriority     = null;
+  let doneOpen        = false;
+  let addOpen         = false;
+  let schedOpen       = false;
+  let moreOpen        = false;
+  let dragId          = null;
+  let calDrag         = null;
+  let currentNowId    = null;
+  let pdTargetId      = null;
+
+  // ── Break state ─────────────────────────────────────────────────────────
+  let breakBudgetMins = 60;     // daily budget chosen by user
+  let breakUsedMins   = 0;      // cumulative minutes used today
+  let breakDay        = null;   // PST date string this tally belongs to
+  let breakStartMs    = null;   // Date.now() when current break began, null if no break
+  let breakTimerInt   = null;   // setInterval handle
+  let breakTaskId     = null;   // id of the active "Taking a Break" task
+
+  // ── Firebase config ────────────────────────────────────────────────────
+  // 1. Go to https://console.firebase.google.com and create a project
+  // 2. Add a Web app, copy the config object here
+  // 3. In Firestore → Rules, set: allow read, write: if true;  (for personal use)
+  const firebaseConfig = {
+    apiKey:            "AIzaSyAHiy9-Tc8UW5BdNcMjMf5OAj7wfTyJubY",
+    authDomain:        "queue-app-13065.firebaseapp.com",
+    projectId:         "queue-app-13065",
+    storageBucket:     "queue-app-13065.firebasestorage.app",
+    messagingSenderId: "299707953232",
+    appId:             "1:299707953232:web:22ec549b0e8b37f7c76155"
+  };
+
+  // Check whether the config has been filled in
+  const _configReady = !Object.values(firebaseConfig).some(v => v.startsWith('PASTE_'));
+
+  let _db   = null;
+  let _auth = null;
+  let _currentUser = null;
+  let _stateDoc = null;
+  let _unsubscribeSnapshot = null;
+
+  if (_configReady) {
+    try {
+      firebase.initializeApp(firebaseConfig);
+      _db   = firebase.firestore();
+      _auth = firebase.auth();
+    } catch(e) {
+      console.warn('[Queue] Firebase init failed:', e);
+    }
+  }
+
+  // ── Auth helpers ───────────────────────────────────────────────────────
+  let _authMode = 'signin'; // 'signin' | 'signup'
+
+  function toggleAuthMode() {
+    _authMode = _authMode === 'signin' ? 'signup' : 'signin';
+    const btn     = document.getElementById('authSubmitBtn');
+    const sw      = document.getElementById('authSwitch');
+    const forgot  = document.getElementById('authForgot');
+    const keepRow = document.getElementById('authKeepRow');
+    if (_authMode === 'signup') {
+      btn.textContent = 'Create account';
+      sw.innerHTML = 'Have an account? <a onclick="toggleAuthMode()">Sign in</a>';
+      if (forgot)  forgot.style.display  = 'none';
+      if (keepRow) keepRow.style.display = 'none';
+    } else {
+      btn.textContent = 'Sign in';
+      sw.innerHTML = 'No account? <a onclick="toggleAuthMode()">Create one</a>';
+      if (forgot)  forgot.style.display  = '';
+      if (keepRow) keepRow.style.display = '';
+    }
+    document.getElementById('authError').textContent = '';
+  }
+
+  function sendPasswordReset() {
+    const email = document.getElementById('authEmail').value.trim();
+    const err   = document.getElementById('authError');
+    if (!email) { err.textContent = 'Enter your email address above first.'; return; }
+    if (!_auth) return;
+    err.textContent = '';
+    _auth.sendPasswordResetEmail(email)
+      .then(() => { err.style.color = 'var(--done-color)'; err.textContent = 'Reset email sent — check your inbox.'; })
+      .catch(e  => { err.style.color = ''; err.textContent = friendlyAuthError(e.code); });
+  }
+
+  function submitAuth() {
+    const email = document.getElementById('authEmail').value.trim();
+    const pass  = document.getElementById('authPassword').value;
+    const err   = document.getElementById('authError');
+    if (!email || !pass) { err.textContent = 'Please enter your email and password.'; return; }
+    if (!_auth) return;
+    err.textContent = ''; err.style.color = '';
+    const btn         = document.getElementById('authSubmitBtn');
+    const keepChecked = document.getElementById('keepSignedIn')?.checked ?? true;
+    btn.disabled = true;
+    const persistence = keepChecked
+      ? firebase.auth.Auth.Persistence.LOCAL
+      : firebase.auth.Auth.Persistence.SESSION;
+    _auth.setPersistence(persistence)
+      .then(() => _authMode === 'signup'
+        ? _auth.createUserWithEmailAndPassword(email, pass)
+        : _auth.signInWithEmailAndPassword(email, pass))
+      .then(() => {
+        if (keepChecked) localStorage.setItem('q_signin_ts', String(Date.now()));
+        else             localStorage.removeItem('q_signin_ts');
+        btn.disabled = false;
+      })
+      .catch(e => {
+        btn.disabled = false;
+        err.textContent = friendlyAuthError(e.code);
+      });
+  }
+
+  function signInWithGoogle() {
+    if (!_auth) return;
+    const keepChecked = document.getElementById('keepSignedIn')?.checked ?? true;
+    const persistence = keepChecked
+      ? firebase.auth.Auth.Persistence.LOCAL
+      : firebase.auth.Auth.Persistence.SESSION;
+    const provider = new firebase.auth.GoogleAuthProvider();
+    _auth.setPersistence(persistence)
+      .then(() => _auth.signInWithPopup(provider))
+      .then(() => {
+        if (keepChecked) localStorage.setItem('q_signin_ts', String(Date.now()));
+        else             localStorage.removeItem('q_signin_ts');
+      })
+      .catch(e => {
+        document.getElementById('authError').textContent = friendlyAuthError(e.code);
+      });
+  }
+
+  function signOut() {
+    if (!_auth) return;
+    localStorage.removeItem('q_signin_ts');
+    _auth.signOut().then(() => {
+      tasks = []; doneTasks = [];
+      try {
+        localStorage.removeItem('q_tasks');
+        localStorage.removeItem('q_done');
+      } catch(e) {}
+    });
+  }
+
+  function friendlyAuthError(code) {
+    const map = {
+      'auth/invalid-email':          'Invalid email address.',
+      'auth/user-not-found':         'No account found with that email.',
+      'auth/wrong-password':         'Incorrect password.',
+      'auth/email-already-in-use':   'An account with that email already exists.',
+      'auth/weak-password':          'Password must be at least 6 characters.',
+      'auth/too-many-requests':      'Too many attempts. Please try again later.',
+      'auth/popup-closed-by-user':    '',
+      'auth/invalid-credential':      'Current password is incorrect.',
+      'auth/requires-recent-login':   'Please sign out and sign back in, then try again.',
+      'auth/provider-already-linked': 'A password is already linked to this account.',
+    };
+    return map[code] || 'Something went wrong. Please try again.';
+  }
+
+  function showAuthScreen(visible) {
+    const screen   = document.getElementById('authScreen');
+    const gearWrap = document.getElementById('gearWrap');
+    if (screen)   screen.classList.toggle('hidden', !visible);
+    if (gearWrap) gearWrap.style.display = visible ? 'none' : '';
+  }
+
+  // ── Gear menu ──────────────────────────────────────────────────────────
+  function toggleGearMenu(e) {
+    e.stopPropagation();
+    document.getElementById('gearMenu').classList.toggle('open');
+  }
+  function closeGearMenu() {
+    const m = document.getElementById('gearMenu');
+    if (m) m.classList.remove('open');
+  }
+  document.addEventListener('click', () => closeGearMenu());
+
+  function hasPasswordProvider() {
+    return !!(_currentUser && _currentUser.providerData.some(p => p.providerId === 'password'));
+  }
+
+  function openPasswordModal() {
+    if (!_currentUser) return;
+    const hasPass = hasPasswordProvider();
+    document.getElementById('pwModalTitle').textContent    = hasPass ? 'Change Password' : 'Set Password';
+    document.getElementById('pwModalSubtitle').textContent = hasPass
+      ? 'Enter your current password to verify, then choose a new one.'
+      : 'Add a password to your account so you can sign in without Google.';
+    document.getElementById('pwModalError').textContent = '';
+
+    const fields = document.getElementById('pwModalFields');
+    fields.innerHTML = (hasPass ? `<input class="auth-input" id="pwCurrent" type="password" placeholder="Current password" autocomplete="current-password"/>` : '') + `
+      <input class="auth-input" id="pwNew"     type="password" placeholder="New password (min 6 chars)" autocomplete="new-password"/>
+      <input class="auth-input" id="pwConfirm" type="password" placeholder="Confirm new password"       autocomplete="new-password"/>
+    `;
+
+    document.getElementById('pwModalOverlay').classList.add('active');
+    const first = hasPass ? document.getElementById('pwCurrent') : document.getElementById('pwNew');
+    if (first) first.focus();
+
+    // Allow Enter key to submit
+    fields.querySelectorAll('input').forEach(inp => {
+      inp.addEventListener('keydown', e => { if (e.key === 'Enter') submitPasswordModal(); });
+    });
+  }
+
+  function closePasswordModal() {
+    document.getElementById('pwModalOverlay').classList.remove('active');
+  }
+
+  function submitPasswordModal() {
+    const err     = document.getElementById('pwModalError');
+    const submit  = document.getElementById('pwModalSubmit');
+    const newPw   = (document.getElementById('pwNew')     || {}).value || '';
+    const confirm = (document.getElementById('pwConfirm') || {}).value || '';
+    const current = (document.getElementById('pwCurrent') || {}).value || '';
+
+    err.textContent = '';
+    if (newPw.length < 6)      { err.textContent = 'Password must be at least 6 characters.'; return; }
+    if (newPw !== confirm)     { err.textContent = 'Passwords do not match.'; return; }
+
+    submit.disabled = true;
+    const user = _currentUser;
+
+    if (hasPasswordProvider()) {
+      // Reauthenticate then update
+      const cred = firebase.auth.EmailAuthProvider.credential(user.email, current);
+      user.reauthenticateWithCredential(cred)
+        .then(() => user.updatePassword(newPw))
+        .then(() => { closePasswordModal(); })
+        .catch(e => {
+          submit.disabled = false;
+          err.textContent = friendlyAuthError(e.code) || 'Failed to update password.';
+        });
+    } else {
+      // Link email/password to Google account
+      const cred = firebase.auth.EmailAuthProvider.credential(user.email, newPw);
+      user.linkWithCredential(cred)
+        .then(() => { closePasswordModal(); })
+        .catch(e => {
+          submit.disabled = false;
+          err.textContent = friendlyAuthError(e.code) || 'Failed to set password.';
+        });
+    }
+  }
+
+  function setUserDoc(user) {
+    _currentUser = user;
+    _stateDoc = user ? _db.collection('users').doc(user.uid).collection('queue').doc('state') : null;
+  }
+
+  // ── Auth state observer ────────────────────────────────────────────────
+  if (_auth) {
+    _auth.onAuthStateChanged(user => {
+      if (user) {
+        // Enforce 1-week expiry for "keep me signed in"
+        const signinTs = localStorage.getItem('q_signin_ts');
+        if (signinTs && Date.now() - parseInt(signinTs, 10) > 7 * 24 * 60 * 60 * 1000) {
+          localStorage.removeItem('q_signin_ts');
+          _auth.signOut();
+          return;
+        }
+        setUserDoc(user);
+        showAuthScreen(false);
+        load();
+      } else {
+        setUserDoc(null);
+        if (_unsubscribeSnapshot) { _unsubscribeSnapshot(); _unsubscribeSnapshot = null; }
+        tasks = []; doneTasks = [];
+        render();
+        showAuthScreen(true);
+        setSyncStatus('offline');
+      }
+    });
+  } else {
+    // No config — run in local-only mode without auth
+    showAuthScreen(false);
+  }
+
+  // ── Sync status ────────────────────────────────────────────────────────
+  function setSyncStatus(status) {
+    const dot = document.getElementById('syncDot');
+    const lbl = document.getElementById('syncLabel');
+    if (!dot) return;
+    dot.className = 'sync-dot ' + status;
+    lbl.textContent = { synced: 'Synced', syncing: 'Saving…', error: 'Error', offline: 'Offline', connecting: 'Connecting…' }[status] || '';
+  }
+
+  // ── Persistence ────────────────────────────────────────────────────────
+  function save() {
+    purgeDone();
+    try {
+      localStorage.setItem('q_tasks', JSON.stringify(tasks));
+      localStorage.setItem('q_done',  JSON.stringify(doneTasks));
+    } catch(e) {}
+    if (_stateDoc) {
+      setSyncStatus('syncing');
+      _stateDoc.set({ tasks, doneTasks })
+        .then(() => setSyncStatus('synced'))
+        .catch(err => { console.error('[Queue] Save failed:', err); setSyncStatus('error'); });
+    }
+  }
+
+  function load() {
+    // Render from localStorage cache immediately
+    try { tasks     = JSON.parse(localStorage.getItem('q_tasks') || '[]'); } catch(e){ tasks=[]; }
+    try { doneTasks = JSON.parse(localStorage.getItem('q_done')  || '[]'); } catch(e){ doneTasks=[]; }
+    purgeDone();
+    render();
+
+    if (!_stateDoc) {
+      setSyncStatus('offline');
+      document.getElementById('syncLabel').textContent = 'Local only';
+      return;
+    }
+    setSyncStatus('connecting');
+    if (_unsubscribeSnapshot) _unsubscribeSnapshot();
+    _unsubscribeSnapshot = _stateDoc.onSnapshot(snap => {
+      if (!snap.exists) { setSyncStatus('synced'); return; }
+      const data = snap.data();
+      tasks     = data.tasks     || [];
+      doneTasks = data.doneTasks || [];
+      purgeDone();
+      try {
+        localStorage.setItem('q_tasks', JSON.stringify(tasks));
+        localStorage.setItem('q_done',  JSON.stringify(doneTasks));
+      } catch(e) {}
+      setSyncStatus('synced');
+      render();
+    }, err => {
+      console.error('[Queue] Firestore listener error:', err);
+      setSyncStatus('error');
+    });
+  }
+
+  function purgeDone() {
+    doneTasks = doneTasks.filter(t => (Date.now() - t.doneAt) < DONE_TTL);
+  }
+
+  // ── PST helpers ────────────────────────────────────────────────────────
+  function getPST() {
+    return new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+  }
+  function dateToMinsPST(date) {
+    const p = new Date(date.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+    return p.getHours() * 60 + p.getMinutes();
+  }
+  // Parse a datetime-local string ("YYYY-MM-DDTHH:MM") as local (LA) minutes
+  // Avoids UTC-misparse by splitting the string directly instead of new Date().
+  function parseDateLocalMins(dtStr) {
+    if (!dtStr) return null;
+    // datetime-local format: "2026-03-20T14:45" or "2026-03-20T14:45:00"
+    const m = dtStr.match(/T(\d{2}):(\d{2})/);
+    if (m) return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+    // fallback: convert via LA locale
+    return dateToMinsPST(new Date(dtStr));
+  }
+
+  function fmtTimePST(dtStr) {
+    // Format a datetime-local string ("YYYY-MM-DDTHH:MM") as "H:MMam/pm"
+    // Parse T part directly to avoid UTC-shift in new Date(dtStr)
+    if (!dtStr) return null;
+    const tm = dtStr.match(/T(\d{2}):(\d{2})/);
+    if (tm) {
+      let h = parseInt(tm[1], 10), m = parseInt(tm[2], 10);
+      const ap = h >= 12 ? 'pm' : 'am';
+      h = h % 12 || 12;
+      return `${h}:${String(m).padStart(2,'0')}${ap}`;
+    }
+    // Fallback for ISO strings / ms
+    const d = new Date(dtStr);
+    if (isNaN(d)) return null;
+    const p = new Date(d.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+    let h = p.getHours(), m = p.getMinutes();
+    const ap = h >= 12 ? 'pm' : 'am';
+    h = h % 12 || 12;
+    return `${h}:${String(m).padStart(2,'0')}${ap}`;
+  }
+  // Format a Unix ms timestamp as PST "H:MMam/pm"
+  function fmtMsTimePST(ms) {
+    const p = new Date(new Date(ms).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+    let h = p.getHours(), m = p.getMinutes();
+    const ap = h >= 12 ? 'pm' : 'am';
+    h = h % 12 || 12;
+    return `${h}:${String(m).padStart(2,'0')}${ap}`;
+  }
+  // Convert a Unix ms timestamp to PST minutes-since-midnight
+  function msMinsToCalMins(ms) {
+    const p = new Date(new Date(ms).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+    return p.getHours() * 60 + p.getMinutes();
+  }
+  // Returns today's PST date as "YYYY-MM-DD"
+  function todayPstDateStr() {
+    const p = getPST();
+    return `${p.getFullYear()}-${String(p.getMonth()+1).padStart(2,'0')}-${String(p.getDate()).padStart(2,'0')}`;
+  }
+  // Formats minutes-since-midnight as "HH:MM"
+  function fmtMins(m) {
+    return `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
+  }
+  // Formats a break budget duration as "X min" or "X hr"
+  function fmtBudgetMins(mins) {
+    return mins >= 60 && mins % 60 === 0 ? `${mins / 60} hr` : `${mins} min`;
+  }
+
+  // ── Clock ──────────────────────────────────────────────────────────────
+  function updateClock() {
+    const now = getPST();
+    let h = now.getHours();
+    const m = now.getMinutes();
+    const ap = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    document.getElementById('clockTime').textContent = `${h}:${String(m).padStart(2,'0')}`;
+    document.getElementById('clockAmpm').textContent = ap;
+    document.getElementById('clockDate').textContent =
+      `${DAYS[now.getDay()]}\n${MONTHS[now.getMonth()]} ${now.getDate()}`;
+  }
+
+  // ── End-time helpers (for escalation + display) ────────────────────────
+  function minsUntil(dtStr) {
+    if (!dtStr) return null;
+    const d = new Date(dtStr);
+    if (isNaN(d)) return null;
+    return (d - new Date()) / 60000;
+  }
+
+  function fmtEndTime(dtStr) {
+    if (!dtStr) return null;
+    const mins = minsUntil(dtStr);
+    if (mins === null) return null;
+    const label = fmtTimePST(dtStr);
+    if (mins < -60)  return `ends ${label} (overdue)`;
+    if (mins < 0)    return `ends ${label} (${Math.abs(Math.round(mins))}m past)`;
+    if (mins < 60)   return `ends ${label} (${Math.round(mins)}m left)`;
+    return `ends ${label}`;
+  }
+
+  function endTimeClass(dtStr) {
+    const mins = minsUntil(dtStr);
+    if (mins === null) return '';
+    if (mins < -60)  return 'end-over';
+    if (mins < 0)    return 'end-warn';
+    if (mins <= 30)  return 'end-urgent';
+    if (mins <= 60)  return 'end-warn';
+    return '';
+  }
+
+  function fmtDuration(mins) {
+    if (!mins) return null;
+    if (mins < 60) return `${mins}m`;
+    const h = Math.floor(mins / 60), rm = mins % 60;
+    return rm ? `${h}h ${rm}m` : `${h}h`;
+  }
+
+  // ── Dropdown helpers ───────────────────────────────────────────────────
+  function openDropdown(dd, rect, width) {
+    dd.classList.add('open');
+    let left = rect.left;
+    if (left + width > window.innerWidth - 8) left = window.innerWidth - width - 8;
+    dd.style.top  = (rect.bottom + 4) + 'px';
+    dd.style.left = left + 'px';
+  }
+  function hideAllDropdowns() { hidePriorityDropdown(); hideSchedDropdown(); hideDurDropdown(); hideStartTimeDropdown(); }
+
+  // ── Priority dropdown ──────────────────────────────────────────────────
+  function showPriorityDropdown(taskId, event) {
+    event.stopPropagation();
+    pdTargetId = taskId;
+    openDropdown(document.getElementById('priorityDropdown'), event.target.getBoundingClientRect(), 100);
+  }
+
+  function changeTaskPriority(newP) {
+    if (!pdTargetId) return;
+    const task = tasks.find(t => t.id === pdTargetId);
+    if (task) { task.priority = newP; save(); }
+    hidePriorityDropdown();
+    render();
+  }
+
+  function hidePriorityDropdown() {
+    document.getElementById('priorityDropdown').classList.remove('open');
+    pdTargetId = null;
+  }
+
+  // Close dropdown on any outside click
+  document.addEventListener('click', hideAllDropdowns);
+
+  // ── Schedule-edit dropdown ─────────────────────────────────────────────
+  let sdTargetId  = null;
+  let sdAnchor    = 'start';
+
+  function showSchedDropdown(taskId, event) {
+    event.stopPropagation();
+    hideAllDropdowns();
+    sdTargetId = taskId;
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    const timeStr = task.startTime
+      ? task.startTime.match(/T(\d{2}:\d{2})/)?.[1] ?? '09:00'
+      : '09:00';
+    sdAnchor = 'start';
+    sdSetAnchor('start');
+    document.getElementById('sdTimeInput').value = timeStr;
+    document.getElementById('sdDurInput').value  = String(task.duration || DEFAULT_DUR);
+    sdCheckSave();
+    openDropdown(document.getElementById('schedDropdown'), event.target.getBoundingClientRect(), 218);
+  }
+
+  function hideSchedDropdown() {
+    document.getElementById('schedDropdown').classList.remove('open');
+    sdTargetId = null;
+  }
+
+  // ── Duration-edit dropdown ─────────────────────────────────────────────
+  let ddTargetId = null;
+
+  function showDurDropdown(taskId, event) {
+    event.stopPropagation();
+    hideAllDropdowns();
+    ddTargetId = taskId;
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+    document.getElementById('ddDurInput').value = String(task.duration || DEFAULT_DUR);
+    openDropdown(document.getElementById('durDropdown'), event.target.getBoundingClientRect(), 168);
+  }
+
+  function hideDurDropdown() {
+    document.getElementById('durDropdown').classList.remove('open');
+    ddTargetId = null;
+  }
+
+  // ── Start-time-edit dropdown (flex NOW task only) ──────────────────────
+  let stTargetId = null;
+
+  function showStartTimeDropdown(taskId, event) {
+    event.stopPropagation();
+    hideAllDropdowns();
+    stTargetId = taskId;
+    const task = tasks.find(t => t.id === taskId);
+    if (!task || !task.calStartTime) return;
+    const p = new Date(new Date(task.calStartTime).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+    document.getElementById('stTimeInput').value =
+      `${String(p.getHours()).padStart(2,'0')}:${String(p.getMinutes()).padStart(2,'0')}`;
+    openDropdown(document.getElementById('startTimeDropdown'), event.target.getBoundingClientRect(), 160);
+  }
+
+  function hideStartTimeDropdown() {
+    document.getElementById('startTimeDropdown').classList.remove('open');
+    stTargetId = null;
+  }
+
+  function commitStartTimeEdit() {
+    const timeVal = document.getElementById('stTimeInput').value;
+    if (!timeVal || !stTargetId) { hideStartTimeDropdown(); return; }
+    const task = tasks.find(t => t.id === stTargetId);
+    if (!task) { hideStartTimeDropdown(); return; }
+    // Convert chosen PST "HH:MM" to UTC ms using the same offset trick as getPST()
+    const dp        = todayPstDateStr();
+    const pstFake   = new Date(`${dp}T${timeVal}`);
+    const offsetMs  = Date.now() - getPST().getTime();
+    task.calStartTime = pstFake.getTime() + offsetMs;
+    hideStartTimeDropdown();
+    save();
+    render();
+  }
+
+  function commitDurEdit() {
+    if (!ddTargetId) return;
+    const task = tasks.find(t => t.id === ddTargetId);
+    if (!task) return;
+    task.duration = parseInt(document.getElementById('ddDurInput').value) || DEFAULT_DUR;
+    save();
+    hideDurDropdown();
+    render();
+  }
+
+  function sdSetAnchor(which) {
+    sdAnchor = which;
+    const startBtn = document.getElementById('sdAnchorStart');
+    const endBtn   = document.getElementById('sdAnchorEnd');
+    const on  = 'border:1px solid var(--sched);background:rgba(126,200,227,0.15);color:var(--sched);';
+    const off = 'border:1px solid var(--border);background:none;color:var(--text-dim);';
+    startBtn.style.cssText = `flex:1;font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:4px 0;border-radius:4px;cursor:pointer;${which==='start'?on:off}`;
+    endBtn.style.cssText   = `flex:1;font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:4px 0;border-radius:4px;cursor:pointer;${which==='end'?on:off}`;
+  }
+
+  function sdCheckSave() {
+    document.getElementById('sdSaveBtn').disabled =
+      !document.getElementById('sdTimeInput').value;
+  }
+
+  function commitSchedEdit() {
+    if (!sdTargetId) return;
+    const task    = tasks.find(t => t.id === sdTargetId);
+    if (!task) return;
+    const timeVal = document.getElementById('sdTimeInput').value;
+    if (!timeVal) return;
+    const dur      = parseInt(document.getElementById('sdDurInput').value) || DEFAULT_DUR;
+    const dp       = todayPstDateStr();
+    const anchorDT = `${dp}T${timeVal}`;
+    let startTime, endTime;
+    if (sdAnchor === 'start') {
+      startTime = anchorDT;
+      endTime   = `${dp}T${fmtMins(parseDateLocalMins(anchorDT) + dur)}`;
+    } else {
+      endTime   = anchorDT;
+      startTime = `${dp}T${fmtMins(parseDateLocalMins(anchorDT) - dur)}`;
+    }
+    task.type      = 'scheduled';
+    task.startTime = startTime;
+    task.endTime   = endTime;
+    task.duration  = dur;
+    delete task.priority;
+    delete task.calStartTime;
+    save();
+    hideSchedDropdown();
+    render();
+  }
+
+  function convertToFlex() {
+    if (!sdTargetId) return;
+    const task = tasks.find(t => t.id === sdTargetId);
+    if (!task) return;
+    task.type      = 'flex';
+    task.priority  = task.priority || 3; // default to Medium if none set
+    delete task.startTime;
+    delete task.endTime;
+    delete task.calStartTime;
+    save();
+    hideSchedDropdown();
+    render();
+  }
+  function effP(task) {
+    if (!task.endTime) return { priority: task.priority, escalated: false };
+    const mins = minsUntil(task.endTime);
+    if (mins === null || mins < -60) return { priority: task.priority, escalated: false };
+    if (mins <= 30) return { priority: 1, escalated: task.priority > 1 };
+    if (mins <= 60) {
+      const bumped = Math.max(1, task.priority - 1);
+      return { priority: bumped, escalated: bumped < task.priority };
+    }
+    return { priority: task.priority, escalated: false };
+  }
+
+  // ── Task type helpers ─────────────────────────────────────────────────
+  // Scheduled = user pinned to a specific time; Flex = priority-driven, fills gaps.
+  // Backward-compat: tasks without a type field that have startTime → scheduled.
+  function isScheduled(t) {
+    return t.type === 'scheduled' || (!t.type && (t.startTime || t.endTime));
+  }
+
+  // ── getSorted: FLEX tasks only, ordered by flexOrder then priority ──────
+  function getSorted() {
+    return [...tasks]
+      .filter(t => !isScheduled(t))
+      .map(t => ({ ...t, _eff: effP(t), _active: true }))
+      .sort((a, b) => {
+        const ao = a.flexOrder !== undefined ? a.flexOrder : Infinity;
+        const bo = b.flexOrder !== undefined ? b.flexOrder : Infinity;
+        if (ao !== bo) return ao - bo;
+        if (a._eff.priority !== b._eff.priority) return a._eff.priority - b._eff.priority;
+        return a.addedAt - b.addedAt;
+      });
+  }
+
+  // ── getScheduled: SCHEDULED tasks sorted by startTime ────────────────
+  function getScheduled() {
+    const pst     = getPST();
+    const nowMins = pst.getHours() * 60 + pst.getMinutes();
+    return [...tasks]
+      .filter(t => isScheduled(t))
+      .map(t => {
+        const stMins = t.startTime ? parseDateLocalMins(t.startTime) : null;
+        const dur    = t.duration || DEFAULT_DUR;
+        const etMins = t.endTime  ? parseDateLocalMins(t.endTime)
+                     : stMins != null ? stMins + dur : null;
+        const active = stMins != null && nowMins >= stMins && (etMins == null || nowMins < etMins);
+        return { ...t, _eff: { priority: 2, escalated: false }, _stMins: stMins, _etMins: etMins, _active: active };
+      })
+      .sort((a, b) => (a._stMins ?? 9999) - (b._stMins ?? 9999));
+  }
+
+  // ── getAllSorted: merged queue order ──────────────────────────────────
+  // 1. Active scheduled tasks (currently in their window) — by startTime
+  // 2. Flex tasks — by priority
+  // 3. Future scheduled tasks (not yet started) — by startTime
+  function getAllSorted(flex) {
+    if (!flex) flex = getSorted();
+    const scheduled = getScheduled();
+    const active    = scheduled.filter(t => t._active);
+    const future    = scheduled.filter(t => !t._active);
+    return [...active, ...flex, ...future];
+  }
+  function taskTimeLabel(task) {
+    if (task.startTime && task.endTime) return `${fmtTimePST(task.startTime)} – ${fmtTimePST(task.endTime)}`;
+    if (task.startTime) return `starts ${fmtTimePST(task.startTime)}`;
+    if (task.endTime)   return fmtEndTime(task.endTime);
+    if (task.calStartTime) return `started ${fmtMsTimePST(task.calStartTime)}`;
+    return null;
+  }
+  function taskTimeClass(task) {
+    if (task.endTime) return endTimeClass(task.endTime);
+    return '';
+  }
+
+  // ── renderCard: returns HTML string for a full task card ────────────────
+  const SCHED_COL = '#7ec8e3';
+  function renderCard(task, opts) {
+    opts = opts || {};
+    if (!task) {
+      const jokes = [
+        'Climb a mountain','Run a marathon','Summit Everest','Complete a triathlon',
+        'Hike the Pacific Crest Trail','Ski a black diamond','Surf a big wave',
+        'Row across the ocean','Bike across the country','Free solo El Capitan',
+        'Make a movie','Write a screenplay','Direct a short film','Win at Sundance',
+        'Score a film','Edit a feature','Cast the perfect lead','Shoot on location',
+        'Get a standing ovation','Land a distribution deal'
+      ];
+      const placeholder = jokes[Math.floor(Math.random() * jokes.length)];
+      return `<div class="task-card empty" style="min-height:90px;border:1px dashed rgba(255,255,255,0.25);background:transparent;opacity:0.8;display:flex;align-items:center;justify-content:center"><span style="color:var(--text-dim);font-size:11px;font-style:italic;font-weight:400">${placeholder}</span></div>`;
+    }
+    const taskSched  = isScheduled(task);
+    const taskBreak  = !!task.isBreak;
+    const { priority, escalated } = task._eff;
+    const col = taskBreak ? '#9863f3' : taskSched ? SCHED_COL : (P_COLORS[priority] || '#fff');
+
+    // calStartTime label only meaningful on the NOW slot (slotIndex 0)
+    const taskForLabel = (opts.slotIndex === 0 || opts.inMore) ? task : { ...task, calStartTime: null };
+    const timeTxt = taskTimeLabel(taskForLabel);
+    const timeCls = taskSched ? '' : taskTimeClass(task);
+
+    const badgeHtml = taskSched
+      ? `<span class="priority-badge" onclick="showSchedDropdown(${task.id},event)" style="cursor:pointer;background:rgba(126,200,227,0.15);color:${SCHED_COL};border:1px solid rgba(126,200,227,0.3)">⏰ SCHEDULED</span>`
+      : `<span class="priority-badge pc-${priority}" onclick="showPriorityDropdown(${task.id},event)" style="cursor:pointer">${P_LABELS[priority]}</span>`;
+
+    const escHtml  = escalated ? `<span class="escalation-badge">⚡ escalated</span>` : '';
+    const hasCalStart = !taskSched && !!task.calStartTime && opts.slotIndex === 0;
+    const timeHtml = timeTxt
+      ? `<span class="time-display ${timeCls}"${
+          taskSched   ? ` onclick="showSchedDropdown(${task.id},event)" style="cursor:pointer"`
+          : hasCalStart ? ` onclick="showStartTimeDropdown(${task.id},event)" style="cursor:pointer"`
+          : ''
+        }>${esc(timeTxt)}</span>`
+      : '';
+    const durHtml = task.duration
+      ? `<span class="duration-display" onclick="showDurDropdown(${task.id},event)" style="cursor:pointer;text-decoration:underline dotted">${fmtDuration(task.duration)}</span>`
+      : `<span class="duration-display" onclick="showDurDropdown(${task.id},event)" style="cursor:pointer;opacity:0.4">+ duration</span>`;
+
+    const dragAttrs = taskSched
+      ? `onmousedown="schedDragAttempt(event,${task.id})"`
+      : `draggable="true" ondragstart="cardDragStart(event,${task.id})" ondragend="cardDragEnd(event)"`;
+
+    const moreAttrs = opts.inMore
+      ? ` ondragover="moreCardDragOver(event,${task.id})" ondrop="moreCardDrop(event,${task.id})"`
+      : '';
+
+    return `<div class="task-card ${taskSched ? 'sched-card' : 'flex-card'}" data-id="${task.id}" ${dragAttrs}${moreAttrs} style="--card-bar:${col};border-color:${col}">
+      <button class="delete-btn" onclick="deleteTaskById(${task.id})" title="Delete">✕</button>
+      <div class="card-task-title">${esc(task.title)}</div>
+      <div class="task-meta" style="display:flex">${badgeHtml}${escHtml}${timeHtml}${durHtml}<span class="task-age">${timeAgo(task.addedAt)}</span><button class="done-btn" onclick="markDoneById(${task.id})">✓ Done</button></div>
+      ${taskSched ? '<div class="sched-error-msg">Scheduled tasks can\'t be reordered by priority.</div>' : ''}
+    </div>`;
+  }
+
+  // ── Block detail modal ─────────────────────────────────────────────────
+  let _detailBlock = null;
+  let _detailDp    = null;
+
+  function openBlockDetail(b, dp) {
+    _detailBlock = b;
+    _detailDp    = dp;
+    _renderBlockDetail();
+    document.getElementById('blockDetailOverlay').classList.add('active');
+  }
+
+  function closeBlockDetail() {
+    document.getElementById('blockDetailOverlay').classList.remove('active');
+    _detailBlock = null;
+    _detailDp    = null;
+  }
+
+  function _minsToTimeInput(mins) {
+    if (mins == null) return '';
+    const h = Math.floor(mins / 60) % 24;
+    const m = mins % 60;
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  }
+
+  function _renderBlockDetail() {
+    const b    = _detailBlock;
+    if (!b) return;
+    const task = b.task;
+    const card = document.getElementById('blockDetailCard');
+    if (!card) return;
+
+    if (!b.done) {
+      // Active task — use renderCard with slotIndex:0 for full interactivity
+      card.innerHTML = renderCard(task, { slotIndex: 0 });
+    } else {
+      // Done task — show info + time edit
+      const priority = task.priority || 3;
+      const col = task.isBreak ? '#9863f3' : isScheduled(task) ? SCHED_COL : (P_COLORS[priority] || '#fff');
+      const badgeHtml = task.isBreak
+        ? `<span class="priority-badge" style="background:rgba(152,99,243,0.15);color:#9863f3;border:1px solid rgba(152,99,243,0.3)">Break</span>`
+        : isScheduled(task)
+        ? `<span class="priority-badge" style="background:rgba(126,200,227,0.15);color:${SCHED_COL};border:1px solid rgba(126,200,227,0.3)">⏰ Scheduled</span>`
+        : `<span class="priority-badge pc-${priority}">${P_LABELS[priority]}</span>`;
+      const durHtml = `<span class="duration-display">${fmtDuration(task.duration || DEFAULT_DUR)}</span>`;
+      card.innerHTML = `
+        <div class="task-card ${isScheduled(task) ? 'sched-card' : 'flex-card'}" style="--card-bar:${col};border-color:${col};cursor:default">
+          <div class="card-task-title">${esc(task.title)}</div>
+          <div class="task-meta" style="display:flex">${badgeHtml}${durHtml}
+            <span class="task-age" style="color:var(--done-color)">✓ Done</span>
+          </div>
+          <div class="block-detail-time-edit">
+            <label>Start</label>
+            <input type="time" id="bdStartTime" value="${_minsToTimeInput(b.startMins)}" onchange="updateDoneBlockTime()"/>
+            <label>End</label>
+            <input type="time" id="bdEndTime"   value="${_minsToTimeInput(b.endMins)}"   onchange="updateDoneBlockTime()"/>
+          </div>
+        </div>`;
+    }
+  }
+
+  function updateDoneBlockTime() {
+    if (!_detailBlock || !_detailBlock.done || !_detailDp) return;
+    const startVal = (document.getElementById('bdStartTime') || {}).value;
+    const endVal   = (document.getElementById('bdEndTime')   || {}).value;
+    if (!startVal || !endVal) return;
+    const doneTask = doneTasks.find(t => t.id === _detailBlock.task.id);
+    if (!doneTask) return;
+    doneTask.startTime = `${_detailDp}T${startVal}`;
+    doneTask.endTime   = `${_detailDp}T${endVal}`;
+    save();
+    render();
+  }
+
+  function _refreshBlockDetail() {
+    const overlay = document.getElementById('blockDetailOverlay');
+    if (!overlay || !overlay.classList.contains('active') || !_detailBlock) return;
+    if (!_detailBlock.done) {
+      const task = tasks.find(t => t.id === _detailBlock.task.id);
+      if (!task) { closeBlockDetail(); return; }
+      task._eff = effP(task);
+      _detailBlock = { ..._detailBlock, task };
+    }
+    _renderBlockDetail();
+  }
+
+  // ── Render ─────────────────────────────────────────────────────────────
+  function render() {
+    purgeDone();
+    const flexSorted = getSorted();
+    const all        = getAllSorted(flexSorted);
+
+    // Stamp calStartTime only when the top FLEX task changes
+    const topFlexId = flexSorted[0] ? flexSorted[0].id : null;
+    if (topFlexId !== currentNowId) {
+      // Clear calStartTime on the task that just lost the top spot
+      if (currentNowId) {
+        const prev = tasks.find(t => t.id === currentNowId);
+        if (prev && !isScheduled(prev)) {
+          delete prev.calStartTime;
+          save();
+        }
+      }
+      currentNowId = topFlexId;
+      if (topFlexId) {
+        const taskObj = tasks.find(t => t.id === topFlexId);
+        if (taskObj && !isScheduled(taskObj) && !taskObj.calStartTime) {
+          taskObj.calStartTime = Date.now();
+          save();
+        }
+      }
+    }
+
+    renderCalendar();
+
+    document.getElementById('queueCount').textContent =
+      tasks.length === 0 ? 'empty' : `${tasks.length} task${tasks.length===1?'':'s'}`;
+
+    // Populate slots 0-2
+    const slotLabelIds = ['nowLabel','upnextLabel','deckLabel'];
+    for (let i = 0; i < 3; i++) {
+      const slot  = document.getElementById(`slot-${i}`);
+      const label = document.getElementById(slotLabelIds[i]);
+      const task  = all[i] || null;
+      if (slot)  slot.innerHTML = renderCard(task, { slotIndex: i });
+      if (label) label.style.color = task
+        ? (isScheduled(task) ? SCHED_COL : (P_COLORS[task._eff.priority] || ''))
+        : '';
+    }
+
+    // MORE section
+    const rest        = all.slice(3);
+    const moreHeader  = document.getElementById('moreHeader');
+    const moreCards   = document.getElementById('moreCards');
+    const moreCount   = document.getElementById('moreCount');
+    if (moreHeader) moreHeader.style.display = rest.length > 0 ? '' : 'none';
+    if (moreCount)  moreCount.textContent = rest.length > 0 ? `(${rest.length})` : '';
+    if (moreCards)  moreCards.innerHTML   = rest.map(t => renderCard(t, { inMore: true })).join('');
+
+    // Completed
+    document.getElementById('doneList').innerHTML = doneTasks.length === 0
+      ? '<div class="empty-queue">Nothing completed yet</div>'
+      : doneTasks.map(t => `
+          <div class="done-item">
+            <span class="done-check">✓</span>
+            <span class="done-title">${esc(t.title)}</span>
+            <span class="done-age">${timeAgo(t.doneAt)}</span>
+            <button class="undo-btn" onclick="unmarkDone(${t.id})">↩ Undo</button>
+          </div>`).join('');
+
+    updateBreakUI();
+    _refreshBlockDetail();
+  }
+
+  // ── Calendar ───────────────────────────────────────────────────────────
+  function minsToY(mins) {
+    return (mins - CAL_START) * PX_PER_MIN + 8;
+  }
+
+  function renderCalendar() {
+    const pst      = getPST();
+    const todayStr = pst.toDateString();
+    const nowMins  = pst.getHours() * 60 + pst.getMinutes();
+    const dp       = todayPstDateStr();
+
+    const blocks = [];
+
+    // ── SCHEDULED TASKS: hard anchors ────────────────────────────────────
+    const scheduledTasks = getScheduled();
+    for (const task of scheduledTasks) {
+      const dur = task.duration || DEFAULT_DUR;
+      const startMins = task._stMins;
+      const endMins   = task._etMins ?? (startMins != null ? startMins + dur : null);
+      if (startMins == null) continue;
+      blocks.push({ task, startMins, endMins, done: false, anchored: true, scheduled: true });
+    }
+
+    // occupied[] = scheduled task windows + done flex task windows
+    // Computed before placing active flex tasks so findGap avoids both
+    const occupied = blocks
+      .map(b => ({ start: b.startMins, end: b.endMins }))
+      .sort((a, b) => a.start - b.start);
+
+    // ── Completed tasks for today (computed first, added to occupied) ──────
+    for (const task of doneTasks) {
+      const donePst = new Date(new Date(task.doneAt).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+      if (donePst.toDateString() !== todayStr) continue;
+
+      let startMins, endMins;
+      if (task.startTime && task.endTime) {
+        startMins = parseDateLocalMins(task.startTime);
+        endMins   = parseDateLocalMins(task.endTime);
+      } else {
+        const doneMins = donePst.getHours() * 60 + donePst.getMinutes();
+        const dur      = task.duration || DEFAULT_DUR;
+        startMins = doneMins - dur;
+        endMins   = doneMins;
+      }
+      // Skip 0-duration done blocks — they cause visual overlap and carry no useful info
+      if (endMins <= startMins) continue;
+      blocks.push({ task, startMins, endMins, done: true, anchored: false, scheduled: isScheduled(task) });
+      // Include done flex blocks in occupied so active tasks hop over them
+      if (!isScheduled(task)) occupied.push({ start: startMins, end: endMins });
+    }
+
+    function findGap(start, dur) {
+      let cursor = start, safe = false;
+      while (!safe) {
+        safe = true;
+        for (const w of occupied) {
+          if (cursor < w.end && cursor + dur > w.start) {
+            cursor = w.end;
+            safe   = false;
+            break;
+          }
+        }
+      }
+      return cursor;
+    }
+
+    // ── FLEX TASKS: fill gaps in priority order ────────────────────────
+    const flexTasks = getSorted();
+    let cursor = findGap(nowMins, 1);
+    for (const task of flexTasks) {
+      const dur   = task.duration || DEFAULT_DUR;
+      let start, end;
+      if (task.calStartTime && task.id === flexTasks[0].id) {
+        const elapsedMins = (Date.now() - task.calStartTime) / 60000;
+        const calStart = msMinsToCalMins(task.calStartTime);
+        if (elapsedMins >= dur) {
+          start = findGap(Math.max(CAL_START, nowMins - dur), dur);
+          end   = start + dur;
+        } else {
+          start = findGap(calStart, dur);
+          end   = start + dur;
+        }
+      } else {
+        start = findGap(cursor, dur);
+        end   = start + dur;
+      }
+      blocks.push({ task, startMins: start, endMins: end, done: false, anchored: false, scheduled: false });
+      cursor = end;
+    }
+
+    // ── Build DOM ──────────────────────────────────────────────────────────
+    const container = document.getElementById('calContainer');
+    container.style.height = (CAL_H + 24) + 'px';
+    container.innerHTML = '';
+
+    for (let h = 6; h <= 21; h++) {
+      const y     = minsToY(h * 60);
+      const label = h === 12 ? '12PM' : h > 12 ? `${h-12}PM` : `${h}AM`;
+      const row   = document.createElement('div');
+      row.className = 'cal-hour-row';
+      row.style.top = y + 'px';
+      row.innerHTML = `<span class="cal-hour-label">${label}</span><div class="cal-hour-line"></div>`;
+      container.appendChild(row);
+    }
+
+    const track = document.createElement('div');
+    track.className = 'cal-track';
+
+    for (const b of blocks) {
+      const yStart = minsToY(Math.max(b.startMins, CAL_START));
+      const yEnd   = minsToY(Math.min(b.endMins,   CAL_END));
+      const height = Math.max(yEnd - yStart, 12);
+      if (yStart > CAL_H + 8 || yEnd < 8) continue;
+
+      const priority  = b.done ? b.task.priority : b.task._eff.priority;
+      let   metaLabel = fmtDuration(b.task.duration || DEFAULT_DUR) || '';
+      const tl        = taskTimeLabel(b.task);
+      if (tl) metaLabel = tl;
+
+      const block = document.createElement('div');
+      const blockCls = b.task.isBreak
+        ? `cal-block break-block${b.done ? ' done-block' : ''}`
+        : b.scheduled
+        ? `cal-block sched-block${b.done ? ' done-block' : ''}`
+        : `cal-block pc-${priority}${b.done ? ' done-block' : ''}`;
+      block.className = blockCls;
+      block.style.top    = yStart + 'px';
+      block.style.height = height + 'px';
+      block.innerHTML    = `
+        <span class="cal-block-title">${esc(b.task.title)}</span>
+        <span class="cal-block-meta">${esc(metaLabel)}</span>`;
+
+
+      // Double-click opens detail modal for any block
+      block.addEventListener('dblclick', e => { e.stopPropagation(); openBlockDetail(b, dp); });
+
+      if (b.scheduled && !b.done) {
+        // Drag-to-move for active scheduled blocks
+        block.addEventListener('mousedown', e => { if (e.detail >= 2) return; startCalBlockDrag(e, b.task.id, b.startMins, b.endMins - b.startMins, dp); });
+      } else if (b.done) {
+        // Drag-to-move + top/bottom resize handles for done blocks
+        const topHandle = document.createElement('div');
+        topHandle.className = 'cal-resize-handle cal-resize-top';
+        const botHandle = document.createElement('div');
+        botHandle.className = 'cal-resize-handle cal-resize-bot';
+        if (height >= 20) {
+          block.appendChild(topHandle);
+          block.appendChild(botHandle);
+        }
+
+        const startDoneDrag = (e, mode) => {
+          e.preventDefault(); e.stopPropagation();
+          calDrag = { taskId: b.task.id, blockEl: block, startY: e.clientY,
+                      origStartMins: b.startMins, origEndMins: b.endMins,
+                      mode, isDone: true, dpStr: dp };
+          block.classList.add('cal-dragging');
+        };
+        block.addEventListener('mousedown',  e => { if (e.detail >= 2 || e.target === topHandle || e.target === botHandle) return; startDoneDrag(e, 'move'); });
+        topHandle.addEventListener('mousedown', e => startDoneDrag(e, 'resize-top'));
+        botHandle.addEventListener('mousedown', e => startDoneDrag(e, 'resize-bot'));
+      }
+      track.appendChild(block);
+    }
+
+    container.appendChild(track);
+
+    const nowLine     = document.createElement('div');
+    nowLine.className = 'cal-now-line';
+    nowLine.id        = 'calNowLine';
+    container.appendChild(nowLine);
+
+    updateCalNowLine();
+    // Only scroll to now on initial load (calScrolled flag prevents re-scroll on every render)
+    if (!window._calScrolled) {
+      document.getElementById('calendarSection').scrollTop = Math.max(0, minsToY(nowMins) - 44);
+      window._calScrolled = true;
+    }
+  }
+
+  function updateCalNowLine() {
+    const pst     = getPST();
+    const nowMins = pst.getHours() * 60 + pst.getMinutes();
+    const line    = document.getElementById('calNowLine');
+    if (line) line.style.top = minsToY(nowMins) + 'px';
+  }
+
+  // ── Add form ───────────────────────────────────────────────────────────
+  function toggleAddForm() {
+    // Close sched form if open
+    if (schedOpen) {
+      schedOpen = false;
+      document.getElementById('addSchedFormWrap').classList.remove('open');
+      document.getElementById('addSchedToggleBtn').classList.remove('open');
+    }
+    addOpen = !addOpen;
+    document.getElementById('addFormWrap').classList.toggle('open', addOpen);
+    document.getElementById('addToggleBtn').classList.toggle('open', addOpen);
+    if (addOpen) {
+      if (!selPriority) selectP(3); // pre-select Medium
+      setTimeout(() => document.getElementById('taskInput').focus(), 240);
+    }
+  }
+  function selectP(n) {
+    selPriority = n;
+    for (let i = 1; i <= 4; i++)
+      document.getElementById(`pb${i}`).className = 'p-btn' + (i===n ? ` sel-${n}` : '');
+    const btn  = document.getElementById('addToggleBtn');
+    const form = document.getElementById('addFormInner');
+    const add  = document.getElementById('addBtn');
+    const cls  = ['pcolor-1','pcolor-2','pcolor-3','pcolor-4'];
+    cls.forEach(c => { btn.classList.remove(c); form.classList.remove(c); add.classList.remove(c); });
+    if (n) { btn.classList.add(`pcolor-${n}`); form.classList.add(`pcolor-${n}`); add.classList.add(`pcolor-${n}`); }
+    checkAdd();
+  }
+  function checkAdd() {
+    document.getElementById('addBtn').disabled =
+      !(document.getElementById('taskInput').value.trim() && selPriority);
+  }
+  document.getElementById('taskInput').addEventListener('input', checkAdd);
+
+  function addTask() {
+    const title = document.getElementById('taskInput').value.trim();
+    if (!title || !selPriority) return;
+    const durInp = document.getElementById('durationInput');
+    const flexOrder = tasks.filter(t => !isScheduled(t)).length;
+    tasks.push({
+      id:       Date.now(), type: 'flex', title, priority: selPriority,
+      addedAt:  Date.now(), flexOrder,
+      duration: parseInt(durInp.value) || DEFAULT_DUR,
+    });
+    // Reset
+    document.getElementById('taskInput').value = '';
+    durInp.value = '60';
+    selPriority = null;
+    for (let i = 1; i <= 4; i++) document.getElementById(`pb${i}`).className = 'p-btn';
+    ['pcolor-1','pcolor-2','pcolor-3','pcolor-4'].forEach(c => {
+      document.getElementById('addToggleBtn').classList.remove(c);
+      document.getElementById('addFormInner').classList.remove(c);
+      document.getElementById('addBtn').classList.remove(c);
+    });
+    checkAdd();
+    save(); addOpen = false;
+    document.getElementById('addFormWrap').classList.remove('open');
+    document.getElementById('addToggleBtn').classList.remove('open');
+    render();
+  }
+
+  // ── Scheduled task form ────────────────────────────────────────────────
+  let schedAnchor = 'start'; // 'start' or 'end'
+
+  function setAnchor(which) {
+    schedAnchor = which;
+    const startBtn = document.getElementById('anchorStartBtn');
+    const endBtn   = document.getElementById('anchorEndBtn');
+    const active   = 'border-color:var(--sched);color:var(--sched);background:rgba(126,200,227,0.1)';
+    const inactive = '';
+    startBtn.style.cssText = which === 'start' ? active : inactive;
+    endBtn.style.cssText   = which === 'end'   ? active : inactive;
+  }
+
+  function toggleSchedForm() {
+    if (addOpen) {
+      addOpen = false;
+      document.getElementById('addFormWrap').classList.remove('open');
+      document.getElementById('addToggleBtn').classList.remove('open');
+    }
+    schedOpen = !schedOpen;
+    document.getElementById('addSchedFormWrap').classList.toggle('open', schedOpen);
+    document.getElementById('addSchedToggleBtn').classList.toggle('open', schedOpen);
+    if (schedOpen) {
+      // Pre-fill with 9:00am so the field is never blank
+      const ti = document.getElementById('schedTimeInput');
+      if (!ti.value) ti.value = '09:00';
+      checkSchedAdd();
+      setTimeout(() => document.getElementById('schedTitleInput').focus(), 240);
+    }
+  }
+
+  function checkSchedAdd() {
+    const hasTitle = document.getElementById('schedTitleInput').value.trim().length > 0;
+    const hasTime  = document.getElementById('schedTimeInput').value.length > 0;
+    document.getElementById('schedAddBtn').disabled = !(hasTitle && hasTime);
+  }
+
+  function addScheduledTask() {
+    const title   = document.getElementById('schedTitleInput').value.trim();
+    const timeVal = document.getElementById('schedTimeInput').value; // "HH:MM"
+    if (!title || !timeVal) return;
+
+    const dur      = parseInt(document.getElementById('schedDurInput').value) || DEFAULT_DUR;
+    const dp       = todayPstDateStr();
+    const anchorDT = `${dp}T${timeVal}`;
+
+    let startTime, endTime;
+    if (schedAnchor === 'start') {
+      startTime = anchorDT;
+      endTime   = `${dp}T${fmtMins(parseDateLocalMins(anchorDT) + dur)}`;
+    } else {
+      endTime   = anchorDT;
+      startTime = `${dp}T${fmtMins(parseDateLocalMins(anchorDT) - dur)}`;
+    }
+
+    tasks.push({
+      id: Date.now(), type: 'scheduled', title, addedAt: Date.now(),
+      startTime, endTime, duration: dur,
+    });
+
+    // Reset
+    document.getElementById('schedTitleInput').value = '';
+    document.getElementById('schedTimeInput').value  = '09:00';
+    document.getElementById('schedDurInput').value   = '60';
+    setAnchor('start');
+    checkSchedAdd();
+    save(); schedOpen = false;
+    document.getElementById('addSchedFormWrap').classList.remove('open');
+    document.getElementById('addSchedToggleBtn').classList.remove('open');
+    render();
+  }
+
+  // ── MORE toggle ─────────────────────────────────────────────────────────
+  function toggleMore(e) {
+    if (e) e.stopPropagation();
+    moreOpen = !moreOpen;
+    document.getElementById('moreCards').classList.toggle('open', moreOpen);
+    document.getElementById('moreArrow').classList.toggle('open', moreOpen);
+  }
+
+  // ── Queue drag-and-drop ──────────────────────────────────────────────────
+  function cardDragStart(e, id) {
+    dragId = id;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(id));
+    // Delay adding class so the ghost still renders correctly
+    setTimeout(() => {
+      const card = document.querySelector(`[data-id="${id}"]`);
+      if (card) card.classList.add('dragging');
+    }, 0);
+  }
+
+  function cardDragEnd(e) {
+    dragId = null;
+    document.querySelectorAll('.dragging').forEach(c => c.classList.remove('dragging'));
+    document.querySelectorAll('.drag-over').forEach(c => c.classList.remove('drag-over'));
+    document.querySelectorAll('.more-drag-over').forEach(c => c.classList.remove('more-drag-over'));
+  }
+
+  function schedDragAttempt(e, id) {
+    // Only show error when the user actually starts dragging (moved 4+ px)
+    // Use a one-time mousemove listener on the card itself
+    const card = document.querySelector(`[data-id="${id}"]`);
+    if (!card) return;
+    const startX = e.clientX, startY = e.clientY;
+    function onMove(me) {
+      if (Math.abs(me.clientX - startX) > 4 || Math.abs(me.clientY - startY) > 4) {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        if (!card.classList.contains('sched-drag-error')) {
+          card.classList.add('sched-drag-error');
+          setTimeout(() => card.classList.remove('sched-drag-error'), 2000);
+        }
+      }
+    }
+    function onUp() {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    }
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  }
+
+  function slotDragOver(e, slotIdx) {
+    if (!dragId) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = 'move';
+    document.querySelectorAll('.card-slot, .more-cards').forEach(el => el.classList.remove('drag-over'));
+    const slot = document.getElementById(`slot-${slotIdx}`);
+    if (slot) slot.classList.add('drag-over');
+  }
+
+  function slotDragLeave(e, slotIdx) {
+    const slot = document.getElementById(`slot-${slotIdx}`);
+    if (slot && !slot.contains(e.relatedTarget)) slot.classList.remove('drag-over');
+  }
+
+  function slotDrop(e, slotIdx) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!dragId) return;
+    reorderFlexToAllIndex(dragId, slotIdx);
+    dragId = null;
+    render();
+  }
+
+  function moreDragOver(e) {
+    if (!dragId) return;
+    e.preventDefault();
+    // Auto-expand MORE if collapsed
+    if (!moreOpen) {
+      moreOpen = true;
+      document.getElementById('moreCards').classList.add('open');
+      document.getElementById('moreArrow').classList.add('open');
+    }
+    document.querySelectorAll('.card-slot, .more-cards').forEach(el => el.classList.remove('drag-over'));
+    document.getElementById('moreCards').classList.add('drag-over');
+  }
+
+  function moreDragLeave(e) {
+    const more = document.getElementById('moreCards');
+    if (more && !more.contains(e.relatedTarget)) more.classList.remove('drag-over');
+  }
+
+  function moreDrop(e) {
+    e.preventDefault();
+    if (!dragId) return;
+    // Send dragged card to the very end of flex list
+    const draggedTask = tasks.find(t => t.id === dragId);
+    if (draggedTask && !isScheduled(draggedTask)) {
+      const maxOrder = getSorted().reduce((m, t) => Math.max(m, t.flexOrder ?? 0), 0);
+      draggedTask.flexOrder = maxOrder + 1;
+      draggedTask.priority  = 4;
+      save();
+      render();
+    }
+    dragId = null;
+  }
+
+  function moreCardDragOver(e, targetId) {
+    if (!dragId || dragId === targetId) return;
+    e.preventDefault();
+    e.stopPropagation();
+    document.getElementById('moreCards').classList.remove('drag-over');
+    document.querySelectorAll('.more-cards .task-card').forEach(c => c.classList.remove('more-drag-over'));
+    const target = document.querySelector(`.more-cards [data-id="${targetId}"]`);
+    if (target) target.classList.add('more-drag-over');
+  }
+
+  function moreCardDrop(e, targetId) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!dragId) return;
+    const all = getAllSorted();
+    const targetIdx = all.findIndex(t => t.id === targetId);
+    if (targetIdx >= 0) reorderFlexToAllIndex(dragId, targetIdx);
+    dragId = null;
+    render();
+  }
+
+  function reorderFlexToAllIndex(draggedId, targetAllIndex) {
+    const all         = getAllSorted();
+    const flex        = getSorted();
+    const displaced   = all[targetAllIndex];
+    const draggedTask = tasks.find(t => t.id === draggedId);
+    if (!draggedTask || isScheduled(draggedTask)) return;
+
+    // Dropped past end of list → send to back with Low priority
+    if (!displaced) {
+      draggedTask.flexOrder = flex.length;
+      draggedTask.priority  = 4;
+      save(); return;
+    }
+
+    // Dropped on self → no-op
+    if (displaced.id === draggedId) return;
+
+    // Dropped on a scheduled task → redirect to first flex task after it
+    if (isScheduled(displaced)) {
+      for (let i = targetAllIndex + 1; i < all.length; i++) {
+        if (!isScheduled(all[i])) return reorderFlexToAllIndex(draggedId, i);
+      }
+      return;
+    }
+
+    // ── INSERT: shift all flex tasks at/after the target position down by 1 ─
+    // (excluding the dragged card itself, which will take the target slot)
+    const targetFlexOrder = displaced.flexOrder ?? 0;
+    for (const t of flex) {
+      if (t.id === draggedId) continue;
+      const task = tasks.find(x => x.id === t.id);
+      if (task && (task.flexOrder ?? 0) >= targetFlexOrder) {
+        task.flexOrder = (task.flexOrder ?? 0) + 1;
+      }
+    }
+    draggedTask.flexOrder = targetFlexOrder;
+
+    // ── PRIORITY: one level higher if dropped at the top of a priority group ─
+    // "Top of group" = no flex task above the displaced card shares its priority
+    const displacedPriority = displaced.priority;
+    const isTopOfGroup = !flex.some(t =>
+      t.id !== draggedId &&
+      t.priority === displacedPriority &&
+      (t.flexOrder ?? 0) < targetFlexOrder
+    );
+    const newPriority = isTopOfGroup
+      ? Math.max(1, displacedPriority - 1)
+      : displacedPriority;
+    // Never downgrade priority when dragging up (lower number = higher priority)
+    draggedTask.priority = Math.min(draggedTask.priority, newPriority);
+
+    save();
+  }
+
+  // ── Calendar block drag (scheduled tasks on timeline) ────────────────────
+  function startCalBlockDrag(e, taskId, startMins, dur, dpStr) {
+    e.preventDefault();
+    e.stopPropagation();
+    const block = e.currentTarget;
+    calDrag = { taskId, blockEl: block, startY: e.clientY,
+                origStartMins: startMins, origEndMins: startMins + dur,
+                mode: 'move', isDone: false, dpStr };
+    block.classList.add('cal-dragging');
+  }
+
+  function calcDragTimes(dy) {
+    const dMins = Math.round(dy / PX_PER_MIN / 15) * 15;
+    const { mode, origStartMins, origEndMins } = calDrag;
+    if (mode === 'resize-top') {
+      return { newStart: Math.max(CAL_START, Math.min(origEndMins - 15, origStartMins + dMins)), newEnd: origEndMins };
+    } else if (mode === 'resize-bot') {
+      return { newStart: origStartMins, newEnd: Math.max(origStartMins + 15, Math.min(CAL_END, origEndMins + dMins)) };
+    } else {
+      const dur = origEndMins - origStartMins;
+      const newStart = Math.max(CAL_START, Math.min(CAL_END - dur, origStartMins + dMins));
+      return { newStart, newEnd: newStart + dur };
+    }
+  }
+
+  // ── Delete / Done / Undo ───────────────────────────────────────────────
+  function deleteTaskById(id) {
+    tasks = tasks.filter(t => t.id !== id);
+    save(); render();
+  }
+  function markDoneById(id) {
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
+    tasks = tasks.filter(t => t.id !== id);
+    const doneAt  = Date.now();
+    const dp      = todayPstDateStr();
+    const pst     = getPST();
+    const nowMins = pst.getHours() * 60 + pst.getMinutes();
+
+    if (isScheduled(task) && task.startTime) {
+      task.endTime = `${dp}T${fmtMins(nowMins)}`;
+    } else if (!isScheduled(task) && task.calStartTime) {
+      task.startTime = `${dp}T${fmtMins(msMinsToCalMins(task.calStartTime))}`;
+      task.endTime   = `${dp}T${fmtMins(nowMins)}`;
+    }
+
+    doneTasks.unshift({ ...task, doneAt });
+    closeBlockDetail();
+    save(); render();
+  }
+  function unmarkDone(id) {
+    const task = doneTasks.find(t => t.id === id);
+    if (!task) return;
+    doneTasks = doneTasks.filter(t => t.id !== id);
+    const { doneAt, ...restored } = task;
+    // Assign flexOrder at end of current flex list so it doesn't lose its place
+    if (!isScheduled(restored) && restored.flexOrder === undefined) {
+      restored.flexOrder = getSorted().length;
+    }
+    tasks.push(restored);
+    save(); render();
+  }
+
+  function toggleDone() {
+    doneOpen = !doneOpen;
+    document.getElementById('doneList').classList.toggle('open', doneOpen);
+    document.getElementById('doneArrow').classList.toggle('open', doneOpen);
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────
+  function timeAgo(ts) {
+    const m = Math.floor((Date.now() - ts) / 60000);
+    if (m < 1)  return 'just now';
+    if (m < 60) return `${m}m ago`;
+    const h = Math.floor(m / 60);
+    return h < 24 ? `${h}h ago` : `${Math.floor(h/24)}d ago`;
+  }
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── Break feature ──────────────────────────────────────────────────────
+
+  function loadBreakState() {
+    try {
+      const s = JSON.parse(localStorage.getItem('q_break') || '{}');
+      const today = todayPstDateStr();
+      breakBudgetMins = s.budget ?? 60;
+      // Reset tally if stored day differs from today
+      breakUsedMins   = s.day === today ? (s.used ?? 0) : 0;
+      breakDay        = today;
+      // Sync budget select to loaded value
+      const sel = document.getElementById('breakBudgetSelect');
+      if (sel) {
+        const opt = [...sel.options].find(o => parseInt(o.value) === breakBudgetMins);
+        if (opt) sel.value = String(breakBudgetMins);
+      }
+    } catch(e) {}
+    updateBreakUI();
+  }
+
+  function saveBreakState() {
+    try {
+      localStorage.setItem('q_break', JSON.stringify({
+        budget: breakBudgetMins,
+        used:   breakUsedMins,
+        day:    breakDay || todayPstDateStr(),
+      }));
+    } catch(e) {}
+  }
+
+  function setBreakBudget(v) {
+    breakBudgetMins = parseInt(v) || 60;
+    saveBreakState();
+    updateBreakUI();
+  }
+
+  function takeBreak() {
+    const all     = getAllSorted();
+    const nowTask = all[0];
+    if (!nowTask || breakStartMs) return;
+
+    const pst     = getPST();
+    const nowMins = pst.getHours() * 60 + pst.getMinutes();
+
+    // ── Calculate how many minutes remain on the interrupted task ──────────
+    let remaining = nowTask.duration || DEFAULT_DUR;
+    if (!isScheduled(nowTask) && nowTask.calStartTime) {
+      const elapsedMins = Math.floor((Date.now() - nowTask.calStartTime) / 60000);
+      remaining = Math.max((nowTask.duration || DEFAULT_DUR) - elapsedMins, 1);
+    } else if (isScheduled(nowTask) && nowTask._etMins != null) {
+      remaining = Math.max(nowTask._etMins - nowMins, 1);
+    }
+
+    // ── Mark current task done (inline to avoid double render) ────────────
+    tasks = tasks.filter(t => t.id !== nowTask.id);
+    const doneAt = Date.now();
+    const dp     = todayPstDateStr();
+    const doneEntry = { ...nowTask, doneAt };
+    // strip computed properties
+    delete doneEntry._eff; delete doneEntry._stMins; delete doneEntry._etMins; delete doneEntry._active;
+    if (isScheduled(nowTask) && nowTask.startTime) {
+      doneEntry.endTime = `${dp}T${fmtMins(nowMins)}`;
+    } else if (!isScheduled(nowTask) && nowTask.calStartTime) {
+      doneEntry.startTime = `${dp}T${fmtMins(msMinsToCalMins(nowTask.calStartTime))}`;
+      doneEntry.endTime   = `${dp}T${fmtMins(nowMins)}`;
+    }
+    doneTasks.unshift(doneEntry);
+
+    // ── Shift any existing ordered flex tasks down by 2 ───────────────────
+    tasks.forEach(t => {
+      if (!isScheduled(t) && t.flexOrder !== undefined) t.flexOrder += 2;
+    });
+
+    // ── Create "Taking a Break" task at position 0 ────────────────────────
+    const bId = Date.now();
+    const rId = bId + 1;
+    const breakTask = {
+      id: bId, title: 'BREAK', priority: 1,
+      addedAt: Date.now(), duration: breakBudgetMins, flexOrder: 0, isBreak: true,
+    };
+    // ── Create resume duplicate at position 1 ─────────────────────────────
+    const resumeTask = {
+      id: rId, title: nowTask.title,
+      priority: nowTask.priority || 3,
+      addedAt: Date.now() + 1, duration: remaining, flexOrder: 1,
+    };
+
+    tasks.push(breakTask, resumeTask);
+    breakTaskId  = bId;
+    breakStartMs = Date.now();
+
+    save();
+    render();
+
+    // ── Show lightbox ─────────────────────────────────────────────────────
+    updateBreakTimer();
+    document.getElementById('breakOverlay').classList.add('active');
+    breakTimerInt = setInterval(updateBreakTimer, 1000);
+  }
+
+  function updateBreakTimer() {
+    if (!breakStartMs) return;
+    const elapsedSec  = Math.floor((Date.now() - breakStartMs) / 1000);
+    const elapsedMins = Math.floor(elapsedSec / 60);
+    const s           = elapsedSec % 60;
+    const m           = Math.floor(elapsedSec / 60);
+    const h           = Math.floor(elapsedSec / 3600);
+    const displayTime = h > 0
+      ? `${h}:${String(m % 60).padStart(2,'0')}:${String(s).padStart(2,'0')}`
+      : `${m}:${String(s).padStart(2,'0')}`;
+
+    const totalUsed = breakUsedMins + elapsedMins;
+    const over      = totalUsed >= breakBudgetMins;
+    const remaining = Math.max(breakBudgetMins - totalUsed, 0);
+
+    const timerEl  = document.getElementById('breakTimerDisplay');
+    const statusEl = document.getElementById('breakStatus');
+    const endBtn   = document.getElementById('endBreakBtn');
+
+    const budgetLabel = fmtBudgetMins(breakBudgetMins);
+    const pct = Math.min((totalUsed / breakBudgetMins) * 100, 100);
+
+    if (timerEl)  { timerEl.textContent = displayTime; timerEl.classList.toggle('over', over); }
+    if (statusEl) {
+      statusEl.textContent = over
+        ? `${totalUsed - breakBudgetMins} min over your ${budgetLabel} daily budget`
+        : `${remaining} min of ${budgetLabel} daily budget remaining`;
+      statusEl.classList.toggle('over', over);
+    }
+    if (endBtn) endBtn.classList.toggle('over', over);
+
+    const overlay  = document.getElementById('breakOverlay');
+    const infoBar  = document.getElementById('breakInfoBar');
+    const infoText = document.getElementById('breakInfoText');
+    if (overlay)  overlay.classList.toggle('over', over);
+    if (infoBar)  { infoBar.style.width = pct + '%'; infoBar.classList.toggle('over', over); }
+    if (infoText) { infoText.textContent = `${totalUsed} min used of ${budgetLabel}`; infoText.classList.toggle('over', over); }
+  }
+
+  function endBreak() {
+    if (!breakStartMs) return;
+
+    // Tally elapsed minutes into daily total
+    const elapsedMins = Math.floor((Date.now() - breakStartMs) / 60000);
+    breakUsedMins = (breakUsedMins || 0) + elapsedMins;
+    breakDay      = todayPstDateStr();
+    saveBreakState();
+
+    // Mark the "Taking a Break" task done (records timeline entry)
+    if (breakTaskId) markDoneById(breakTaskId);
+
+    // Clear break state
+    if (breakTimerInt) { clearInterval(breakTimerInt); breakTimerInt = null; }
+    breakStartMs = null;
+    breakTaskId  = null;
+
+    document.getElementById('breakOverlay').classList.remove('active');
+    updateBreakUI();
+    // render() already called by markDoneById
+  }
+
+  function updateBreakUI() {
+    const totalUsed = breakUsedMins;
+    const over      = totalUsed > 0 && totalUsed >= breakBudgetMins;
+    const pct       = breakBudgetMins > 0 ? Math.min((totalUsed / breakBudgetMins) * 100, 100) : 0;
+
+    const tallyEl = document.getElementById('breakTally');
+    if (tallyEl) {
+      tallyEl.textContent = `${totalUsed} min used of ${fmtBudgetMins(breakBudgetMins)}`;
+      tallyEl.classList.toggle('over', over);
+    }
+    const barFill = document.getElementById('breakBarFill');
+    if (barFill) {
+      barFill.style.width = pct + '%';
+      barFill.classList.toggle('over', over);
+    }
+
+    // Enable break button only when a task is in the now slot
+    const all    = getAllSorted();
+    const hasNow = all.length > 0;
+    const btn    = document.getElementById('takeBreakBtn');
+    if (btn) {
+      btn.disabled = !hasNow || !!breakStartMs;
+      btn.classList.toggle('over', over);
+    }
+  }
+
+  // ── Intervals ──────────────────────────────────────────────────────────
+  setInterval(updateClock, 1000);
+  // Lightweight tick: move the now-line every minute without rebuilding the calendar
+  setInterval(updateCalNowLine, 60000);
+  // Full re-render every 30s (for time labels, escalation, etc.)
+  // renderCalendar is cheap but we skip the scroll reset via _calScrolled flag
+  setInterval(render, 30000);
+
+  // ── Calendar block drag: global mouse handlers ──────────────────────────
+  document.addEventListener('mousemove', e => {
+    if (!calDrag) return;
+    const { newStart, newEnd } = calcDragTimes(e.clientY - calDrag.startY);
+    calDrag.blockEl.style.top    = minsToY(newStart) + 'px';
+    calDrag.blockEl.style.height = Math.max(minsToY(newEnd) - minsToY(newStart), 12) + 'px';
+    const meta = calDrag.blockEl.querySelector('.cal-block-meta');
+    if (meta) {
+      const fmt = m => { const h = Math.floor(m/60), mn = m%60, ap = h>=12?'pm':'am'; return `${h%12||12}:${String(mn).padStart(2,'0')}${ap}`; };
+      meta.textContent = calDrag.mode === 'move' ? fmt(newStart) : `${fmt(newStart)} – ${fmt(newEnd)}`;
+    }
+  });
+
+  document.addEventListener('mouseup', e => {
+    if (!calDrag) return;
+    const { newStart, newEnd } = calcDragTimes(e.clientY - calDrag.startY);
+    const { isDone, taskId, dpStr } = calDrag;
+    const list = isDone ? doneTasks : tasks;
+    const task = list.find(t => t.id === taskId);
+    if (task) {
+      task.startTime = `${dpStr}T${fmtMins(newStart)}`;
+      task.endTime   = `${dpStr}T${fmtMins(newEnd)}`;
+      if (isDone) task.duration = newEnd - newStart;
+      save();
+    }
+    calDrag.blockEl.classList.remove('cal-dragging');
+    calDrag = null;
+    render();
+  });
+
+  // ── View mode (mobile / desktop) ──────────────────────────────────────
+  function isMobileDevice() {
+    return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || window.innerWidth < 600;
+  }
+
+  function applyViewMode(mobile) {
+    const segDesktop = document.getElementById('segDesktop');
+    const segMobile  = document.getElementById('segMobile');
+    if (mobile) {
+      document.body.classList.add('mobile-view');
+      if (segDesktop) segDesktop.classList.remove('active');
+      if (segMobile)  segMobile.classList.add('active');
+    } else {
+      document.body.classList.remove('mobile-view');
+      closeCalDrawer();
+      if (segDesktop) segDesktop.classList.add('active');
+      if (segMobile)  segMobile.classList.remove('active');
+    }
+  }
+
+  function toggleViewMode() {
+    applyViewMode(!document.body.classList.contains('mobile-view'));
+  }
+
+  // ── Calendar drawer (mobile only) ─────────────────────────────────────
+  function toggleCalDrawer(e) {
+    if (!document.body.classList.contains('mobile-view')) return;
+    e.stopPropagation();
+    if (document.body.classList.contains('cal-drawer-open')) {
+      closeCalDrawer();
+    } else {
+      openCalDrawer();
+    }
+  }
+
+  function openCalDrawer() {
+    // Move cal-container into the drawer panel
+    const container = document.getElementById('calContainer');
+    const panel     = document.getElementById('calDrawerPanel');
+    if (container && panel && !panel.contains(container)) {
+      panel.appendChild(container);
+    }
+    document.body.classList.add('cal-drawer-open');
+    renderCalendar(); // re-render inside drawer
+  }
+
+  function closeCalDrawer() {
+    // Move cal-container back into calendar-section
+    const container = document.getElementById('calContainer');
+    const section   = document.getElementById('calendarSection');
+    if (container && section && !section.contains(container)) {
+      section.appendChild(container);
+    }
+    document.body.classList.remove('cal-drawer-open');
+  }
+
+  // ── Init view mode ─────────────────────────────────────────────────────
+  (function initViewMode() {
+    applyViewMode(isMobileDevice());
+  })();
+
+  // ── Init ───────────────────────────────────────────────────────────────
+  // load() is called by the auth state observer once signed in
+  if (!_auth) { load(); } // local-only fallback
+  loadBreakState();
+  updateClock();
+  render();
+</script>
+</body>
+</html>
