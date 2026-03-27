@@ -1347,7 +1347,7 @@
     } catch(e) {}
     if (_stateDoc) {
       setSyncStatus('syncing');
-      _stateDoc.set({ tasks, doneTasks })
+      _stateDoc.set({ tasks, doneTasks, breakStartMs: breakStartMs || null, breakTaskId: breakTaskId || null })
         .then(() => setSyncStatus('synced'))
         .catch(err => { console.error('[Queue] Save failed:', err); setSyncStatus('error'); });
     }
@@ -1379,6 +1379,27 @@
       } catch(e) {}
       setSyncStatus('synced');
       render();
+
+      // ── Sync break overlay across all windows ──────────────────────────
+      const remoteBreakStart  = data.breakStartMs  || null;
+      const remoteBreakTaskId = data.breakTaskId   || null;
+      if (remoteBreakStart && !breakStartMs) {
+        // Another window started a break — show overlay here too
+        breakStartMs = remoteBreakStart;
+        breakTaskId  = remoteBreakTaskId;
+        document.getElementById('breakOverlay').classList.add('active');
+        if (!breakTimerInt) {
+          updateBreakTimer();
+          breakTimerInt = setInterval(updateBreakTimer, 1000);
+        }
+      } else if (!remoteBreakStart && breakStartMs) {
+        // Another window ended the break — hide overlay here
+        breakStartMs = null;
+        breakTaskId  = null;
+        if (breakTimerInt) { clearInterval(breakTimerInt); breakTimerInt = null; }
+        document.getElementById('breakOverlay').classList.remove('active');
+        updateBreakUI();
+      }
     }, err => {
       console.error('[Queue] Firestore listener error:', err);
       setSyncStatus('error');
@@ -1810,7 +1831,7 @@
     return `<div class="task-card ${taskSched ? 'sched-card' : 'flex-card'}" data-id="${task.id}" ${dragAttrs}${moreAttrs} style="--card-bar:${col};border-color:${col}">
       <button class="delete-btn" onclick="deleteTaskById(${task.id})" title="Delete">✕</button>
       <div class="card-task-title">${esc(task.title)}</div>
-      <div class="task-meta" style="display:flex">${badgeHtml}${escHtml}${timeHtml}${durHtml}<span class="task-age">${timeAgo(task.addedAt)}</span><button class="done-btn" onclick="markDoneById(${task.id})">✓ Done</button></div>
+      <div class="task-meta" style="display:flex">${badgeHtml}${escHtml}${timeHtml}${durHtml}<button class="done-btn" onclick="markDoneById(${task.id})">✓ Done</button></div>
       ${taskSched ? '<div class="sched-error-msg">Scheduled tasks can\'t be reordered by priority.</div>' : ''}
     </div>`;
   }
