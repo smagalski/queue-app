@@ -424,6 +424,88 @@
   .gear-menu-item:hover { background: rgba(255,255,255,0.07); color: #fff; }
   .gear-menu-divider { height: 1px; background: var(--border); margin: 3px 0; }
 
+  /* ── END DAY MODAL ───────────────────────────────────────────────────── */
+  .end-day-overlay {
+    display: none; position: fixed; inset: 0; z-index: 1100;
+    background: rgba(0,0,0,0.75); align-items: center; justify-content: center;
+  }
+  .end-day-overlay.active { display: flex; }
+  .end-day-modal {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 28px; width: 480px; max-width: 94vw; max-height: 88vh;
+    overflow-y: auto; position: relative; display: flex; flex-direction: column; gap: 20px;
+  }
+  .edm-title { font-size: 18px; font-weight: 700; color: #fff; }
+  .edm-section-label {
+    font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--text-dim); margin-bottom: 8px;
+  }
+  .edm-task-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .edm-task-title { font-size: 12px; color: var(--text-mid); }
+  .edm-task-time  { font-size: 11px; color: var(--text-dim); }
+  .edm-priority-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .edm-priority-chip {
+    padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 600;
+    letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  .edm-stress {
+    display: flex; align-items: center; gap: 14px;
+    background: rgba(255,255,255,0.04); border-radius: 10px; padding: 14px 16px;
+  }
+  .edm-stress-score {
+    font-size: 36px; font-weight: 800; min-width: 48px; text-align: center;
+  }
+  .edm-stress-label { font-size: 11px; color: var(--text-dim); line-height: 1.5; }
+  .edm-stress-desc  { font-size: 12px; color: var(--text-mid); font-weight: 600; }
+  .edm-choice-row { display: flex; gap: 10px; margin-top: 4px; }
+  .edm-choice-btn {
+    flex: 1; padding: 10px 0; border-radius: 8px; border: 1px solid var(--border);
+    background: none; color: var(--text-mid); font-family: 'Inter', sans-serif;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .edm-choice-btn:hover { background: rgba(255,255,255,0.07); color: #fff; border-color: rgba(255,255,255,0.3); }
+  .edm-choice-btn.carry { border-color: rgba(126,200,227,0.4); color: var(--sched); }
+  .edm-choice-btn.carry:hover { background: rgba(126,200,227,0.1); }
+  .edm-choice-btn.clear { border-color: rgba(255,107,138,0.4); color: var(--p1); }
+  .edm-choice-btn.clear:hover { background: rgba(255,107,138,0.1); }
+  .edm-incomplete-count { font-size: 11px; color: var(--text-dim); text-align: center; }
+
+  /* ── HISTORY OVERLAY ─────────────────────────────────────────────────── */
+  .history-overlay {
+    display: none; position: fixed; inset: 0; z-index: 1200;
+    background: rgba(0,0,0,0.85); overflow-y: auto;
+  }
+  .history-overlay.active { display: block; }
+  .history-inner {
+    max-width: 680px; margin: 0 auto; padding: 32px 20px 60px;
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  .history-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;
+  }
+  .history-title { font-size: 20px; font-weight: 800; color: #fff; }
+  .history-close {
+    background: none; border: 1px solid var(--border); border-radius: 6px;
+    color: var(--text-dim); font-size: 14px; width: 32px; height: 32px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+  }
+  .history-close:hover { color: #fff; border-color: rgba(255,255,255,0.3); }
+  .history-day-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 18px 20px; display: flex; flex-direction: column; gap: 12px;
+  }
+  .hdc-header { display: flex; align-items: center; justify-content: space-between; }
+  .hdc-date { font-size: 14px; font-weight: 700; color: #fff; }
+  .hdc-stress { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+  .hdc-tasks { display: flex; flex-direction: column; gap: 2px; }
+  .hdc-task-row { display: flex; justify-content: space-between; font-size: 11px; padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .hdc-task-title { color: var(--text-mid); }
+  .hdc-task-time  { color: var(--text-dim); }
+  .hdc-priority-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .hdc-priority-chip { padding: 2px 8px; border-radius: 20px; font-size: 9px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+  .history-empty { text-align: center; color: var(--text-dim); font-size: 13px; padding: 60px 0; }
+
   /* ── BLOCK DETAIL MODAL ──────────────────────────────────────────────── */
   .block-detail-overlay {
     display: none; position: fixed; inset: 0; z-index: 8000;
@@ -663,6 +745,32 @@
   .break-toggle-btn:hover:not(:disabled) { background: rgba(152,99,243,0.14); border-color: rgba(152,99,243,0.55); }
   .break-toggle-btn:disabled { opacity: 0.25; cursor: default; }
   .break-toggle-btn.over { border-color: var(--p1); color: var(--p1); background: rgba(255,107,138,0.07); }
+
+  /* ── END DAY BUTTON ───────────────────────────────────────────────────── */
+  .end-day-btn {
+    width: 100%; margin-top: 6px; padding: 9px 14px;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 8px; color: rgba(255,255,255,0.45);
+    font-family: 'Inter', sans-serif; font-weight: 700; font-size: 10px;
+    letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer;
+    transition: all 0.2s;
+  }
+  .end-day-btn:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.25); color: rgba(255,255,255,0.75); }
+  .day-ended-msg {
+    width: 100%; margin-top: 6px; padding: 9px 14px; box-sizing: border-box;
+    text-align: center; font-family: 'Inter', sans-serif; font-weight: 700;
+    font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px; display: none;
+  }
+  body.day-ended .day-ended-msg { display: block; }
+  body.day-ended .end-day-btn   { display: none; }
+
+  /* ── DAY ENDED GREY STATE ─────────────────────────────────────────────── */
+  body.day-ended .right-panel { opacity: 0.35; pointer-events: none; }
+  body.day-ended .add-btns-row,
+  body.day-ended .add-form-wrap,
+  body.day-ended .add-sched-form-wrap { opacity: 0.35; pointer-events: none; }
   /* ── BREAK BUDGET PANEL (left panel, bottom) ─────────────────────────── */
   .break-budget-panel {
     flex-shrink: 0; border-top: 1px solid var(--border);
@@ -756,6 +864,9 @@
     <div class="gear-wrap" id="gearWrap" style="display:none">
       <button class="gear-btn" id="gearBtn" onclick="toggleGearMenu(event)">⚙</button>
       <div class="gear-menu" id="gearMenu">
+        <button class="gear-menu-item" onclick="openHistoryOverlay()">Day History</button>
+        <button class="gear-menu-item" onclick="clearOldHistory();closeGearMenu()">Clear history older than 7 days</button>
+        <div class="gear-menu-divider"></div>
         <button class="gear-menu-item" onclick="openPasswordModal();closeGearMenu()">Change Password</button>
         <div class="gear-menu-divider"></div>
         <button class="gear-menu-item" onclick="signOut()">Sign Out</button>
@@ -891,6 +1002,8 @@
       </button>
       <button class="break-toggle-btn" id="takeBreakBtn" onclick="takeBreak()" disabled>Take a Break</button>
     </div>
+    <button class="end-day-btn" id="endDayBtn" onclick="openEndDayModal()">End Day</button>
+    <div class="day-ended-msg" id="dayEndedMsg">Day Ended — See You Tomorrow</div>
 
     <!-- FLEX TASK FORM -->
     <div class="add-form-wrap" id="addFormWrap">
@@ -972,6 +1085,33 @@
   </div>
   <div class="break-status" id="breakStatus"></div>
   <button class="end-break-btn" id="endBreakBtn" onclick="endBreak()">End Break</button>
+</div>
+
+<!-- END DAY MODAL -->
+<div class="end-day-overlay" id="endDayOverlay">
+  <div class="end-day-modal">
+    <div class="edm-title">End of Day Report</div>
+    <div id="edmBody"></div>
+    <div>
+      <div class="edm-section-label">Remaining Tasks</div>
+      <div class="edm-incomplete-count" id="edmIncompleteCount"></div>
+      <div class="edm-choice-row">
+        <button class="edm-choice-btn carry" onclick="commitEndDay('carry')">Add to Tomorrow</button>
+        <button class="edm-choice-btn clear" onclick="commitEndDay('clear')">Clear Remaining</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORY OVERLAY -->
+<div class="history-overlay" id="historyOverlay">
+  <div class="history-inner">
+    <div class="history-header">
+      <div class="history-title">Day History</div>
+      <button class="history-close" onclick="closeHistoryOverlay()">✕</button>
+    </div>
+    <div id="historyBody"></div>
+  </div>
 </div>
 
 <!-- BLOCK DETAIL MODAL -->
@@ -1345,6 +1485,7 @@
       localStorage.setItem('q_tasks', JSON.stringify(tasks));
       localStorage.setItem('q_done',  JSON.stringify(doneTasks));
     } catch(e) {}
+    updateTodayHistory();
     if (_stateDoc) {
       setSyncStatus('syncing');
       _stateDoc.set({ tasks, doneTasks, breakStartMs: breakStartMs || null, breakTaskId: breakTaskId || null })
@@ -2758,6 +2899,277 @@
     }
   }
 
+  // ── End Day ────────────────────────────────────────────────────────────
+  function computeDayReport() {
+    const today    = todayPstDateStr();
+    const todayDone = doneTasks.filter(t => {
+      const ts = t.doneAt || 0;
+      const p  = new Date(new Date(ts).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+      return `${p.getFullYear()}-${String(p.getMonth()+1).padStart(2,'0')}-${String(p.getDate()).padStart(2,'0')}` === today;
+    });
+
+    // ── Time per task (totalled by title) ──────────────────────────────
+    const timeMap = {};
+    for (const t of todayDone) {
+      if (t.isBreak) continue;
+      let mins = 0;
+      if (t.startTime && t.endTime) {
+        mins = parseDateLocalMins(t.endTime) - parseDateLocalMins(t.startTime);
+      } else {
+        mins = t.duration || 0;
+      }
+      if (mins <= 0) continue;
+      const key = t.title || 'Untitled';
+      timeMap[key] = (timeMap[key] || 0) + mins;
+    }
+    const timePerTask = Object.entries(timeMap)
+      .map(([title, mins]) => ({ title, mins }))
+      .sort((a, b) => b.mins - a.mins);
+
+    // ── Priority breakdown (completed tasks only) ──────────────────────
+    const nonBreak = todayDone.filter(t => !t.isBreak);
+    const pCount   = { 1: 0, 2: 0, 3: 0, 4: 0 };
+    for (const t of nonBreak) { if (t.priority && pCount[t.priority] !== undefined) pCount[t.priority]++; }
+    const total = nonBreak.length;
+    const priorityBreakdown = {
+      urgent: pCount[1], high: pCount[2], medium: pCount[3], low: pCount[4], total
+    };
+
+    // ── Stress score ───────────────────────────────────────────────────
+    const urgencyRaw  = Math.min(Math.max(pCount[1] + pCount[2], 1), 5);
+    const urgencyNorm = (urgencyRaw - 1) / 4;
+    const volumeRaw   = Math.min(Math.max(total, 5), 12);
+    const volumeNorm  = (volumeRaw - 5) / 7;
+    const workMins    = timePerTask.reduce((s, r) => s + r.mins, 0);
+    const workHours   = workMins / 60;
+    const hoursRaw    = Math.min(Math.max(workHours, 6), 10);
+    const hoursNorm   = (hoursRaw - 6) / 4;
+    const rawScore    = (urgencyNorm + volumeNorm + hoursNorm) * 10 / 3;
+    const stressScore = Math.min(Math.max(Math.round(rawScore), 1), 10);
+
+    // ── Incomplete tasks ───────────────────────────────────────────────
+    const incompleteTasks = [...tasks];
+
+    return { todayDone, timePerTask, priorityBreakdown, stressScore, incompleteTasks };
+  }
+
+  function stressColor(score) {
+    if (score <= 3) return '#4caf7d';
+    if (score <= 6) return '#f0a500';
+    return '#ff6b8a';
+  }
+
+  function stressLabel(score) {
+    if (score <= 2) return 'Very relaxed day';
+    if (score <= 4) return 'Light load';
+    if (score <= 6) return 'Moderate';
+    if (score <= 8) return 'Demanding day';
+    return 'High stress day';
+  }
+
+  function fmtTaskMins(mins) {
+    if (mins < 60) return `${mins}m`;
+    const h = Math.floor(mins / 60), m = mins % 60;
+    return m > 0 ? `${h}h ${m}m` : `${h}h`;
+  }
+
+  function openEndDayModal() {
+    const report  = computeDayReport();
+    const { timePerTask, priorityBreakdown, stressScore, incompleteTasks } = report;
+    const col     = stressColor(stressScore);
+    const P_NAMES = ['', 'Urgent', 'High', 'Medium', 'Low'];
+    const P_COLS  = ['', 'rgba(255,107,138,0.2)', 'rgba(255,165,89,0.2)', 'rgba(100,200,120,0.2)', 'rgba(100,150,255,0.2)'];
+    const P_TEXT  = ['', '#ff6b8a', '#ffa559', '#64c878', '#6496ff'];
+    const total   = priorityBreakdown.total;
+
+    let tasksHtml = timePerTask.length
+      ? timePerTask.map(r => `<div class="edm-task-row"><span class="edm-task-title">${esc(r.title)}</span><span class="edm-task-time">${fmtTaskMins(r.mins)}</span></div>`).join('')
+      : '<div style="color:var(--text-dim);font-size:11px;padding:4px 0">No completed tasks recorded.</div>';
+
+    let priorityHtml = '';
+    for (let p = 1; p <= 4; p++) {
+      const cnt = priorityBreakdown[['','urgent','high','medium','low'][p]];
+      if (!cnt) continue;
+      const pct = total > 0 ? Math.round(cnt / total * 100) : 0;
+      priorityHtml += `<span class="edm-priority-chip" style="background:${P_COLS[p]};color:${P_TEXT[p]}">${P_NAMES[p]} ${pct}%</span>`;
+    }
+    if (!priorityHtml) priorityHtml = '<span style="color:var(--text-dim);font-size:11px">No priority data</span>';
+
+    document.getElementById('edmBody').innerHTML = `
+      <div>
+        <div class="edm-section-label">Time Spent</div>
+        ${tasksHtml}
+      </div>
+      <div>
+        <div class="edm-section-label">Priority Breakdown</div>
+        <div class="edm-priority-row">${priorityHtml}</div>
+      </div>
+      <div class="edm-stress">
+        <div class="edm-stress-score" style="color:${col}">${stressScore}</div>
+        <div>
+          <div class="edm-stress-desc" style="color:${col}">${stressLabel(stressScore)}</div>
+          <div class="edm-stress-label">Stress score out of 10 — based on task urgency, volume, and hours worked.</div>
+        </div>
+      </div>`;
+
+    const inc = incompleteTasks.length;
+    document.getElementById('edmIncompleteCount').textContent =
+      inc > 0 ? `${inc} task${inc > 1 ? 's' : ''} remaining in queue` : 'No remaining tasks';
+
+    document.getElementById('endDayOverlay').classList.add('active');
+  }
+
+  function commitEndDay(choice) {
+    const today  = todayPstDateStr();
+    const report = computeDayReport();
+
+    // Apply choice to remaining tasks
+    if (choice === 'clear') {
+      tasks = [];
+    } else {
+      // carry: scheduled tasks with past times become flex
+      tasks = tasks.map(t => {
+        if (isScheduled(t) && t._etMins != null && t._etMins < (getPST().getHours()*60 + getPST().getMinutes())) {
+          const { startTime, endTime, calStartTime, ...flex } = t;
+          return { ...flex, type: 'flex', priority: t.priority || 3 };
+        }
+        return t;
+      });
+    }
+
+    // Close modal, apply greyed state, persist choice for updateTodayHistory
+    document.getElementById('endDayOverlay').classList.remove('active');
+    localStorage.setItem('q_dayEndedChoice', choice);
+    setDayEndedState(true);
+    save();   // triggers updateTodayHistory() which writes to Firestore
+    render();
+  }
+
+  function saveDayHistory(date, dayDone, incomplete, choice, stressScore, priorityBreakdown, timePerTask) {
+    if (!_db || !_currentUser) return;
+    _db.collection('users').doc(_currentUser.uid).collection('history').doc(date).set({
+      date, stressScore, priorityBreakdown, timePerTask,
+      doneTasks:        dayDone,
+      incompleteTasks:  incomplete.map(t => ({ id: t.id, title: t.title, priority: t.priority, duration: t.duration })),
+      choice,
+      savedAt:          Date.now(),
+    }).catch(err => console.error('[Queue] History save failed:', err));
+  }
+
+  function updateTodayHistory() {
+    const today = todayPstDateStr();
+    const ended = localStorage.getItem('q_dayEnded');
+    if (ended !== today || !_db || !_currentUser) return;
+    const choice = localStorage.getItem('q_dayEndedChoice') || null;
+    const report = computeDayReport();
+    saveDayHistory(today, report.todayDone, report.incompleteTasks, choice, report.stressScore, report.priorityBreakdown, report.timePerTask);
+  }
+
+  function setDayEndedState(ended) {
+    if (ended) {
+      document.body.classList.add('day-ended');
+      localStorage.setItem('q_dayEnded', todayPstDateStr());
+    } else {
+      document.body.classList.remove('day-ended');
+      localStorage.removeItem('q_dayEnded');
+      localStorage.removeItem('q_dayEndedChoice');
+    }
+  }
+
+  function checkDayEndedReset() {
+    const ended = localStorage.getItem('q_dayEnded');
+    if (!ended) return;
+    if (ended < todayPstDateStr()) {
+      // New day — clear greyed state
+      setDayEndedState(false);
+    } else {
+      document.body.classList.add('day-ended');
+    }
+  }
+
+  // ── History overlay ────────────────────────────────────────────────────
+  function openHistoryOverlay() {
+    closeGearMenu();
+    if (!_db || !_currentUser) return;
+    const body = document.getElementById('historyBody');
+    body.innerHTML = '<div style="text-align:center;color:var(--text-dim);padding:40px 0">Loading…</div>';
+    document.getElementById('historyOverlay').classList.add('active');
+
+    _db.collection('users').doc(_currentUser.uid).collection('history')
+      .orderBy('date', 'desc')
+      .get()
+      .then(snap => {
+        if (snap.empty) {
+          body.innerHTML = '<div class="history-empty">No day history yet.<br>Press "End Day" to start recording.</div>';
+          return;
+        }
+        body.innerHTML = snap.docs.map(d => renderHistoryDay(d.data())).join('');
+      })
+      .catch(err => {
+        console.error('[Queue] History load failed:', err);
+        body.innerHTML = '<div class="history-empty">Failed to load history.</div>';
+      });
+  }
+
+  function closeHistoryOverlay() {
+    document.getElementById('historyOverlay').classList.remove('active');
+  }
+
+  function renderHistoryDay(day) {
+    const col   = stressColor(day.stressScore || 1);
+    const label = stressLabel(day.stressScore || 1);
+    const P_NAMES = ['','Urgent','High','Medium','Low'];
+    const P_COLS  = ['','rgba(255,107,138,0.2)','rgba(255,165,89,0.2)','rgba(100,200,120,0.2)','rgba(100,150,255,0.2)'];
+    const P_TEXT  = ['','#ff6b8a','#ffa559','#64c878','#6496ff'];
+
+    const taskRows = (day.timePerTask || []).map(r =>
+      `<div class="hdc-task-row"><span class="hdc-task-title">${esc(r.title)}</span><span class="hdc-task-time">${fmtTaskMins(r.mins)}</span></div>`
+    ).join('') || '<div style="color:var(--text-dim);font-size:11px;padding:4px 0">No tasks recorded</div>';
+
+    const pb = day.priorityBreakdown || {};
+    const ptotal = pb.total || 0;
+    let priorityHtml = '';
+    for (let p = 1; p <= 4; p++) {
+      const cnt = pb[['','urgent','high','medium','low'][p]] || 0;
+      if (!cnt) continue;
+      const pct = ptotal > 0 ? Math.round(cnt / ptotal * 100) : 0;
+      priorityHtml += `<span class="hdc-priority-chip" style="background:${P_COLS[p]};color:${P_TEXT[p]}">${P_NAMES[p]} ${pct}%</span>`;
+    }
+
+    // Format date nicely
+    const [y,m,d] = day.date.split('-').map(Number);
+    const dateObj = new Date(y, m-1, d);
+    const dateLabel = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+    return `<div class="history-day-card">
+      <div class="hdc-header">
+        <div class="hdc-date">${dateLabel}</div>
+        <div class="hdc-stress" style="background:${col}22;color:${col}">Stress ${day.stressScore || '—'}/10 · ${label}</div>
+      </div>
+      <div class="hdc-tasks">${taskRows}</div>
+      ${priorityHtml ? `<div class="hdc-priority-row">${priorityHtml}</div>` : ''}
+    </div>`;
+  }
+
+  function clearOldHistory() {
+    if (!_db || !_currentUser) return;
+    if (!confirm('Delete all history older than 7 days? This cannot be undone.')) return;
+    const cutoff = new Date(getPST());
+    cutoff.setDate(cutoff.getDate() - 7);
+    const cutoffStr = `${cutoff.getFullYear()}-${String(cutoff.getMonth()+1).padStart(2,'0')}-${String(cutoff.getDate()).padStart(2,'0')}`;
+
+    _db.collection('users').doc(_currentUser.uid).collection('history')
+      .where('date', '<', cutoffStr)
+      .get()
+      .then(snap => {
+        const batch = _db.batch();
+        snap.docs.forEach(d => batch.delete(d.ref));
+        return batch.commit();
+      })
+      .then(() => { if (document.getElementById('historyOverlay').classList.contains('active')) openHistoryOverlay(); })
+      .catch(err => console.error('[Queue] Clear history failed:', err));
+  }
+
   // ── Intervals ──────────────────────────────────────────────────────────
   setInterval(updateClock, 1000);
   // Lightweight tick: move the now-line every minute without rebuilding the calendar
@@ -2765,6 +3177,8 @@
   // Full re-render every 30s (for time labels, escalation, etc.)
   // renderCalendar is cheap but we skip the scroll reset via _calScrolled flag
   setInterval(render, 30000);
+  // Check day-ended reset every minute (catches midnight rollover)
+  setInterval(checkDayEndedReset, 60000);
 
   // ── Calendar block drag: global mouse handlers ──────────────────────────
   document.addEventListener('mousemove', e => {
@@ -2861,6 +3275,7 @@
   // load() is called by the auth state observer once signed in
   if (!_auth) { load(); } // local-only fallback
   loadBreakState();
+  checkDayEndedReset();
   updateClock();
   render();
 </script>
