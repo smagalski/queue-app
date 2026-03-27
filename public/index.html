@@ -763,8 +763,9 @@
     color: rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.08);
     border-radius: 8px; display: none;
   }
-  body.day-ended .day-ended-msg { display: block; }
-  body.day-ended .end-day-btn   { display: none; }
+  body.day-ended .day-ended-msg  { display: block; }
+  body.day-ended .end-day-btn    { display: none; }
+  body.day-ended #resumeDayBtn   { display: block !important; }
 
   /* ── DAY ENDED GREY STATE ─────────────────────────────────────────────── */
   body.day-ended .right-panel { opacity: 0.35; pointer-events: none; }
@@ -1004,6 +1005,7 @@
     </div>
     <button class="end-day-btn" id="endDayBtn" onclick="openEndDayModal()">End Day</button>
     <div class="day-ended-msg" id="dayEndedMsg">Day Ended — See You Tomorrow</div>
+    <button class="end-day-btn" id="resumeDayBtn" onclick="resumeDay()" style="display:none">Resume Day</button>
 
     <!-- FLEX TASK FORM -->
     <div class="add-form-wrap" id="addFormWrap">
@@ -1099,6 +1101,7 @@
         <button class="edm-choice-btn carry" onclick="commitEndDay('carry')">Add to Tomorrow</button>
         <button class="edm-choice-btn clear" onclick="commitEndDay('clear')">Clear Remaining</button>
       </div>
+      <button class="edm-choice-btn" onclick="document.getElementById('endDayOverlay').classList.remove('active')" style="margin-top:4px">Cancel</button>
     </div>
   </div>
 </div>
@@ -3074,6 +3077,11 @@
       localStorage.removeItem('q_dayEnded');
       localStorage.removeItem('q_dayEndedChoice');
     }
+  }
+
+  function resumeDay() {
+    setDayEndedState(false);
+    render();
   }
 
   function checkDayEndedReset() {
