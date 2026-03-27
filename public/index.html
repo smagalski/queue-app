@@ -1380,20 +1380,19 @@
       setSyncStatus('synced');
       render();
 
-      // ── Sync break overlay across all windows ──────────────────────────
-      const remoteBreakStart  = data.breakStartMs  || null;
-      const remoteBreakTaskId = data.breakTaskId   || null;
-      if (remoteBreakStart && !breakStartMs) {
-        // Another window started a break — show overlay here too
-        breakStartMs = remoteBreakStart;
-        breakTaskId  = remoteBreakTaskId;
+      // ── Sync break overlay from tasks (works on refresh + cross-window) ──
+      const breakTask = tasks.find(t => t.isBreak);
+      if (breakTask && !breakStartMs) {
+        // Break is active (on refresh or started in another window)
+        breakStartMs = data.breakStartMs || breakTask.calStartTime || breakTask.addedAt;
+        breakTaskId  = breakTask.id;
         document.getElementById('breakOverlay').classList.add('active');
         if (!breakTimerInt) {
           updateBreakTimer();
           breakTimerInt = setInterval(updateBreakTimer, 1000);
         }
-      } else if (!remoteBreakStart && breakStartMs) {
-        // Another window ended the break — hide overlay here
+      } else if (!breakTask && breakStartMs) {
+        // Break ended in another window
         breakStartMs = null;
         breakTaskId  = null;
         if (breakTimerInt) { clearInterval(breakTimerInt); breakTimerInt = null; }
