@@ -432,15 +432,15 @@
   .end-day-overlay.active { display: flex; }
   .end-day-modal {
     background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
-    padding: 28px; width: 480px; max-width: 94vw; max-height: 88vh;
-    overflow-y: auto; position: relative; display: flex; flex-direction: column; gap: 20px;
+    padding: 28px; width: 520px; max-width: 94vw; max-height: 88vh;
+    overflow-y: auto; position: relative; display: flex; flex-direction: column; gap: 26px;
   }
   .edm-title { font-size: 18px; font-weight: 700; color: #fff; }
   .edm-section-label {
     font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
     color: var(--text-dim); margin-bottom: 8px;
   }
-  .edm-task-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .edm-task-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
   .edm-task-title { font-size: 12px; color: var(--text-mid); }
   .edm-task-time  { font-size: 11px; color: var(--text-dim); }
   .edm-priority-row { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -469,7 +469,7 @@
   .edm-choice-btn.carry:hover { background: rgba(126,200,227,0.1); }
   .edm-choice-btn.clear { border-color: rgba(255,107,138,0.4); color: var(--p1); }
   .edm-choice-btn.clear:hover { background: rgba(255,107,138,0.1); }
-  .edm-incomplete-count { font-size: 11px; color: var(--text-dim); text-align: center; }
+  .edm-incomplete-count { font-size: 12px; color: var(--text-mid); text-align: center; margin-bottom: 10px; }
 
   /* ── HISTORY OVERLAY ─────────────────────────────────────────────────── */
   .history-overlay {
@@ -1100,8 +1100,8 @@
       <div class="edm-choice-row">
         <button class="edm-choice-btn carry" onclick="commitEndDay('carry')">Add to Tomorrow</button>
         <button class="edm-choice-btn clear" onclick="commitEndDay('clear')">Clear Remaining</button>
+        <button class="edm-choice-btn" onclick="document.getElementById('endDayOverlay').classList.remove('active')">Cancel</button>
       </div>
-      <button class="edm-choice-btn" onclick="document.getElementById('endDayOverlay').classList.remove('active')" style="margin-top:4px">Cancel</button>
     </div>
   </div>
 </div>
