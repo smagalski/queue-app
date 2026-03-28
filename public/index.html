@@ -594,6 +594,59 @@
   .hdc-priority-chip { padding: 2px 8px; border-radius: 20px; font-size: 9px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
   .history-empty { text-align: center; color: var(--text-dim); font-size: 13px; padding: 60px 0; }
 
+  /* ── GOOGLE CALENDAR IMPORT ─────────────────────────────────────────── */
+  .gcal-import-btn {
+    background: rgba(66,133,244,0.07); border: 1px solid rgba(66,133,244,0.22);
+    border-radius: 8px; color: #adc8ff; font-family: 'Inter',sans-serif; font-weight: 600;
+    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; padding: 9px 14px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px; transition: all 0.2s;
+  }
+  .gcal-import-btn:hover { background: rgba(66,133,244,0.14); border-color: rgba(66,133,244,0.45); color: #c8daff; }
+  .gcal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 8500;
+    background: rgba(0,0,0,0.75); align-items: center; justify-content: center;
+  }
+  .gcal-overlay.active { display: flex; }
+  .gcal-modal {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 28px; width: 520px; max-width: 94vw; max-height: 88vh;
+    overflow-y: auto; position: relative; display: flex; flex-direction: column; gap: 20px;
+  }
+  .gcal-title { font-size: 18px; font-weight: 700; color: #fff; }
+  .gcal-event-list { display: flex; flex-direction: column; gap: 8px; }
+  .gcal-event-row {
+    display: flex; align-items: flex-start; gap: 12px; padding: 10px 12px;
+    background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+    border-radius: 8px; cursor: pointer; transition: all 0.15s; user-select: none;
+  }
+  .gcal-event-row:hover { background: rgba(255,255,255,0.05); }
+  .gcal-event-row.checked { border-color: rgba(66,133,244,0.4); background: rgba(66,133,244,0.07); }
+  .gcal-event-check { margin-top: 2px; flex-shrink: 0; accent-color: #4285f4; width: 15px; height: 15px; cursor: pointer; }
+  .gcal-event-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+  .gcal-event-title { font-size: 13px; color: #fff; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gcal-event-meta { font-size: 11px; color: var(--text-dim); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .gcal-est-badge {
+    font-size: 9px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 1px 5px; border-radius: 3px; background: rgba(255,170,96,0.15); color: var(--p2);
+  }
+  .gcal-empty { font-size: 13px; color: var(--text-dim); text-align: center; padding: 30px 0; }
+  .gcal-actions { display: flex; gap: 10px; }
+  .gcal-confirm-btn {
+    flex: 1; padding: 10px 0; border-radius: 8px; border: 1px solid rgba(66,133,244,0.4);
+    background: rgba(66,133,244,0.1); color: #adc8ff; font-family: 'Inter', sans-serif;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .gcal-confirm-btn:hover:not(:disabled) { background: rgba(66,133,244,0.2); border-color: rgba(66,133,244,0.6); color: #c8daff; }
+  .gcal-confirm-btn:disabled { opacity: 0.35; cursor: default; }
+  .gcal-cancel-btn {
+    flex: 1; padding: 10px 0; border-radius: 8px; border: 1px solid var(--border);
+    background: none; color: var(--text-mid); font-family: 'Inter', sans-serif;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .gcal-cancel-btn:hover { background: rgba(255,255,255,0.07); color: #fff; border-color: rgba(255,255,255,0.3); }
+
   /* ── BLOCK DETAIL MODAL ──────────────────────────────────────────────── */
   .block-detail-overlay {
     display: none; position: fixed; inset: 0; z-index: 8000;
@@ -972,6 +1025,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://accounts.google.com/gsi/client" async></script>
 </head>
 <body>
 
@@ -1155,6 +1209,7 @@
         Schedule
       </button>
       <button class="break-toggle-btn" id="takeBreakBtn" onclick="takeBreak()" disabled>Take a Break</button>
+      <button class="gcal-import-btn" id="gcalImportBtn" onclick="openGcalImport()">Google Cal</button>
     </div>
     <div class="end-btns-row">
       <button class="end-day-btn" id="endDayBtn" onclick="openEndDayModal()">End Day</button>
@@ -1308,6 +1363,20 @@
       <button class="history-close" onclick="closeRecurringOverlay()">✕</button>
     </div>
     <div id="recurringBody"></div>
+  </div>
+</div>
+
+<!-- GOOGLE CALENDAR IMPORT LIGHTBOX -->
+<div class="gcal-overlay" id="gcalOverlay" onclick="if(event.target===this)closeGcalLightbox()">
+  <div class="gcal-modal">
+    <div class="gcal-title">Import from Google Calendar</div>
+    <div class="gcal-event-list" id="gcalEventList">
+      <div class="gcal-empty">Loading…</div>
+    </div>
+    <div class="gcal-actions">
+      <button class="gcal-confirm-btn" id="gcalConfirmBtn" onclick="importGcalTasks()" disabled style="display:none">Import Tasks</button>
+      <button class="gcal-cancel-btn" onclick="closeGcalLightbox()">Cancel</button>
+    </div>
   </div>
 </div>
 
@@ -3929,6 +3998,181 @@
       if (el) el.innerHTML = html;
     });
   })();
+
+  // ── Google Calendar Import ─────────────────────────────────────────────
+  // GCAL_CLIENT_ID: your OAuth 2.0 Web Client ID for this Google Cloud project.
+  // Find it at: Firebase Console → Authentication → Sign-in providers → Google
+  //             → Web SDK configuration → Web client ID
+  //             (looks like: 299707953232-xxxx.apps.googleusercontent.com)
+  const GCAL_CLIENT_ID = '';  // ← paste your OAuth 2.0 web client ID here
+
+  let _gcalTokenClient  = null;
+  let _gcalAccessToken  = null;
+  let _gcalTokenExpiry  = 0;
+  let _gcalPendingEvents = null;
+
+  function _buildGcalTokenClient(onSuccess) {
+    return google.accounts.oauth2.initTokenClient({
+      client_id: GCAL_CLIENT_ID,
+      scope: 'https://www.googleapis.com/auth/calendar.readonly',
+      callback(resp) {
+        if (resp.error) { console.error('GCal OAuth error:', resp.error); return; }
+        _gcalAccessToken = resp.access_token;
+        _gcalTokenExpiry = Date.now() + (resp.expires_in - 60) * 1000;
+        onSuccess();
+      },
+    });
+  }
+
+  function openGcalImport() {
+    if (!GCAL_CLIENT_ID) {
+      alert('Google Calendar import is not configured.\n\nSet GCAL_CLIENT_ID in the source to your OAuth 2.0 Web Client ID.\nFind it at: Firebase Console → Auth → Sign-in providers → Google → Web SDK configuration.');
+      return;
+    }
+    if (_gcalAccessToken && Date.now() < _gcalTokenExpiry) {
+      fetchGcalEvents();
+      return;
+    }
+    _gcalTokenClient = _buildGcalTokenClient(fetchGcalEvents);
+    _gcalTokenClient.requestAccessToken({ prompt: '' });
+  }
+
+  async function fetchGcalEvents() {
+    const overlay = document.getElementById('gcalOverlay');
+    document.getElementById('gcalEventList').innerHTML = '<div class="gcal-empty">Loading…</div>';
+    document.getElementById('gcalConfirmBtn').style.display = 'none';
+    overlay.classList.add('active');
+
+    // Build today's date range in PST/PDT with correct UTC offset
+    const now    = new Date();
+    const laDate = new Date(now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+    const offsetHrs = Math.round((now.getTime() - laDate.getTime()) / 3600000);
+    const offsetStr = `-0${offsetHrs}:00`;
+    const pst = getPST();
+    const y   = pst.getFullYear();
+    const mo  = String(pst.getMonth() + 1).padStart(2, '0');
+    const d   = String(pst.getDate()).padStart(2, '0');
+    const timeMin = `${y}-${mo}-${d}T00:00:00${offsetStr}`;
+    const timeMax = `${y}-${mo}-${d}T23:59:59${offsetStr}`;
+
+    try {
+      const url = new URL('https://www.googleapis.com/calendar/v3/calendars/primary/events');
+      url.searchParams.set('timeMin', timeMin);
+      url.searchParams.set('timeMax', timeMax);
+      url.searchParams.set('singleEvents', 'true');
+      url.searchParams.set('orderBy', 'startTime');
+
+      const res = await fetch(url.toString(), {
+        headers: { Authorization: `Bearer ${_gcalAccessToken}` },
+      });
+
+      if (res.status === 401) {
+        _gcalAccessToken = null;
+        _gcalTokenExpiry  = 0;
+        overlay.classList.remove('active');
+        _gcalTokenClient = _buildGcalTokenClient(fetchGcalEvents);
+        _gcalTokenClient.requestAccessToken({ prompt: '' });
+        return;
+      }
+      if (!res.ok) {
+        document.getElementById('gcalEventList').innerHTML = '<div class="gcal-empty">Failed to load events. Please try again.</div>';
+        return;
+      }
+
+      const data = await res.json();
+      // Filter out all-day events (they have .date but not .dateTime)
+      const events = (data.items || []).filter(e => e.start && e.start.dateTime);
+      _gcalPendingEvents = events;
+      renderGcalEvents(events);
+    } catch (e) {
+      document.getElementById('gcalEventList').innerHTML = '<div class="gcal-empty">Error loading events. Please try again.</div>';
+    }
+  }
+
+  function renderGcalEvents(events) {
+    const list       = document.getElementById('gcalEventList');
+    const confirmBtn = document.getElementById('gcalConfirmBtn');
+
+    if (!events.length) {
+      list.innerHTML = '<div class="gcal-empty">No events found for today.</div>';
+      confirmBtn.style.display = 'none';
+      return;
+    }
+
+    confirmBtn.style.display = '';
+    list.innerHTML = events.map((e, i) => {
+      const startMins = dateToMinsPST(new Date(e.start.dateTime));
+      const noEnd     = !e.end || !e.end.dateTime;
+      const endMins   = noEnd ? startMins + 30 : dateToMinsPST(new Date(e.end.dateTime));
+      const dur       = endMins - startMins;
+      const durStr    = dur >= 60
+        ? `${Math.floor(dur / 60)}h${dur % 60 > 0 ? ` ${dur % 60}m` : ''}`
+        : `${dur}m`;
+      return `<div class="gcal-event-row checked" id="gcalRow_${i}" onclick="toggleGcalRow(${i})">
+        <input type="checkbox" class="gcal-event-check" id="gcalChk_${i}" checked
+               onclick="event.stopPropagation()" onchange="updateGcalRow(${i})"/>
+        <div class="gcal-event-info">
+          <div class="gcal-event-title">${esc(e.summary || '(No title)')}</div>
+          <div class="gcal-event-meta">
+            <span>${fmtMins(startMins)} – ${fmtMins(endMins)}</span>
+            <span>${durStr}</span>
+            ${noEnd ? '<span class="gcal-est-badge">estimated end</span>' : ''}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+    updateGcalConfirmBtn();
+  }
+
+  function toggleGcalRow(i) {
+    const chk = document.getElementById(`gcalChk_${i}`);
+    chk.checked = !chk.checked;
+    updateGcalRow(i);
+  }
+
+  function updateGcalRow(i) {
+    const chk = document.getElementById(`gcalChk_${i}`);
+    document.getElementById(`gcalRow_${i}`).classList.toggle('checked', chk.checked);
+    updateGcalConfirmBtn();
+  }
+
+  function updateGcalConfirmBtn() {
+    const checked = document.querySelectorAll('.gcal-event-check:checked').length;
+    const btn = document.getElementById('gcalConfirmBtn');
+    btn.textContent = `Import ${checked} Task${checked !== 1 ? 's' : ''}`;
+    btn.disabled = checked === 0;
+  }
+
+  function importGcalTasks() {
+    if (!_gcalPendingEvents) return;
+    const dp = todayPstDateStr();
+    let count = 0;
+    _gcalPendingEvents.forEach((e, i) => {
+      const chk = document.getElementById(`gcalChk_${i}`);
+      if (!chk || !chk.checked) return;
+      const startMins = dateToMinsPST(new Date(e.start.dateTime));
+      const noEnd     = !e.end || !e.end.dateTime;
+      const endMins   = noEnd ? startMins + 30 : dateToMinsPST(new Date(e.end.dateTime));
+      const dur       = endMins - startMins;
+      tasks.push({
+        id:        Date.now() + count,
+        type:      'scheduled',
+        title:     (e.summary || 'Calendar Event').slice(0, 120),
+        addedAt:   Date.now(),
+        startTime: `${dp}T${fmtMins(startMins)}`,
+        endTime:   `${dp}T${fmtMins(endMins)}`,
+        duration:  dur,
+      });
+      count++;
+    });
+    if (count > 0) { save(); render(); }
+    closeGcalLightbox();
+  }
+
+  function closeGcalLightbox() {
+    document.getElementById('gcalOverlay').classList.remove('active');
+    _gcalPendingEvents = null;
+  }
 
   // ── Init ───────────────────────────────────────────────────────────────
   // load() is called by the auth state observer once signed in
