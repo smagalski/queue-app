@@ -1239,6 +1239,9 @@
   const DONE_TTL   = 48 * 60 * 60 * 1000;
   const P_LABELS   = ['','URGENT','HIGH','MEDIUM','LOW'];
   const P_COLORS   = ['','#ff6b8a','#ffaa60','#f0d060','#7fd4a8'];
+  const P_NAMES    = ['','Urgent','High','Medium','Low'];
+  const P_CHIP_BG  = ['','rgba(255,107,138,0.2)','rgba(255,165,89,0.2)','rgba(100,200,120,0.2)','rgba(100,150,255,0.2)'];
+  const P_CHIP_COL = ['','#ff6b8a','#ffa559','#64c878','#6496ff'];
   let   CAL_START  = parseInt(localStorage.getItem('q_calStart') || '360');  // default 6:00am
   let   CAL_END    = parseInt(localStorage.getItem('q_calEnd')   || '1260'); // default 9:00pm
   const PX_PER_MIN = 44 / 60;
@@ -1638,7 +1641,7 @@
     // Format a datetime-local string ("YYYY-MM-DDTHH:MM") as "H:MMam/pm"
     // Parse T part directly to avoid UTC-shift in new Date(dtStr)
     if (!dtStr) return null;
-    const tm = dtStr.match(/T(\d{2}):(\d{2})/);
+    const tm = typeof dtStr === 'string' ? dtStr.match(/T(\d{2}):(\d{2})/) : null;
     if (tm) {
       let h = parseInt(tm[1], 10), m = parseInt(tm[2], 10);
       const ap = h >= 12 ? 'pm' : 'am';
@@ -1655,13 +1658,7 @@
     return `${h}:${String(m).padStart(2,'0')}${ap}`;
   }
   // Format a Unix ms timestamp as PST "H:MMam/pm"
-  function fmtMsTimePST(ms) {
-    const p = new Date(new Date(ms).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
-    let h = p.getHours(), m = p.getMinutes();
-    const ap = h >= 12 ? 'pm' : 'am';
-    h = h % 12 || 12;
-    return `${h}:${String(m).padStart(2,'0')}${ap}`;
-  }
+  function fmtMsTimePST(ms) { return fmtTimePST(ms); }
   // Convert a Unix ms timestamp to PST minutes-since-midnight
   function msMinsToCalMins(ms) {
     const p = new Date(new Date(ms).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
@@ -2853,27 +2850,24 @@
   }
 
   // ── Inline title editing ───────────────────────────────────────────────
-  function startTitleEdit(taskId, titleEl) {
-    const task = tasks.find(t => t.id === taskId);
-    if (!task || titleEl.querySelector('input')) return;
+  function _doTitleEdit(task, el, onCommit, cssText) {
+    if (!task || el.querySelector('input')) return;
     const original = task.title;
-    const card = titleEl.closest('.task-card');
+    const card = cssText ? null : el.closest('.task-card');
     if (card) card.draggable = false;
     const input = document.createElement('input');
-    input.className = 'title-edit-input';
+    if (cssText) input.style.cssText = cssText;
+    else input.className = 'title-edit-input';
     input.value = original;
-    titleEl.textContent = '';
-    titleEl.appendChild(input);
+    el.textContent = '';
+    el.appendChild(input);
     input.focus();
     input.select();
     const commit = () => {
       if (card) card.draggable = true;
       const newTitle = input.value.trim();
-      if (newTitle && newTitle !== original) {
-        task.title = newTitle;
-        save();
-      }
-      render();
+      if (newTitle && newTitle !== original) { task.title = newTitle; save(); }
+      onCommit();
     };
     input.addEventListener('blur', commit, { once: true });
     input.addEventListener('keydown', e => {
@@ -2882,31 +2876,14 @@
     });
   }
 
+  function startTitleEdit(taskId, titleEl) {
+    _doTitleEdit(tasks.find(t => t.id === taskId), titleEl, render, null);
+  }
+
   function startCalTitleEdit(blockTask, isDone, spanEl) {
-    const arr  = isDone ? doneTasks : tasks;
-    const task = arr.find(t => t.id === blockTask.id);
-    if (!task || spanEl.querySelector('input')) return;
-    const original = task.title;
-    const input = document.createElement('input');
-    input.value = original;
-    input.style.cssText = 'background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,0.5);outline:none;color:inherit;font:inherit;width:100%;padding:0';
-    spanEl.textContent = '';
-    spanEl.appendChild(input);
-    input.focus();
-    input.select();
-    const commit = () => {
-      const newTitle = input.value.trim();
-      if (newTitle && newTitle !== original) {
-        task.title = newTitle;
-        save();
-      }
-      renderCalendar();
-    };
-    input.addEventListener('blur', commit, { once: true });
-    input.addEventListener('keydown', e => {
-      if (e.key === 'Enter')  { e.preventDefault(); input.blur(); }
-      if (e.key === 'Escape') { input.value = original; input.blur(); }
-    });
+    const arr = isDone ? doneTasks : tasks;
+    _doTitleEdit(arr.find(t => t.id === blockTask.id), spanEl, renderCalendar,
+      'background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,0.5);outline:none;color:inherit;font:inherit;width:100%;padding:0');
   }
 
   function loadBreakState() {
@@ -3197,9 +3174,6 @@
     const report  = computeDayReport();
     const { timePerTask, priorityBreakdown, stressScore, incompleteTasks } = report;
     const col     = stressColor(stressScore);
-    const P_NAMES = ['', 'Urgent', 'High', 'Medium', 'Low'];
-    const P_COLS  = ['', 'rgba(255,107,138,0.2)', 'rgba(255,165,89,0.2)', 'rgba(100,200,120,0.2)', 'rgba(100,150,255,0.2)'];
-    const P_TEXT  = ['', '#ff6b8a', '#ffa559', '#64c878', '#6496ff'];
     const total   = priorityBreakdown.total;
 
     let tasksHtml = timePerTask.length
@@ -3211,7 +3185,7 @@
       const cnt = priorityBreakdown[['','urgent','high','medium','low'][p]];
       if (!cnt) continue;
       const pct = total > 0 ? Math.round(cnt / total * 100) : 0;
-      priorityHtml += `<span class="edm-priority-chip" style="background:${P_COLS[p]};color:${P_TEXT[p]}">${P_NAMES[p]} ${pct}%</span>`;
+      priorityHtml += `<span class="edm-priority-chip" style="background:${P_CHIP_BG[p]};color:${P_CHIP_COL[p]}">${P_NAMES[p]} ${pct}%</span>`;
     }
     if (!priorityHtml) priorityHtml = '<span style="color:var(--text-dim);font-size:11px">No priority data</span>';
 
@@ -3349,10 +3323,6 @@
   function renderHistoryDay(day) {
     const col   = stressColor(day.stressScore || 1);
     const label = stressLabel(day.stressScore || 1);
-    const P_NAMES = ['','Urgent','High','Medium','Low'];
-    const P_COLS  = ['','rgba(255,107,138,0.2)','rgba(255,165,89,0.2)','rgba(100,200,120,0.2)','rgba(100,150,255,0.2)'];
-    const P_TEXT  = ['','#ff6b8a','#ffa559','#64c878','#6496ff'];
-
     const taskRows = (day.timePerTask || []).map(r =>
       `<div class="hdc-task-row"><span class="hdc-task-title">${esc(r.title)}</span><span class="hdc-task-time">${fmtTaskMins(r.mins)}</span></div>`
     ).join('') || '<div style="text-align:center;color:var(--text-dim);font-size:11px;padding:10px 0;letter-spacing:0.06em;font-style:italic">No recorded data</div>';
@@ -3364,7 +3334,7 @@
       const cnt = pb[['','urgent','high','medium','low'][p]] || 0;
       if (!cnt) continue;
       const pct = ptotal > 0 ? Math.round(cnt / ptotal * 100) : 0;
-      priorityHtml += `<span class="hdc-priority-chip" style="background:${P_COLS[p]};color:${P_TEXT[p]}">${P_NAMES[p]} ${pct}%</span>`;
+      priorityHtml += `<span class="hdc-priority-chip" style="background:${P_CHIP_BG[p]};color:${P_CHIP_COL[p]}">${P_NAMES[p]} ${pct}%</span>`;
     }
 
     // Format date nicely
