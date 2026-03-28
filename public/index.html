@@ -648,7 +648,28 @@
     overflow: auto;
     height: auto;
     min-height: 100vh;
+    overscroll-behavior-y: none; /* prevent browser's native pull-to-refresh */
   }
+
+  /* ── PULL-TO-REFRESH ──────────────────────────────────────────────────── */
+  .ptr-indicator {
+    position: fixed; top: 0; left: 50%; z-index: 2000;
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--surface); border: 1px solid var(--border);
+    box-shadow: 0 3px 14px rgba(0,0,0,0.6);
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: none;
+    transform: translate(-50%, -100%);
+    will-change: transform, opacity;
+  }
+  .ptr-arrow { color: var(--sched); font-size: 13px; line-height: 1; display: block; }
+  .ptr-spinner {
+    display: none; width: 14px; height: 14px;
+    border: 2px solid rgba(126,200,227,0.25);
+    border-top-color: var(--sched); border-radius: 50%;
+    animation: ptr-spin 0.65s linear infinite;
+  }
+  @keyframes ptr-spin { to { transform: rotate(360deg); } }
   body.mobile-view .main-layout {
     flex-direction: column;
     overflow: visible;
@@ -928,6 +949,11 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 </head>
 <body>
+
+<div id="ptr" class="ptr-indicator">
+  <span class="ptr-arrow" id="ptrArrow">↓</span>
+  <span class="ptr-spinner" id="ptrSpinner"></span>
+</div>
 
 <div class="titlebar">
   <span class="app-name">Queue</span>
@@ -3704,6 +3730,84 @@
     }
     document.body.classList.remove('cal-drawer-open');
   }
+
+  // ── Pull-to-refresh (mobile only) ─────────────────────────────────────
+  (function() {
+    const PTR_THRESHOLD = 72;   // pull distance (px) required to trigger
+    const PTR_MAX       = 88;   // max indicator travel (px)
+    const PTR_DAMPING   = 0.45; // resistance: finger travel → indicator travel
+    const EL_H          = 36;   // indicator circle height (matches CSS)
+
+    const el    = document.getElementById('ptr');
+    const arrow = document.getElementById('ptrArrow');
+    const spin  = document.getElementById('ptrSpinner');
+
+    let touchStartY = null;
+    let pulling     = false;
+    let triggered   = false;
+
+    function ptrReset() {
+      el.style.transition = 'transform 0.25s ease, opacity 0.25s ease';
+      el.style.transform  = 'translate(-50%, -100%)';
+      el.style.opacity    = '0';
+      setTimeout(() => {
+        el.style.transition   = '';
+        el.style.opacity      = '';
+        arrow.style.transform = '';
+        arrow.style.display   = '';
+        spin.style.display    = 'none';
+        triggered = false;
+      }, 260);
+    }
+
+    document.addEventListener('touchstart', e => {
+      if (!document.body.classList.contains('mobile-view')) return;
+      if (window.scrollY > 4 || triggered) return;
+      touchStartY = e.touches[0].clientY;
+      pulling = false;
+    }, { passive: true });
+
+    document.addEventListener('touchmove', e => {
+      if (touchStartY === null || triggered) return;
+      const dy = e.touches[0].clientY - touchStartY;
+      if (dy <= 0) { touchStartY = null; return; }
+
+      pulling = true;
+      e.preventDefault();
+
+      const damped = Math.min(dy * PTR_DAMPING, PTR_MAX);
+      el.style.transition = 'none';
+      el.style.transform  = `translate(-50%, ${-EL_H + damped}px)`;
+      el.style.opacity    = String(Math.min(damped / 28, 1));
+
+      // Arrow rotates as you pull, flips at threshold
+      arrow.style.transform = dy >= PTR_THRESHOLD
+        ? 'rotate(180deg)'
+        : `rotate(${(dy / PTR_THRESHOLD) * 180}deg)`;
+    }, { passive: false });
+
+    document.addEventListener('touchend', e => {
+      if (!pulling || triggered) { touchStartY = null; pulling = false; return; }
+      const dy = e.changedTouches[0].clientY - (touchStartY || 0);
+      touchStartY = null;
+      pulling = false;
+
+      if (dy >= PTR_THRESHOLD) {
+        triggered = true;
+        // Lock indicator visible and swap to spinner
+        const lockY = Math.min(dy * PTR_DAMPING, PTR_MAX) - EL_H;
+        el.style.transition = 'transform 0.15s ease';
+        el.style.transform  = `translate(-50%, ${Math.min(lockY, PTR_MAX * 0.5)}px)`;
+        el.style.opacity    = '1';
+        arrow.style.display = 'none';
+        spin.style.display  = 'block';
+        load();
+        setTimeout(ptrReset, 1000);
+      } else {
+        ptrReset();
+      }
+    }, { passive: true });
+  })();
 
   // ── Init view mode ─────────────────────────────────────────────────────
   (function initViewMode() {
