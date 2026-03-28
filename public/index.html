@@ -394,7 +394,7 @@
   .add-sched-toggle-btn.open { border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom-color: transparent; }
   .add-sched-toggle-btn.open .add-toggle-icon { transform: rotate(45deg); }
   .add-sched-form-wrap { overflow: hidden; max-height: 0; transition: max-height 0.3s ease; }
-  .add-sched-form-wrap.open { max-height: 480px; }
+  .add-sched-form-wrap.open { max-height: 620px; }
   .add-sched-form {
     background: var(--surface); border: 1px solid rgba(126,200,227,0.3); border-top: none;
     border-radius: 0 0 8px 8px; padding: 14px; display: flex; flex-direction: column; gap: 12px;
@@ -407,6 +407,51 @@
   .add-sched-btn:hover { opacity: 0.85; }
   .add-sched-btn:active { transform: scale(0.98); }
   .add-sched-btn:disabled { opacity: 0.2; cursor: default; }
+
+  /* ── RECURRING DAY PICKER ─────────────────────────────────────────────── */
+  .recur-toggle-row {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .recur-day-picker {
+    display: none; flex-wrap: wrap; gap: 5px; margin-top: 8px;
+  }
+  .recur-day-picker.visible { display: flex; }
+  .recur-day-btn {
+    height: 28px; padding: 0 8px; border-radius: 5px; border: 1px solid var(--border);
+    background: var(--bg); color: var(--text-dim); font-family: 'Inter',sans-serif;
+    font-size: 9px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+    cursor: pointer; transition: all 0.12s;
+  }
+  .recur-day-btn.active {
+    background: rgba(126,200,227,0.15); border-color: var(--sched); color: var(--sched);
+  }
+
+  /* ── RECURRING TASKS MODAL ────────────────────────────────────────────── */
+  .recur-task-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 16px; display: flex; flex-direction: column; gap: 8px;
+  }
+  .recur-task-header {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  }
+  .recur-task-title { font-size: 14px; font-weight: 700; color: #fff; }
+  .recur-task-meta  { font-size: 11px; color: var(--text-dim); }
+  .recur-task-days  { display: flex; gap: 5px; flex-wrap: wrap; }
+  .recur-day-chip {
+    font-size: 9px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 2px 7px; border-radius: 4px; border: 1px solid var(--border); color: var(--text-dim);
+  }
+  .recur-day-chip.on { border-color: var(--sched); color: var(--sched); background: rgba(126,200,227,0.12); }
+  .recur-delete-btn {
+    background: none; border: 1px solid var(--border); border-radius: 5px;
+    color: var(--text-dim); font-size: 10px; font-weight: 600; letter-spacing: 0.06em;
+    text-transform: uppercase; padding: 4px 9px; cursor: pointer; transition: all 0.12s;
+    white-space: nowrap; flex-shrink: 0;
+  }
+  .recur-delete-btn:hover { border-color: #ff6b8a; color: #ff6b8a; }
+  .recur-empty {
+    color: var(--text-dim); font-size: 13px; text-align: center; padding: 40px 0;
+  }
 
   /* Sign-out button in titlebar */
   .signout-btn {
@@ -897,6 +942,7 @@
     <div class="gear-wrap" id="gearWrap" style="display:none">
       <button class="gear-btn" id="gearBtn" onclick="toggleGearMenu(event)">⚙</button>
       <div class="gear-menu" id="gearMenu">
+        <button class="gear-menu-item" onclick="openRecurringOverlay();closeGearMenu()">Recurring Tasks</button>
         <button class="gear-menu-item" onclick="openHistoryOverlay()">Day History</button>
         <button class="gear-menu-item" onclick="clearOldHistory();closeGearMenu()">Clear history older than 7 days</button>
         <div class="gear-menu-divider"></div>
@@ -1123,6 +1169,24 @@
             <option value="360">6 hr</option><option value="480">8 hr</option>
           </select>
         </div>
+        <div>
+          <label class="form-label">Recurring</label>
+          <div class="recur-toggle-row">
+            <label class="check-label">
+              <input type="checkbox" id="schedRecurringCheck" onchange="toggleRecurringDays()"/>
+              Repeat weekly
+            </label>
+          </div>
+          <div class="recur-day-picker" id="schedDayPicker">
+            <button class="recur-day-btn" data-day="0" onclick="toggleRecurringDay(0)">Sun</button>
+            <button class="recur-day-btn" data-day="1" onclick="toggleRecurringDay(1)">Mon</button>
+            <button class="recur-day-btn" data-day="2" onclick="toggleRecurringDay(2)">Tue</button>
+            <button class="recur-day-btn" data-day="3" onclick="toggleRecurringDay(3)">Wed</button>
+            <button class="recur-day-btn" data-day="4" onclick="toggleRecurringDay(4)">Thu</button>
+            <button class="recur-day-btn" data-day="5" onclick="toggleRecurringDay(5)">Fri</button>
+            <button class="recur-day-btn" data-day="6" onclick="toggleRecurringDay(6)">Sat</button>
+          </div>
+        </div>
         <button class="add-sched-btn" id="schedAddBtn" onclick="addScheduledTask()" disabled>Schedule It</button>
       </div>
     </div>
@@ -1170,6 +1234,17 @@
       <button class="history-close" onclick="closeHistoryOverlay()">✕</button>
     </div>
     <div id="historyBody"></div>
+  </div>
+</div>
+
+<!-- RECURRING TASKS MODAL -->
+<div class="history-overlay" id="recurringOverlay" onclick="if(event.target===this)closeRecurringOverlay()">
+  <div class="history-inner">
+    <div class="history-header">
+      <div class="history-title">Recurring Tasks</div>
+      <button class="history-close" onclick="closeRecurringOverlay()">✕</button>
+    </div>
+    <div id="recurringBody"></div>
   </div>
 </div>
 
@@ -1249,6 +1324,7 @@
   // ── State ──────────────────────────────────────────────────────────────
   let tasks           = [];
   let doneTasks       = [];
+  let recurringTasks  = [];
   let selPriority     = null;
   let doneOpen        = false;
   let addOpen         = false;
@@ -1546,7 +1622,7 @@
     updateTodayHistory();
     if (_stateDoc) {
       setSyncStatus('syncing');
-      _stateDoc.set({ tasks, doneTasks, breakStartMs: breakStartMs || null, breakTaskId: breakTaskId || null })
+      _stateDoc.set({ tasks, doneTasks, recurringTasks, breakStartMs: breakStartMs || null, breakTaskId: breakTaskId || null })
         .then(() => setSyncStatus('synced'))
         .catch(err => {
           console.error('[Queue] Save failed:', err);
@@ -1574,13 +1650,15 @@
     _unsubscribeSnapshot = _stateDoc.onSnapshot(snap => {
       if (!snap.exists) { setSyncStatus('synced'); return; }
       const data = snap.data();
-      tasks     = data.tasks     || [];
-      doneTasks = data.doneTasks || [];
+      tasks          = data.tasks          || [];
+      doneTasks      = data.doneTasks      || [];
+      recurringTasks = data.recurringTasks || [];
       purgeDone();
       try {
         localStorage.setItem('q_tasks', JSON.stringify(tasks));
         localStorage.setItem('q_done',  JSON.stringify(doneTasks));
       } catch(e) {}
+      injectRecurringTasks();
       setSyncStatus('synced');
       render();
 
@@ -1609,6 +1687,89 @@
       // Re-establish the listener after a delay so the UI doesn't stay stuck in error state
       setTimeout(() => { if (_currentUser) load(); }, 8000);
     });
+  }
+
+  // ── Recurring task injection ────────────────────────────────────────────
+  function injectRecurringTasks() {
+    if (!recurringTasks.length) return;
+    const today     = todayPstDateStr();
+    const dayOfWeek = getPST().getDay(); // 0=Sun … 6=Sat
+    let injected    = false;
+    recurringTasks.forEach((rt, i) => {
+      if (rt.days.includes(dayOfWeek) && rt.lastAddedDate !== today) {
+        const anchorDT = `${today}T${rt.time}`;
+        const dur      = rt.duration;
+        let startTime, endTime;
+        if (rt.anchor === 'start') {
+          startTime = anchorDT;
+          endTime   = `${today}T${fmtMins(parseDateLocalMins(anchorDT) + dur)}`;
+        } else {
+          endTime   = anchorDT;
+          startTime = `${today}T${fmtMins(parseDateLocalMins(anchorDT) - dur)}`;
+        }
+        tasks.push({
+          id: Date.now() + i,
+          type: 'scheduled',
+          title: rt.title,
+          addedAt: Date.now(),
+          startTime, endTime, duration: dur,
+          recurringId: rt.id,
+        });
+        rt.lastAddedDate = today;
+        injected = true;
+      }
+    });
+    if (injected) save();
+  }
+
+  // ── Recurring tasks modal ───────────────────────────────────────────────
+  const RECUR_DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  function openRecurringOverlay() {
+    renderRecurringList();
+    document.getElementById('recurringOverlay').classList.add('active');
+  }
+
+  function closeRecurringOverlay() {
+    document.getElementById('recurringOverlay').classList.remove('active');
+  }
+
+  function deleteRecurring(id) {
+    recurringTasks = recurringTasks.filter(rt => rt.id !== id);
+    save();
+    renderRecurringList();
+  }
+
+  function fmtTime12(hhmm) {
+    const [hStr, mStr] = hhmm.split(':');
+    const h = parseInt(hStr, 10), m = parseInt(mStr, 10);
+    const ap = h >= 12 ? 'pm' : 'am';
+    return `${h % 12 || 12}:${String(m).padStart(2,'0')}${ap}`;
+  }
+
+  function renderRecurringList() {
+    const body = document.getElementById('recurringBody');
+    if (!recurringTasks.length) {
+      body.innerHTML = '<div class="recur-empty">No recurring tasks yet.<br>Create one by checking "Repeat weekly" when adding a scheduled task.</div>';
+      return;
+    }
+    body.innerHTML = recurringTasks.map(rt => {
+      const timeLabel = `${rt.anchor === 'start' ? 'Starts' : 'Ends'} at ${fmtTime12(rt.time)}`;
+      const durLabel  = rt.duration >= 60
+        ? `${rt.duration / 60}h${rt.duration % 60 ? ' ' + (rt.duration % 60) + 'm' : ''}`
+        : `${rt.duration}m`;
+      const dayChips = RECUR_DAY_NAMES.map((d, i) =>
+        `<span class="recur-day-chip${rt.days.includes(i) ? ' on' : ''}">${d}</span>`
+      ).join('');
+      return `<div class="recur-task-card">
+        <div class="recur-task-header">
+          <div class="recur-task-title">${rt.title}</div>
+          <button class="recur-delete-btn" onclick="deleteRecurring(${rt.id})">Delete</button>
+        </div>
+        <div class="recur-task-meta">${timeLabel} · ${durLabel}</div>
+        <div class="recur-task-days">${dayChips}</div>
+      </div>`;
+    }).join('');
   }
 
   function purgeDone() {
@@ -2522,9 +2683,35 @@
   }
 
   function checkSchedAdd() {
-    const hasTitle = document.getElementById('schedTitleInput').value.trim().length > 0;
-    const hasTime  = document.getElementById('schedTimeInput').value.length > 0;
-    document.getElementById('schedAddBtn').disabled = !(hasTitle && hasTime);
+    const hasTitle    = document.getElementById('schedTitleInput').value.trim().length > 0;
+    const hasTime     = document.getElementById('schedTimeInput').value.length > 0;
+    const isRecurring = document.getElementById('schedRecurringCheck').checked;
+    const hasDays     = !isRecurring || selectedRecurringDays.size > 0;
+    document.getElementById('schedAddBtn').disabled = !(hasTitle && hasTime && hasDays);
+  }
+
+  let selectedRecurringDays = new Set();
+
+  function toggleRecurringDays() {
+    const checked = document.getElementById('schedRecurringCheck').checked;
+    document.getElementById('schedDayPicker').classList.toggle('visible', checked);
+    if (!checked) {
+      selectedRecurringDays.clear();
+      document.querySelectorAll('.recur-day-btn').forEach(b => b.classList.remove('active'));
+    }
+    checkSchedAdd();
+  }
+
+  function toggleRecurringDay(day) {
+    if (selectedRecurringDays.has(day)) {
+      selectedRecurringDays.delete(day);
+    } else {
+      selectedRecurringDays.add(day);
+    }
+    document.querySelectorAll('.recur-day-btn').forEach(b => {
+      b.classList.toggle('active', selectedRecurringDays.has(parseInt(b.dataset.day)));
+    });
+    checkSchedAdd();
   }
 
   function addScheduledTask() {
@@ -2545,18 +2732,39 @@
       startTime = `${dp}T${fmtMins(parseDateLocalMins(anchorDT) - dur)}`;
     }
 
-    tasks.push({
-      id: Date.now(), type: 'scheduled', title, addedAt: Date.now(),
-      startTime, endTime, duration: dur,
-    });
+    const isRecurring = document.getElementById('schedRecurringCheck').checked && selectedRecurringDays.size > 0;
+
+    if (isRecurring) {
+      recurringTasks.push({
+        id: Date.now(),
+        title,
+        time: timeVal,
+        anchor: schedAnchor,
+        duration: dur,
+        days: [...selectedRecurringDays].sort(),
+        lastAddedDate: '',
+      });
+      // injectRecurringTasks will add today's instance if today is a selected day
+      injectRecurringTasks();
+    } else {
+      tasks.push({
+        id: Date.now(), type: 'scheduled', title, addedAt: Date.now(),
+        startTime, endTime, duration: dur,
+      });
+      save();
+    }
 
     // Reset
     document.getElementById('schedTitleInput').value = '';
     document.getElementById('schedTimeInput').value  = '09:00';
     document.getElementById('schedDurInput').value   = '60';
+    document.getElementById('schedRecurringCheck').checked = false;
+    selectedRecurringDays.clear();
+    document.getElementById('schedDayPicker').classList.remove('visible');
+    document.querySelectorAll('.recur-day-btn').forEach(b => b.classList.remove('active'));
     setAnchor('start');
     checkSchedAdd();
-    save(); schedOpen = false;
+    schedOpen = false;
     document.getElementById('addSchedFormWrap').classList.remove('open');
     document.getElementById('addSchedToggleBtn').classList.remove('open');
     render();
@@ -3309,11 +3517,11 @@
 
   function checkDayEndedReset() {
     const ended = localStorage.getItem('q_dayEnded');
-    if (!ended) return;
-    if (ended < todayPstDateStr()) {
-      // New day — clear greyed state
+    if (ended && ended < todayPstDateStr()) {
+      // New day — clear greyed state and inject any recurring tasks for today
       setDayEndedState(false);
-    } else {
+      injectRecurringTasks();
+    } else if (ended) {
       document.body.classList.add('day-ended');
     }
   }
