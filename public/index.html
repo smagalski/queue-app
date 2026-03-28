@@ -1288,6 +1288,7 @@
   let _currentUser = null;
   let _stateDoc = null;
   let _unsubscribeSnapshot = null;
+  let _listenerRetryTimer  = null;
 
   if (_configReady) {
     try {
@@ -1516,6 +1517,7 @@
       } else {
         setUserDoc(null);
         if (_unsubscribeSnapshot) { _unsubscribeSnapshot(); _unsubscribeSnapshot = null; }
+        if (_listenerRetryTimer) { clearTimeout(_listenerRetryTimer); _listenerRetryTimer = null; }
         tasks = []; doneTasks = [];
         render();
         showAuthScreen(true);
@@ -1601,6 +1603,11 @@
     }, err => {
       console.error('[Queue] Firestore listener error:', err);
       setSyncStatus('error');
+      if (_listenerRetryTimer) clearTimeout(_listenerRetryTimer);
+      _listenerRetryTimer = setTimeout(() => {
+        _listenerRetryTimer = null;
+        if (_currentUser && _stateDoc) load();
+      }, 5000);
     });
   }
 
