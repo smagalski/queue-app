@@ -1154,14 +1154,7 @@
         </div>
         <div>
           <label class="form-label">Duration</label>
-          <select class="duration-select" id="durationInput">
-            <option value="15">15 min</option><option value="30">30 min</option>
-            <option value="45">45 min</option><option value="60" selected>1 hr</option>
-            <option value="90">1 hr 30 min</option><option value="120">2 hr</option>
-            <option value="150">2 hr 30 min</option><option value="180">3 hr</option>
-            <option value="240">4 hr</option><option value="300">5 hr</option>
-            <option value="360">6 hr</option><option value="480">8 hr</option>
-          </select>
+          <select class="duration-select" id="durationInput"></select>
         </div>
         <button class="add-btn" id="addBtn" onclick="addTask()" disabled>Add Flex Task</button>
       </div>
@@ -1186,14 +1179,7 @@
         </div>
         <div>
           <label class="form-label">Duration</label>
-          <select class="duration-select" id="schedDurInput" oninput="checkSchedAdd()">
-            <option value="15">15 min</option><option value="30">30 min</option>
-            <option value="45">45 min</option><option value="60" selected>1 hr</option>
-            <option value="90">1 hr 30 min</option><option value="120">2 hr</option>
-            <option value="150">2 hr 30 min</option><option value="180">3 hr</option>
-            <option value="240">4 hr</option><option value="300">5 hr</option>
-            <option value="360">6 hr</option><option value="480">8 hr</option>
-          </select>
+          <select class="duration-select" id="schedDurInput" oninput="checkSchedAdd()"></select>
         </div>
         <div>
           <label class="form-label">Recurring</label>
@@ -1313,14 +1299,7 @@
       <button class="pd-sched-anchor" id="sdAnchorEnd"   onclick="sdSetAnchor('end')"   style="flex:1;font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:4px 0;border-radius:4px;border:1px solid var(--border);background:none;color:var(--text-dim);cursor:pointer;">End</button>
     </div>
     <input class="time-input" id="sdTimeInput" type="time" style="font-size:11px;padding:5px 8px;" oninput="sdCheckSave()" onchange="sdCheckSave()"/>
-    <select class="duration-select" id="sdDurInput" style="font-size:11px;padding:5px 8px;">
-      <option value="15">15 min</option><option value="30">30 min</option>
-      <option value="45">45 min</option><option value="60" selected>1 hr</option>
-      <option value="90">1 hr 30 min</option><option value="120">2 hr</option>
-      <option value="150">2 hr 30 min</option><option value="180">3 hr</option>
-      <option value="240">4 hr</option><option value="300">5 hr</option>
-      <option value="360">6 hr</option><option value="480">8 hr</option>
-    </select>
+    <select class="duration-select" id="sdDurInput" style="font-size:11px;padding:5px 8px;"></select>
     <button id="sdSaveBtn" onclick="commitSchedEdit()" style="width:100%;padding:5px 0;border-radius:4px;border:none;background:var(--sched);color:#0b0a0f;font-family:'Inter',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;">Save</button>
     <button onclick="convertToFlex()" style="width:100%;padding:4px 0;border-radius:4px;border:1px solid var(--border);background:none;color:var(--text-dim);font-family:'Inter',sans-serif;font-size:9px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;">Remove time → Flex</button>
   </div>
@@ -1338,14 +1317,7 @@
 <!-- DURATION EDIT DROPDOWN (shared, positioned by JS) -->
 <div class="p-dropdown" id="durDropdown" onclick="event.stopPropagation()" style="min-width:160px;">
   <div style="padding:4px 6px 6px;display:flex;flex-direction:column;gap:6px;">
-    <select class="duration-select" id="ddDurInput" style="font-size:11px;padding:5px 8px;">
-      <option value="15">15 min</option><option value="30">30 min</option>
-      <option value="45">45 min</option><option value="60">1 hr</option>
-      <option value="90">1 hr 30 min</option><option value="120">2 hr</option>
-      <option value="150">2 hr 30 min</option><option value="180">3 hr</option>
-      <option value="240">4 hr</option><option value="300">5 hr</option>
-      <option value="360">6 hr</option><option value="480">8 hr</option>
-    </select>
+    <select class="duration-select" id="ddDurInput" style="font-size:11px;padding:5px 8px;"></select>
     <button onclick="commitDurEdit()" style="width:100%;padding:5px 0;border-radius:4px;border:none;background:#fff;color:#0b0a0f;font-family:'Inter',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;">Save</button>
   </div>
 </div>
@@ -1355,6 +1327,9 @@
   const DONE_TTL   = 48 * 60 * 60 * 1000;
   const P_LABELS   = ['','URGENT','HIGH','MEDIUM','LOW'];
   const P_COLORS   = ['','#ff6b8a','#ffaa60','#f0d060','#7fd4a8'];
+  const P_NAMES    = ['','Urgent','High','Medium','Low'];
+  const P_COLS     = ['','rgba(255,107,138,0.2)','rgba(255,165,89,0.2)','rgba(100,200,120,0.2)','rgba(100,150,255,0.2)'];
+  const P_TEXT     = ['','#ff6b8a','#ffa559','#64c878','#6496ff'];
   let   CAL_START  = parseInt(localStorage.getItem('q_calStart') || '360');  // default 6:00am
   let   CAL_END    = parseInt(localStorage.getItem('q_calEnd')   || '1260'); // default 9:00pm
   const PX_PER_MIN = 44 / 60;
@@ -1782,12 +1757,7 @@
     renderRecurringList();
   }
 
-  function fmtTime12(hhmm) {
-    const [hStr, mStr] = hhmm.split(':');
-    const h = parseInt(hStr, 10), m = parseInt(mStr, 10);
-    const ap = h >= 12 ? 'pm' : 'am';
-    return `${h % 12 || 12}:${String(m).padStart(2,'0')}${ap}`;
-  }
+  function fmtTime12(hhmm) { return fmtTimePST('T' + hhmm); }
 
   function renderRecurringList() {
     const body = document.getElementById('recurringBody');
@@ -1797,9 +1767,7 @@
     }
     body.innerHTML = recurringTasks.map(rt => {
       const timeLabel = `${rt.anchor === 'start' ? 'Starts' : 'Ends'} at ${fmtTime12(rt.time)}`;
-      const durLabel  = rt.duration >= 60
-        ? `${rt.duration / 60}h${rt.duration % 60 ? ' ' + (rt.duration % 60) + 'm' : ''}`
-        : `${rt.duration}m`;
+      const durLabel  = fmtTaskMins(rt.duration);
       const dayChips = RECUR_DAY_NAMES.map((d, i) =>
         `<span class="recur-day-chip${rt.days.includes(i) ? ' on' : ''}">${d}</span>`
       ).join('');
@@ -3423,6 +3391,17 @@
     return { todayDone, timePerTask, priorityBreakdown, stressScore, incompleteTasks };
   }
 
+  function buildPriorityHtml(pb, total, chipClass) {
+    let html = '';
+    for (let p = 1; p <= 4; p++) {
+      const cnt = pb[['','urgent','high','medium','low'][p]] || 0;
+      if (!cnt) continue;
+      const pct = total > 0 ? Math.round(cnt / total * 100) : 0;
+      html += `<span class="${chipClass}" style="background:${P_COLS[p]};color:${P_TEXT[p]}">${P_NAMES[p]} ${pct}%</span>`;
+    }
+    return html;
+  }
+
   function stressColor(score) {
     if (score <= 3) return '#4caf7d';
     if (score <= 6) return '#f0a500';
@@ -3446,24 +3425,15 @@
   function openEndDayModal() {
     const report  = computeDayReport();
     const { timePerTask, priorityBreakdown, stressScore, incompleteTasks } = report;
-    const col     = stressColor(stressScore);
-    const P_NAMES = ['', 'Urgent', 'High', 'Medium', 'Low'];
-    const P_COLS  = ['', 'rgba(255,107,138,0.2)', 'rgba(255,165,89,0.2)', 'rgba(100,200,120,0.2)', 'rgba(100,150,255,0.2)'];
-    const P_TEXT  = ['', '#ff6b8a', '#ffa559', '#64c878', '#6496ff'];
-    const total   = priorityBreakdown.total;
+    const col   = stressColor(stressScore);
+    const total = priorityBreakdown.total;
 
-    let tasksHtml = timePerTask.length
+    const tasksHtml = timePerTask.length
       ? timePerTask.map(r => `<div class="edm-task-row"><span class="edm-task-title">${esc(r.title)}</span><span class="edm-task-time">${fmtTaskMins(r.mins)}</span></div>`).join('')
       : '<div style="color:var(--text-dim);font-size:11px;padding:4px 0">No completed tasks recorded.</div>';
 
-    let priorityHtml = '';
-    for (let p = 1; p <= 4; p++) {
-      const cnt = priorityBreakdown[['','urgent','high','medium','low'][p]];
-      if (!cnt) continue;
-      const pct = total > 0 ? Math.round(cnt / total * 100) : 0;
-      priorityHtml += `<span class="edm-priority-chip" style="background:${P_COLS[p]};color:${P_TEXT[p]}">${P_NAMES[p]} ${pct}%</span>`;
-    }
-    if (!priorityHtml) priorityHtml = '<span style="color:var(--text-dim);font-size:11px">No priority data</span>';
+    const priorityHtml = buildPriorityHtml(priorityBreakdown, total, 'edm-priority-chip')
+      || '<span style="color:var(--text-dim);font-size:11px">No priority data</span>';
 
     document.getElementById('edmBody').innerHTML = `
       <div>
@@ -3599,23 +3569,13 @@
   function renderHistoryDay(day) {
     const col   = stressColor(day.stressScore || 1);
     const label = stressLabel(day.stressScore || 1);
-    const P_NAMES = ['','Urgent','High','Medium','Low'];
-    const P_COLS  = ['','rgba(255,107,138,0.2)','rgba(255,165,89,0.2)','rgba(100,200,120,0.2)','rgba(100,150,255,0.2)'];
-    const P_TEXT  = ['','#ff6b8a','#ffa559','#64c878','#6496ff'];
 
     const taskRows = (day.timePerTask || []).map(r =>
       `<div class="hdc-task-row"><span class="hdc-task-title">${esc(r.title)}</span><span class="hdc-task-time">${fmtTaskMins(r.mins)}</span></div>`
     ).join('') || '<div style="text-align:center;color:var(--text-dim);font-size:11px;padding:10px 0;letter-spacing:0.06em;font-style:italic">No recorded data</div>';
 
     const pb = day.priorityBreakdown || {};
-    const ptotal = pb.total || 0;
-    let priorityHtml = '';
-    for (let p = 1; p <= 4; p++) {
-      const cnt = pb[['','urgent','high','medium','low'][p]] || 0;
-      if (!cnt) continue;
-      const pct = ptotal > 0 ? Math.round(cnt / ptotal * 100) : 0;
-      priorityHtml += `<span class="hdc-priority-chip" style="background:${P_COLS[p]};color:${P_TEXT[p]}">${P_NAMES[p]} ${pct}%</span>`;
-    }
+    const priorityHtml = buildPriorityHtml(pb, pb.total || 0, 'hdc-priority-chip');
 
     // Format date nicely
     const [y,m,d] = day.date.split('-').map(Number);
@@ -3836,6 +3796,16 @@
   // ── Init view mode ─────────────────────────────────────────────────────
   (function initViewMode() {
     applyViewMode(isMobileDevice());
+  })();
+
+  // ── Populate duration selects ───────────────────────────────────────────
+  (function() {
+    const DURATION_OPTS = [[15,'15 min'],[30,'30 min'],[45,'45 min'],[60,'1 hr'],[90,'1 hr 30 min'],[120,'2 hr'],[150,'2 hr 30 min'],[180,'3 hr'],[240,'4 hr'],[300,'5 hr'],[360,'6 hr'],[480,'8 hr']];
+    const html = DURATION_OPTS.map(([v,l]) => `<option value="${v}"${v===60?' selected':''}>${l}</option>`).join('');
+    ['durationInput','schedDurInput','sdDurInput','ddDurInput'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = html;
+    });
   })();
 
   // ── Init ───────────────────────────────────────────────────────────────
