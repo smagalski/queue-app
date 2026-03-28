@@ -1365,7 +1365,8 @@
   // ── State ──────────────────────────────────────────────────────────────
   let tasks           = [];
   let doneTasks       = [];
-  let recurringTasks  = [];
+  let recurringTasks        = [];
+  let selectedRecurringDays = new Set();
   let selPriority     = null;
   let doneOpen        = false;
   let addOpen         = false;
@@ -1633,7 +1634,7 @@
       } else {
         setUserDoc(null);
         if (_unsubscribeSnapshot) { _unsubscribeSnapshot(); _unsubscribeSnapshot = null; }
-        tasks = []; doneTasks = [];
+        tasks = []; doneTasks = []; recurringTasks = [];
         render();
         showAuthScreen(true);
         setSyncStatus('offline');
@@ -2731,8 +2732,6 @@
     document.getElementById('schedAddBtn').disabled = !(hasTitle && hasTime && hasDays);
   }
 
-  let selectedRecurringDays = new Set();
-
   function toggleRecurringDays() {
     const checked = document.getElementById('schedRecurringCheck').checked;
     document.getElementById('schedDayPicker').classList.toggle('visible', checked);
@@ -2785,8 +2784,11 @@
         days: [...selectedRecurringDays].sort(),
         lastAddedDate: '',
       });
-      // injectRecurringTasks will add today's instance if today is a selected day
-      injectRecurringTasks();
+      injectRecurringTasks(); // adds today's instance + saves if today is a selected day
+      // if today is not a selected day, injectRecurringTasks() skips the save —
+      // we still need to persist the new template
+      const justAdded = recurringTasks[recurringTasks.length - 1];
+      if (!justAdded.lastAddedDate) save();
     } else {
       tasks.push({
         id: Date.now(), type: 'scheduled', title, addedAt: Date.now(),
@@ -3261,11 +3263,10 @@
     const elapsedSec  = Math.floor((Date.now() - breakStartMs) / 1000);
     const elapsedMins = Math.floor(elapsedSec / 60);
     const s           = elapsedSec % 60;
-    const m           = Math.floor(elapsedSec / 60);
     const h           = Math.floor(elapsedSec / 3600);
     const displayTime = h > 0
-      ? `${h}:${String(m % 60).padStart(2,'0')}:${String(s).padStart(2,'0')}`
-      : `${m}:${String(s).padStart(2,'0')}`;
+      ? `${h}:${String(elapsedMins % 60).padStart(2,'0')}:${String(s).padStart(2,'0')}`
+      : `${elapsedMins}:${String(s).padStart(2,'0')}`;
 
     const totalUsed = breakUsedMins + elapsedMins;
     const over      = totalUsed >= breakBudgetMins;
