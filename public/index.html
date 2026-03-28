@@ -876,6 +876,37 @@
   .end-break-btn:hover { opacity: 0.85; }
   .end-break-btn.over { background: var(--p1); color: #fff; }
 
+  /* ── END-DAY / DAY-OFF BUTTON ROW ────────────────────────────────────── */
+  .end-btns-row { display: flex; gap: 6px; margin-top: 6px; }
+  .end-btns-row .end-day-btn { flex: 1; margin-top: 0; width: auto; }
+
+  /* ── DAY OFF OVERLAY ──────────────────────────────────────────────────── */
+  .day-off-overlay {
+    position: fixed; inset: 0; z-index: 9000;
+    background: rgba(11,10,15,0.92); backdrop-filter: blur(6px);
+    display: none; flex-direction: column; align-items: center; justify-content: center; gap: 28px;
+  }
+  .day-off-overlay.active { display: flex; }
+  .dob-heading {
+    font-size: 11px; font-weight: 800; letter-spacing: 0.35em; text-transform: uppercase; color: var(--text-dim);
+  }
+  .dob-sub {
+    font-size: 13px; color: var(--text-dim); letter-spacing: 0.06em;
+  }
+  .dob-cancel-btn {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px;
+    color: rgba(255,255,255,0.5); font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase; padding: 13px 36px;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .dob-cancel-btn:hover { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); }
+
+  /* ── DAY OFF history badge ────────────────────────────────────────────── */
+  .hdc-day-off-badge {
+    font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--text-dim); background: rgba(255,255,255,0.06); border-radius: 20px; padding: 4px 10px;
+  }
+
 </style>
 <!-- Firebase SDK (compat v9) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -1059,7 +1090,10 @@
       </button>
       <button class="break-toggle-btn" id="takeBreakBtn" onclick="takeBreak()" disabled>Take a Break</button>
     </div>
-    <button class="end-day-btn" id="endDayBtn" onclick="openEndDayModal()">End Day</button>
+    <div class="end-btns-row">
+      <button class="end-day-btn" id="endDayBtn" onclick="openEndDayModal()">End Day</button>
+      <button class="end-day-btn" id="dayOffBtn" onclick="enterDayOff()">Day Off</button>
+    </div>
     <div class="day-ended-msg" id="dayEndedMsg">Day Ended — See You Tomorrow</div>
     <button class="end-day-btn" id="resumeDayBtn" onclick="resumeDay()" style="display:none">Resume Day</button>
 
@@ -1143,6 +1177,13 @@
   </div>
   <div class="break-status" id="breakStatus"></div>
   <button class="end-break-btn" id="endBreakBtn" onclick="endBreak()">End Break</button>
+</div>
+
+<!-- DAY OFF OVERLAY -->
+<div class="day-off-overlay" id="dayOffOverlay">
+  <div class="dob-heading">Day Off</div>
+  <div class="dob-sub">Rest up — see you tomorrow</div>
+  <button class="dob-cancel-btn" onclick="cancelDayOff()">Cancel</button>
 </div>
 
 <!-- END DAY MODAL -->
@@ -3292,6 +3333,39 @@
     }
   }
 
+  // ── Day Off ────────────────────────────────────────────────────────────
+  function enterDayOff() {
+    const today = todayPstDateStr();
+    localStorage.setItem('q_dayOff', today);
+    document.getElementById('dayOffOverlay').classList.add('active');
+    if (_db && _currentUser) {
+      _db.collection('users').doc(_currentUser.uid).collection('history').doc(today).set({
+        date: today, dayOff: true, savedAt: Date.now(),
+      }).catch(err => console.error('[Queue] Day off save failed:', err));
+    }
+  }
+
+  function cancelDayOff() {
+    const today = localStorage.getItem('q_dayOff');
+    localStorage.removeItem('q_dayOff');
+    document.getElementById('dayOffOverlay').classList.remove('active');
+    if (today && _db && _currentUser) {
+      _db.collection('users').doc(_currentUser.uid).collection('history').doc(today)
+        .delete()
+        .catch(err => console.error('[Queue] Day off cancel failed:', err));
+    }
+  }
+
+  function checkDayOffState() {
+    const stored = localStorage.getItem('q_dayOff');
+    const today  = todayPstDateStr();
+    if (stored === today) {
+      document.getElementById('dayOffOverlay').classList.add('active');
+    } else if (stored && stored < today) {
+      localStorage.removeItem('q_dayOff'); // stale
+    }
+  }
+
   // ── History overlay ────────────────────────────────────────────────────
   function openHistoryOverlay() {
     closeGearMenu();
@@ -3321,6 +3395,20 @@
   }
 
   function renderHistoryDay(day) {
+    // Format date (used for both normal and day-off paths)
+    const [y,m,d] = day.date.split('-').map(Number);
+    const dateObj  = new Date(y, m-1, d);
+    const dateLabel = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+    if (day.dayOff) {
+      return `<div class="history-day-card">
+        <div class="hdc-header">
+          <div class="hdc-date">${dateLabel}</div>
+          <div class="hdc-day-off-badge">Day Off</div>
+        </div>
+      </div>`;
+    }
+
     const col   = stressColor(day.stressScore || 1);
     const label = stressLabel(day.stressScore || 1);
     const taskRows = (day.timePerTask || []).map(r =>
@@ -3336,11 +3424,6 @@
       const pct = ptotal > 0 ? Math.round(cnt / ptotal * 100) : 0;
       priorityHtml += `<span class="hdc-priority-chip" style="background:${P_CHIP_BG[p]};color:${P_CHIP_COL[p]}">${P_NAMES[p]} ${pct}%</span>`;
     }
-
-    // Format date nicely
-    const [y,m,d] = day.date.split('-').map(Number);
-    const dateObj = new Date(y, m-1, d);
-    const dateLabel = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
     return `<div class="history-day-card">
       <div class="hdc-header">
@@ -3478,6 +3561,8 @@
   loadBreakState();
   loadCalBounds();
   checkDayEndedReset();
+  checkDayOffState();
+  setInterval(checkDayOffState, 60000);
   updateClock();
   render();
 </script>
