@@ -2069,11 +2069,8 @@
     if (!card) return;
 
     if (!b.done) {
-      // Active task — use renderCard with slotIndex:0 for full interactivity
-      card.innerHTML = renderCard(task, { slotIndex: 0 }) +
-        `<div class="block-detail-delete-row">
-          <button class="block-detail-delete-btn" onclick="deleteBlockFromDetail()">Delete</button>
-        </div>`;
+      // Active task — renderCard already includes a ✕ delete button
+      card.innerHTML = renderCard(task, { slotIndex: 0 });
     } else {
       // Done task — show info + time edit
       const priority = task.priority || 3;
@@ -2132,7 +2129,13 @@
   function _refreshBlockDetail() {
     const overlay = document.getElementById('blockDetailOverlay');
     if (!overlay || !overlay.classList.contains('active') || !_detailBlock) return;
-    if (!_detailBlock.done) {
+    if (_detailBlock.done) {
+      const doneTask = doneTasks.find(t => t.id === _detailBlock.task.id);
+      if (!doneTask) { closeBlockDetail(); return; }
+      const startMins = doneTask.startTime ? parseDateLocalMins(doneTask.startTime) : _detailBlock.startMins;
+      const endMins   = doneTask.endTime   ? parseDateLocalMins(doneTask.endTime)   : _detailBlock.endMins;
+      _detailBlock = { ..._detailBlock, task: doneTask, startMins, endMins };
+    } else {
       const task = tasks.find(t => t.id === _detailBlock.task.id);
       if (!task) { closeBlockDetail(); return; }
       task._eff = effP(task);
@@ -2232,11 +2235,7 @@
       blocks.push({ task, startMins, endMins, done: false, anchored: true, scheduled: true });
     }
 
-    // occupied[] = scheduled task windows + done flex task windows
-    // Computed before placing active flex tasks so findGap avoids both
-    const occupied = blocks
-      .map(b => ({ start: b.startMins, end: b.endMins }))
-      .sort((a, b) => a.start - b.start);
+    const occupied = [];
 
     // ── Completed tasks for today (computed first, added to occupied) ──────
     for (const task of doneTasks) {
@@ -2313,14 +2312,6 @@
       }
       blocks.push({ task, startMins: start, endMins: end, done: false, anchored: false, scheduled: false });
       cursor = end;
-    }
-
-    // ── Clip overlapping done blocks so each moment shows one task ─────────
-    const _doneSorted = blocks.filter(b => b.done).sort((a, b) => a.startMins - b.startMins);
-    let _doneEnd = -Infinity;
-    for (const b of _doneSorted) {
-      if (b.startMins < _doneEnd) b.startMins = _doneEnd;
-      if (b.endMins > _doneEnd)   _doneEnd = b.endMins;
     }
 
     // ── Build DOM ──────────────────────────────────────────────────────────
