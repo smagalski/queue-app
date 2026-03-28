@@ -3147,16 +3147,17 @@
 
     // ── Stress score ───────────────────────────────────────────────────
     // All three factors use nonBreak counts — breaks are excluded.
-    // Denominators are scaled so a formerly-6 day scores ~4.
-    const urgencyRaw  = Math.min(Math.max(pCount[1] + pCount[2], 1), 7);  // max: 7 urgent/high tasks
-    const urgencyNorm = (urgencyRaw - 1) / 6;
-    const volumeRaw   = Math.min(Math.max(total, 5), 16);                  // max: 16 tasks (excl. breaks)
-    const volumeNorm  = (volumeRaw - 5) / 11;
+    // Hours carries 3× weight; volume 1×; urgency 0.5× (priority mix matters less).
+    // Calibrated: ~6h mixed-priority day → 4, 10h active day → 8.
+    const urgencyRaw  = Math.min(pCount[1] + pCount[2], 10);              // urgent + high tasks, max 10
+    const urgencyNorm = urgencyRaw / 10;
+    const volumeRaw   = Math.min(Math.max(total, 3), 20);                  // task count (excl. breaks)
+    const volumeNorm  = (volumeRaw - 3) / 17;
     const workMins    = timePerTask.reduce((s, r) => s + r.mins, 0);
     const workHours   = workMins / 60;
-    const hoursRaw    = Math.min(Math.max(workHours, 6), 12);              // max: 12 hrs worked
-    const hoursNorm   = (hoursRaw - 6) / 6;
-    const rawScore    = (urgencyNorm + volumeNorm + hoursNorm) * 10 / 3;
+    const hoursRaw    = Math.min(Math.max(workHours, 4), 10);              // active hours, floor 4, max 10
+    const hoursNorm   = (hoursRaw - 4) / 6;
+    const rawScore    = (3 * hoursNorm + volumeNorm + 0.5 * urgencyNorm) / 4.5 * 10;
     const stressScore = Math.min(Math.max(Math.round(rawScore), 1), 10);
 
     // ── Incomplete tasks ───────────────────────────────────────────────
