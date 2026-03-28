@@ -1548,7 +1548,12 @@
       setSyncStatus('syncing');
       _stateDoc.set({ tasks, doneTasks, breakStartMs: breakStartMs || null, breakTaskId: breakTaskId || null })
         .then(() => setSyncStatus('synced'))
-        .catch(err => { console.error('[Queue] Save failed:', err); setSyncStatus('error'); });
+        .catch(err => {
+          console.error('[Queue] Save failed:', err);
+          setSyncStatus('error');
+          // Re-establish the listener so the connection recovers automatically
+          setTimeout(() => { if (_currentUser) load(); }, 5000);
+        });
     }
   }
 
@@ -1601,6 +1606,8 @@
     }, err => {
       console.error('[Queue] Firestore listener error:', err);
       setSyncStatus('error');
+      // Re-establish the listener after a delay so the UI doesn't stay stuck in error state
+      setTimeout(() => { if (_currentUser) load(); }, 8000);
     });
   }
 
