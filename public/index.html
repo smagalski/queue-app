@@ -175,7 +175,25 @@
   @keyframes syncPulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
   .sync-label { font-size: 10px; color: var(--text-dim); letter-spacing: 0.05em; }
 
-  .duration-display { font-size: 9px; color: #fff; opacity: 0.45; }
+  .duration-display {
+    font-size: 9px; font-weight: 600; letter-spacing: 0.1em; padding: 2px 7px;
+    border-radius: 3px; text-transform: uppercase;
+    background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.65);
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+  .carried-badge {
+    font-size: 9px; font-weight: 600; letter-spacing: 0.08em; padding: 2px 7px;
+    border-radius: 3px; text-transform: uppercase;
+    background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.3);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .title-edit-input {
+    background: transparent; border: none; border-bottom: 1px solid rgba(255,255,255,0.4);
+    outline: none; color: #fff; font-family: 'Inter', sans-serif;
+    font-size: 18px; font-weight: 700; width: 100%; text-align: center;
+    padding: 0; line-height: 1.3;
+  }
+  .bbp-divider { height: 1px; background: var(--border); margin: 6px 0 4px; }
   .escalation-badge { font-size: 9px; color: var(--p3); font-weight: 600; letter-spacing: 0.04em; }
 
   .done-btn {
@@ -636,6 +654,7 @@
   body.mobile-view .calendar-section .cal-container {
     display: none;
   }
+  .cal-drawer-label { display: none; }
   body.mobile-view .cal-drawer-label {
     font-size: 9px; font-weight: 600; letter-spacing: 0.1em;
     text-transform: uppercase; color: var(--text-dim);
@@ -943,6 +962,7 @@
       <div class="clock-date" id="clockDate">---</div>
     </div>
     <div class="calendar-section" id="calendarSection" onclick="toggleCalDrawer(event)">
+      <div class="cal-drawer-label">📅 Timeline</div>
 <div class="cal-container" id="calContainer"></div>
     </div>
     <div class="break-budget-panel" id="breakBudgetPanel">
@@ -958,6 +978,29 @@
         <div class="bbp-bar-fill" id="breakBarFill"></div>
       </div>
       <div class="bbp-tally" id="breakTally">0 min used</div>
+      <div class="bbp-divider"></div>
+      <div class="bbp-header">
+        <span class="bbp-label">Day Start</span>
+        <select class="bbp-select" id="calStartSelect" onchange="setCalBounds()">
+          <option value="240">4 AM</option>
+          <option value="300">5 AM</option>
+          <option value="360">6 AM</option>
+          <option value="420">7 AM</option>
+          <option value="480">8 AM</option>
+          <option value="540">9 AM</option>
+        </select>
+      </div>
+      <div class="bbp-header">
+        <span class="bbp-label">Day End</span>
+        <select class="bbp-select" id="calEndSelect" onchange="setCalBounds()">
+          <option value="1080">6 PM</option>
+          <option value="1140">7 PM</option>
+          <option value="1200">8 PM</option>
+          <option value="1260">9 PM</option>
+          <option value="1320">10 PM</option>
+          <option value="1380">11 PM</option>
+        </select>
+      </div>
     </div>
   </div>
 
@@ -1195,10 +1238,9 @@
   const DONE_TTL   = 48 * 60 * 60 * 1000;
   const P_LABELS   = ['','URGENT','HIGH','MEDIUM','LOW'];
   const P_COLORS   = ['','#ff6b8a','#ffaa60','#f0d060','#7fd4a8'];
-  const CAL_START  = 6 * 60;   // 6:00am
-  const CAL_END    = 21 * 60;  // 9:00pm
+  let   CAL_START  = parseInt(localStorage.getItem('q_calStart') || '360');  // default 6:00am
+  let   CAL_END    = parseInt(localStorage.getItem('q_calEnd')   || '1260'); // default 9:00pm
   const PX_PER_MIN = 44 / 60;
-  const CAL_H      = (CAL_END - CAL_START) * PX_PER_MIN;
   const DEFAULT_DUR = 60;
   const DAYS   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -1956,13 +1998,17 @@
     // calStartTime label only meaningful on the NOW slot (slotIndex 0)
     const taskForLabel = (opts.slotIndex === 0 || opts.inMore) ? task : { ...task, calStartTime: null };
     const timeTxt = taskTimeLabel(taskForLabel);
-    const timeCls = taskSched ? '' : taskTimeClass(task);
+    const _nowMins = getPST().getHours() * 60 + getPST().getMinutes();
+    const timeCls = taskSched
+      ? (task._etMins != null && task._etMins <= _nowMins ? 'end-over' : '')
+      : taskTimeClass(task);
 
     const badgeHtml = taskSched
       ? `<span class="priority-badge" onclick="showSchedDropdown(${task.id},event)" style="cursor:pointer;background:rgba(126,200,227,0.15);color:${SCHED_COL};border:1px solid rgba(126,200,227,0.3)">⏰ SCHEDULED</span>`
       : `<span class="priority-badge pc-${priority}" onclick="showPriorityDropdown(${task.id},event)" style="cursor:pointer">${P_LABELS[priority]}</span>`;
 
-    const escHtml  = escalated ? `<span class="escalation-badge">⚡ escalated</span>` : '';
+    const escHtml      = escalated ? `<span class="escalation-badge">⚡ escalated</span>` : '';
+    const carriedHtml  = task.carriedFrom ? `<span class="carried-badge">↩ Carried</span>` : '';
     const hasCalStart = !taskSched && !!task.calStartTime && opts.slotIndex === 0;
     const timeHtml = timeTxt
       ? `<span class="time-display ${timeCls}"${
@@ -1985,8 +2031,8 @@
 
     return `<div class="task-card ${taskSched ? 'sched-card' : 'flex-card'}" data-id="${task.id}" ${dragAttrs}${moreAttrs} style="--card-bar:${col};border-color:${col}">
       <button class="delete-btn" onclick="deleteTaskById(${task.id})" title="Delete">✕</button>
-      <div class="card-task-title">${esc(task.title)}</div>
-      <div class="task-meta" style="display:flex">${badgeHtml}${escHtml}${timeHtml}${durHtml}<button class="done-btn" onclick="markDoneById(${task.id})">✓ Done</button></div>
+      <div class="card-task-title" ondblclick="startTitleEdit(${task.id},this)" style="cursor:text">${esc(task.title)}</div>
+      <div class="task-meta" style="display:flex">${badgeHtml}${escHtml}${carriedHtml}${timeHtml}${durHtml}<button class="done-btn" onclick="markDoneById(${task.id})">✓ Done</button></div>
       ${taskSched ? '<div class="sched-error-msg">Scheduled tasks can\'t be reordered by priority.</div>' : ''}
     </div>`;
   }
@@ -2269,12 +2315,20 @@
       cursor = end;
     }
 
+    // ── Clip overlapping done blocks so each moment shows one task ─────────
+    const _doneSorted = blocks.filter(b => b.done).sort((a, b) => a.startMins - b.startMins);
+    let _doneEnd = -Infinity;
+    for (const b of _doneSorted) {
+      if (b.startMins < _doneEnd) b.startMins = _doneEnd;
+      if (b.endMins > _doneEnd)   _doneEnd = b.endMins;
+    }
+
     // ── Build DOM ──────────────────────────────────────────────────────────
     const container = document.getElementById('calContainer');
-    container.style.height = (CAL_H + 24) + 'px';
+    container.style.height = ((CAL_END - CAL_START) * PX_PER_MIN + 24) + 'px';
     container.innerHTML = '';
 
-    for (let h = 6; h <= 21; h++) {
+    for (let h = Math.floor(CAL_START / 60); h <= Math.ceil(CAL_END / 60); h++) {
       const y     = minsToY(h * 60);
       const label = h === 12 ? '12PM' : h > 12 ? `${h-12}PM` : `${h}AM`;
       const row   = document.createElement('div');
@@ -2291,7 +2345,7 @@
       const yStart = minsToY(Math.max(b.startMins, CAL_START));
       const yEnd   = minsToY(Math.min(b.endMins,   CAL_END));
       const height = Math.max(yEnd - yStart, 12);
-      if (yStart > CAL_H + 8 || yEnd < 8) continue;
+      if (yStart > (CAL_END - CAL_START) * PX_PER_MIN + 8 || yEnd < 8) continue;
 
       const priority  = b.done ? b.task.priority : b.task._eff.priority;
       let   metaLabel = fmtDuration(b.task.duration || DEFAULT_DUR) || '';
@@ -2311,8 +2365,19 @@
         <span class="cal-block-title">${esc(b.task.title)}</span>
         <span class="cal-block-meta">${esc(metaLabel)}</span>`;
 
-
-      // Double-click opens detail modal for any block
+      // Double-click: on tall blocks the title span triggers inline edit; on short blocks
+      // (or anywhere outside the title) always open the detail modal.
+      const _titleSpan = block.querySelector('.cal-block-title');
+      if (_titleSpan) {
+        _titleSpan.addEventListener('dblclick', e => {
+          e.stopPropagation();
+          if (height >= 28) {
+            startCalTitleEdit(b.task, b.done, _titleSpan);
+          } else {
+            openBlockDetail(b, dp);
+          }
+        });
+      }
       block.addEventListener('dblclick', e => { e.stopPropagation(); openBlockDetail(b, dp); });
 
       if (b.scheduled && !b.done) {
@@ -2764,6 +2829,87 @@
 
   // ── Break feature ──────────────────────────────────────────────────────
 
+  // ── Calendar bounds ────────────────────────────────────────────────────
+  function setCalBounds() {
+    const startSel = document.getElementById('calStartSelect');
+    const endSel   = document.getElementById('calEndSelect');
+    if (!startSel || !endSel) return;
+    const newStart = parseInt(startSel.value);
+    const newEnd   = parseInt(endSel.value);
+    if (newEnd <= newStart + 60) { // enforce at least 1-hr span
+      endSel.value = String(newStart + 60);
+    }
+    CAL_START = parseInt(startSel.value);
+    CAL_END   = parseInt(endSel.value);
+    localStorage.setItem('q_calStart', String(CAL_START));
+    localStorage.setItem('q_calEnd',   String(CAL_END));
+    renderCalendar();
+  }
+
+  function loadCalBounds() {
+    const startSel = document.getElementById('calStartSelect');
+    const endSel   = document.getElementById('calEndSelect');
+    if (startSel) startSel.value = String(CAL_START);
+    if (endSel)   endSel.value   = String(CAL_END);
+  }
+
+  // ── Inline title editing ───────────────────────────────────────────────
+  function startTitleEdit(taskId, titleEl) {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task || titleEl.querySelector('input')) return;
+    const original = task.title;
+    const card = titleEl.closest('.task-card');
+    if (card) card.draggable = false;
+    const input = document.createElement('input');
+    input.className = 'title-edit-input';
+    input.value = original;
+    titleEl.textContent = '';
+    titleEl.appendChild(input);
+    input.focus();
+    input.select();
+    const commit = () => {
+      if (card) card.draggable = true;
+      const newTitle = input.value.trim();
+      if (newTitle && newTitle !== original) {
+        task.title = newTitle;
+        save();
+      }
+      render();
+    };
+    input.addEventListener('blur', commit, { once: true });
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter')  { e.preventDefault(); input.blur(); }
+      if (e.key === 'Escape') { input.value = original; input.blur(); }
+    });
+  }
+
+  function startCalTitleEdit(blockTask, isDone, spanEl) {
+    const arr  = isDone ? doneTasks : tasks;
+    const task = arr.find(t => t.id === blockTask.id);
+    if (!task || spanEl.querySelector('input')) return;
+    const original = task.title;
+    const input = document.createElement('input');
+    input.value = original;
+    input.style.cssText = 'background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,0.5);outline:none;color:inherit;font:inherit;width:100%;padding:0';
+    spanEl.textContent = '';
+    spanEl.appendChild(input);
+    input.focus();
+    input.select();
+    const commit = () => {
+      const newTitle = input.value.trim();
+      if (newTitle && newTitle !== original) {
+        task.title = newTitle;
+        save();
+      }
+      renderCalendar();
+    };
+    input.addEventListener('blur', commit, { once: true });
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter')  { e.preventDefault(); input.blur(); }
+      if (e.key === 'Escape') { input.value = original; input.blur(); }
+    });
+  }
+
   function loadBreakState() {
     try {
       const s = JSON.parse(localStorage.getItem('q_break') || '{}');
@@ -2923,8 +3069,30 @@
     // render() already called by markDoneById
   }
 
+  function computeBreakUsedMins() {
+    // Derive from today's done break tasks (same source as the timeline) so
+    // the budget bar always stays in sync with what is shown on the calendar.
+    const todayStr = getPST().toDateString();
+    let mins = 0;
+    for (const t of doneTasks) {
+      if (!t.isBreak) continue;
+      const donePst = new Date(new Date(t.doneAt).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+      if (donePst.toDateString() !== todayStr) continue;
+      if (t.startTime && t.endTime) {
+        const s = parseDateLocalMins(t.startTime);
+        const e = parseDateLocalMins(t.endTime);
+        if (e > s) mins += e - s;
+      } else if (t.duration) {
+        mins += t.duration;
+      }
+    }
+    // Include the currently-running break if one is active
+    if (breakStartMs) mins += Math.floor((Date.now() - breakStartMs) / 60000);
+    return mins;
+  }
+
   function updateBreakUI() {
-    const totalUsed = breakUsedMins;
+    const totalUsed = computeBreakUsedMins();
     const over      = totalUsed > 0 && totalUsed >= breakBudgetMins;
     const pct       = breakBudgetMins > 0 ? Math.min((totalUsed / breakBudgetMins) * 100, 100) : 0;
 
@@ -3077,13 +3245,19 @@
     if (choice === 'clear') {
       tasks = [];
     } else {
-      // carry: scheduled tasks with past times become flex
+      // carry: scheduled tasks with past end times become flex; all tasks get a carriedFrom stamp
+      const _nowMinsEod = getPST().getHours() * 60 + getPST().getMinutes();
       tasks = tasks.map(t => {
-        if (isScheduled(t) && t._etMins != null && t._etMins < (getPST().getHours()*60 + getPST().getMinutes())) {
-          const { startTime, endTime, calStartTime, ...flex } = t;
-          return { ...flex, type: 'flex', priority: t.priority || 3 };
+        if (isScheduled(t)) {
+          const etMins = t.endTime   ? parseDateLocalMins(t.endTime)
+                       : t.startTime ? parseDateLocalMins(t.startTime) + (t.duration || DEFAULT_DUR)
+                       : null;
+          if (etMins != null && etMins < _nowMinsEod) {
+            const { startTime, endTime, calStartTime, ...flex } = t;
+            return { ...flex, type: 'flex', priority: t.priority || 3, carriedFrom: today };
+          }
         }
-        return t;
+        return { ...t, carriedFrom: today };
       });
     }
 
@@ -3179,7 +3353,7 @@
 
     const taskRows = (day.timePerTask || []).map(r =>
       `<div class="hdc-task-row"><span class="hdc-task-title">${esc(r.title)}</span><span class="hdc-task-time">${fmtTaskMins(r.mins)}</span></div>`
-    ).join('') || '<div style="color:var(--text-dim);font-size:11px;padding:4px 0">No tasks recorded</div>';
+    ).join('') || '<div style="text-align:center;color:var(--text-dim);font-size:11px;padding:10px 0;letter-spacing:0.06em;font-style:italic">No recorded data</div>';
 
     const pb = day.priorityBreakdown || {};
     const ptotal = pb.total || 0;
@@ -3330,6 +3504,7 @@
   // load() is called by the auth state observer once signed in
   if (!_auth) { load(); } // local-only fallback
   loadBreakState();
+  loadCalBounds();
   checkDayEndedReset();
   updateClock();
   render();
