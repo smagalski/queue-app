@@ -543,10 +543,10 @@
   }
   .day-off-overlay.active { display: flex; }
   .dob-heading {
-    font-size: 22px; font-weight: 800; letter-spacing: 0.35em; text-transform: uppercase; color: #fff;
+    font-size: 88px; font-weight: 800; letter-spacing: -0.03em; color: #fff; line-height: 1;
   }
   .dob-title {
-    font-size: 56px; font-weight: 800; letter-spacing: -0.02em; color: var(--text-dim); line-height: 1;
+    font-size: 13px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-dim);
   }
   .dob-sub {
     font-size: 11px; color: var(--text-dim); letter-spacing: 0.06em; text-align: center;
@@ -1251,8 +1251,8 @@
 
 <!-- DAY OFF OVERLAY -->
 <div class="day-off-overlay" id="dayOffOverlay">
-  <div class="dob-heading">Day Off</div>
   <div class="dob-title" id="dayOffDayName"></div>
+  <div class="dob-heading">Day Off</div>
   <div class="dob-sub">Rest up — see you tomorrow</div>
   <button class="dob-cancel-btn" onclick="cancelDayOff()">Cancel</button>
 </div>
