@@ -40,7 +40,8 @@
   .titlebar {
     width: 100%; background: var(--surface); border-bottom: 1px solid var(--border);
     display: flex; align-items: center; justify-content: space-between;
-    padding: 9px 20px; flex-shrink: 0; user-select: none; z-index: 100;
+    padding: 9px 20px; flex-shrink: 0; user-select: none;
+    position: relative; z-index: 10000;
   }
   .app-name { font-weight: 800; font-size: 12px; letter-spacing: 0.2em; color: #fff; text-transform: uppercase; }
   .titlebar-right { display: flex; align-items: center; gap: 12px; }
