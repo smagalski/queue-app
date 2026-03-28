@@ -534,6 +534,30 @@
   .edm-choice-btn.clear:hover { background: rgba(255,107,138,0.1); }
   .edm-incomplete-count { font-size: 12px; color: var(--text-mid); text-align: center; margin-bottom: 10px; }
 
+  /* ── DAY OFF OVERLAY ─────────────────────────────────────────────────── */
+  .day-off-overlay {
+    position: fixed; inset: 0; z-index: 9500;
+    background: rgba(11,10,15,0.92); backdrop-filter: blur(6px);
+    display: none; flex-direction: column; align-items: center; justify-content: center; gap: 28px;
+  }
+  .day-off-overlay.active { display: flex; }
+  .dob-heading {
+    font-size: 11px; font-weight: 800; letter-spacing: 0.35em; text-transform: uppercase; color: var(--text-dim);
+  }
+  .dob-title {
+    font-size: 88px; font-weight: 800; letter-spacing: -0.03em; color: #fff; line-height: 1;
+  }
+  .dob-sub {
+    font-size: 11px; color: var(--text-dim); letter-spacing: 0.06em; text-align: center;
+  }
+  .dob-cancel-btn {
+    background: #fff; border: none; border-radius: 6px; color: #0b0a0f;
+    font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase; padding: 13px 36px;
+    cursor: pointer; transition: opacity 0.15s;
+  }
+  .dob-cancel-btn:hover { opacity: 0.85; }
+
   /* ── HISTORY OVERLAY ─────────────────────────────────────────────────── */
   .history-overlay {
     display: none; position: fixed; inset: 0; z-index: 1200;
@@ -1227,6 +1251,7 @@
 <!-- DAY OFF OVERLAY -->
 <div class="day-off-overlay" id="dayOffOverlay">
   <div class="dob-heading">Day Off</div>
+  <div class="dob-title" id="dayOffDayName"></div>
   <div class="dob-sub">Rest up — see you tomorrow</div>
   <button class="dob-cancel-btn" onclick="cancelDayOff()">Cancel</button>
 </div>
@@ -1649,6 +1674,7 @@
         setUserDoc(user);
         showAuthScreen(false);
         load();
+        checkDayOffFirestore();
       } else {
         setUserDoc(null);
         if (_unsubscribeSnapshot) { _unsubscribeSnapshot(); _unsubscribeSnapshot = null; }
@@ -3571,10 +3597,16 @@
   }
 
   // ── Day Off ────────────────────────────────────────────────────────────
+  function showDayOffOverlay() {
+    const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    document.getElementById('dayOffDayName').textContent = dayNames[getPST().getDay()];
+    document.getElementById('dayOffOverlay').classList.add('active');
+  }
+
   function enterDayOff() {
     const today = todayPstDateStr();
     localStorage.setItem('q_dayOff', today);
-    document.getElementById('dayOffOverlay').classList.add('active');
+    showDayOffOverlay();
     if (_db && _currentUser) {
       _db.collection('users').doc(_currentUser.uid).collection('history').doc(today).set({
         date: today, dayOff: true, savedAt: Date.now(),
@@ -3583,10 +3615,10 @@
   }
 
   function cancelDayOff() {
-    const today = localStorage.getItem('q_dayOff');
+    const today = localStorage.getItem('q_dayOff') || todayPstDateStr();
     localStorage.removeItem('q_dayOff');
     document.getElementById('dayOffOverlay').classList.remove('active');
-    if (today && _db && _currentUser) {
+    if (_db && _currentUser) {
       _db.collection('users').doc(_currentUser.uid).collection('history').doc(today)
         .delete()
         .catch(err => console.error('[Queue] Day off cancel failed:', err));
@@ -3597,10 +3629,25 @@
     const stored = localStorage.getItem('q_dayOff');
     const today  = todayPstDateStr();
     if (stored === today) {
-      document.getElementById('dayOffOverlay').classList.add('active');
+      showDayOffOverlay();
     } else if (stored && stored < today) {
       localStorage.removeItem('q_dayOff'); // stale
     }
+  }
+
+  // Check Firestore for a day-off entry written from another browser/device
+  function checkDayOffFirestore() {
+    if (!_db || !_currentUser) return;
+    const today = todayPstDateStr();
+    _db.collection('users').doc(_currentUser.uid).collection('history').doc(today)
+      .get()
+      .then(doc => {
+        if (doc.exists && doc.data().dayOff) {
+          localStorage.setItem('q_dayOff', today);
+          showDayOffOverlay();
+        }
+      })
+      .catch(() => {}); // silent — offline is fine
   }
 
   // ── History overlay ────────────────────────────────────────────────────
