@@ -970,7 +970,7 @@
       <div class="gear-menu" id="gearMenu">
         <button class="gear-menu-item" onclick="openRecurringOverlay();closeGearMenu()">Recurring Tasks</button>
         <button class="gear-menu-item" onclick="openHistoryOverlay()">Day History</button>
-        <button class="gear-menu-item" onclick="clearOldHistory();closeGearMenu()">Clear history older than 7 days</button>
+        <button class="gear-menu-item" onclick="openClearHistoryConfirm();closeGearMenu()">Clear history older than 7 days</button>
         <div class="gear-menu-divider"></div>
         <button class="gear-menu-item" onclick="openPasswordModal();closeGearMenu()">Change Password</button>
         <div class="gear-menu-divider"></div>
@@ -1260,6 +1260,21 @@
       <button class="history-close" onclick="closeHistoryOverlay()">✕</button>
     </div>
     <div id="historyBody"></div>
+  </div>
+</div>
+
+<!-- CLEAR HISTORY CONFIRMATION MODAL -->
+<div class="end-day-overlay" id="clearHistoryConfirm" onclick="if(event.target===this)closeClearHistoryConfirm()">
+  <div class="end-day-modal" style="max-width:400px;gap:20px;">
+    <div class="edm-title">Delete Old History?</div>
+    <div style="font-size:13px;color:var(--text-mid);line-height:1.6;">
+      This will permanently delete all day history records older than 7 days.
+      <strong style="color:#fff;display:block;margin-top:10px;">This data cannot be recovered.</strong>
+    </div>
+    <div class="edm-choice-row">
+      <button class="edm-choice-btn" onclick="closeClearHistoryConfirm()">Cancel</button>
+      <button class="edm-choice-btn clear" onclick="clearOldHistory()">Delete Forever</button>
+    </div>
   </div>
 </div>
 
@@ -3616,9 +3631,17 @@
     </div>`;
   }
 
+  function openClearHistoryConfirm() {
+    document.getElementById('clearHistoryConfirm').classList.add('active');
+  }
+
+  function closeClearHistoryConfirm() {
+    document.getElementById('clearHistoryConfirm').classList.remove('active');
+  }
+
   function clearOldHistory() {
+    closeClearHistoryConfirm();
     if (!_db || !_currentUser) return;
-    if (!confirm('Delete all history older than 7 days? This cannot be undone.')) return;
     const cutoff = new Date(getPST());
     cutoff.setDate(cutoff.getDate() - 7);
     const cutoffStr = `${cutoff.getFullYear()}-${String(cutoff.getMonth()+1).padStart(2,'0')}-${String(cutoff.getDate()).padStart(2,'0')}`;
