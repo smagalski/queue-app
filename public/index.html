@@ -534,6 +534,18 @@
     font-size: 11px; padding: 3px 7px; outline: none; cursor: pointer;
   }
   .block-detail-time-edit input[type="time"]:focus { border-color: rgba(255,255,255,0.35); }
+  .block-detail-delete-row {
+    display: flex; justify-content: flex-end; margin-top: 10px;
+  }
+  .block-detail-delete-btn {
+    background: rgba(220,60,60,0.12); border: 1px solid rgba(220,60,60,0.35);
+    border-radius: 6px; color: rgba(220,80,80,0.9); font-size: 11px;
+    font-family: 'Inter', sans-serif; font-weight: 600; letter-spacing: 0.04em;
+    padding: 5px 14px; cursor: pointer; transition: all 0.15s;
+  }
+  .block-detail-delete-btn:hover {
+    background: rgba(220,60,60,0.25); border-color: rgba(220,60,60,0.6); color: #ff6b6b;
+  }
 
   /* ── PASSWORD MODAL ───────────────────────────────────────────────────── */
   .pw-modal-overlay {
@@ -2012,7 +2024,10 @@
 
     if (!b.done) {
       // Active task — use renderCard with slotIndex:0 for full interactivity
-      card.innerHTML = renderCard(task, { slotIndex: 0 });
+      card.innerHTML = renderCard(task, { slotIndex: 0 }) +
+        `<div class="block-detail-delete-row">
+          <button class="block-detail-delete-btn" onclick="deleteBlockFromDetail()">Delete</button>
+        </div>`;
     } else {
       // Done task — show info + time edit
       const priority = task.priority || 3;
@@ -2035,8 +2050,24 @@
             <label>End</label>
             <input type="time" id="bdEndTime"   value="${_minsToTimeInput(b.endMins)}"   onchange="updateDoneBlockTime()"/>
           </div>
+        </div>
+        <div class="block-detail-delete-row">
+          <button class="block-detail-delete-btn" onclick="deleteBlockFromDetail()">Delete</button>
         </div>`;
     }
+  }
+
+  function deleteBlockFromDetail() {
+    if (!_detailBlock) return;
+    const task = _detailBlock.task;
+    if (_detailBlock.done) {
+      doneTasks = doneTasks.filter(t => t.id !== task.id);
+    } else {
+      tasks = tasks.filter(t => t.id !== task.id);
+    }
+    closeBlockDetail();
+    save();
+    render();
   }
 
   function updateDoneBlockTime() {
@@ -2179,9 +2210,25 @@
       // Skip 0-duration done blocks — they cause visual overlap and carry no useful info
       if (endMins <= startMins) continue;
       blocks.push({ task, startMins, endMins, done: true, anchored: false, scheduled: isScheduled(task) });
-      // Include done flex blocks in occupied so active tasks hop over them
-      if (!isScheduled(task)) occupied.push({ start: startMins, end: endMins });
     }
+
+    // ── Resolve overlaps: shift done blocks forward past any earlier block ──
+    // Anchored (scheduled) blocks are immovable; done blocks slide right to clear them.
+    // Sort: anchored before done when tied, then by start time.
+    blocks.sort((a, b) => a.startMins - b.startMins || (b.anchored ? 1 : -1));
+    for (let i = 1; i < blocks.length; i++) {
+      const prev = blocks[i - 1];
+      const curr = blocks[i];
+      if (curr.startMins < prev.endMins && !curr.anchored) {
+        const dur = curr.endMins - curr.startMins;
+        curr.startMins = prev.endMins;
+        curr.endMins   = curr.startMins + dur;
+      }
+    }
+
+    // Rebuild occupied from all placed blocks so flex tasks avoid everything
+    occupied.length = 0;
+    for (const b of blocks) occupied.push({ start: b.startMins, end: b.endMins });
 
     function findGap(start, dur) {
       let cursor = start, safe = false;
