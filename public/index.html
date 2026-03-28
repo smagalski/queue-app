@@ -394,7 +394,7 @@
   .add-sched-toggle-btn.open { border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom-color: transparent; }
   .add-sched-toggle-btn.open .add-toggle-icon { transform: rotate(45deg); }
   .add-sched-form-wrap { overflow: hidden; max-height: 0; transition: max-height 0.3s ease; }
-  .add-sched-form-wrap.open { max-height: 480px; }
+  .add-sched-form-wrap.open { max-height: 620px; }
   .add-sched-form {
     background: var(--surface); border: 1px solid rgba(126,200,227,0.3); border-top: none;
     border-radius: 0 0 8px 8px; padding: 14px; display: flex; flex-direction: column; gap: 12px;
@@ -407,6 +407,51 @@
   .add-sched-btn:hover { opacity: 0.85; }
   .add-sched-btn:active { transform: scale(0.98); }
   .add-sched-btn:disabled { opacity: 0.2; cursor: default; }
+
+  /* ── RECURRING DAY PICKER ─────────────────────────────────────────────── */
+  .recur-toggle-row {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .recur-day-picker {
+    display: none; flex-wrap: wrap; gap: 5px; margin-top: 8px;
+  }
+  .recur-day-picker.visible { display: flex; }
+  .recur-day-btn {
+    height: 28px; padding: 0 8px; border-radius: 5px; border: 1px solid var(--border);
+    background: var(--bg); color: var(--text-dim); font-family: 'Inter',sans-serif;
+    font-size: 9px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+    cursor: pointer; transition: all 0.12s;
+  }
+  .recur-day-btn.active {
+    background: rgba(126,200,227,0.15); border-color: var(--sched); color: var(--sched);
+  }
+
+  /* ── RECURRING TASKS MODAL ────────────────────────────────────────────── */
+  .recur-task-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 16px; display: flex; flex-direction: column; gap: 8px;
+  }
+  .recur-task-header {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  }
+  .recur-task-title { font-size: 14px; font-weight: 700; color: #fff; }
+  .recur-task-meta  { font-size: 11px; color: var(--text-dim); }
+  .recur-task-days  { display: flex; gap: 5px; flex-wrap: wrap; }
+  .recur-day-chip {
+    font-size: 9px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 2px 7px; border-radius: 4px; border: 1px solid var(--border); color: var(--text-dim);
+  }
+  .recur-day-chip.on { border-color: var(--sched); color: var(--sched); background: rgba(126,200,227,0.12); }
+  .recur-delete-btn {
+    background: none; border: 1px solid var(--border); border-radius: 5px;
+    color: var(--text-dim); font-size: 10px; font-weight: 600; letter-spacing: 0.06em;
+    text-transform: uppercase; padding: 4px 9px; cursor: pointer; transition: all 0.12s;
+    white-space: nowrap; flex-shrink: 0;
+  }
+  .recur-delete-btn:hover { border-color: #ff6b8a; color: #ff6b8a; }
+  .recur-empty {
+    color: var(--text-dim); font-size: 13px; text-align: center; padding: 40px 0;
+  }
 
   /* Sign-out button in titlebar */
   .signout-btn {
@@ -603,7 +648,28 @@
     overflow: auto;
     height: auto;
     min-height: 100vh;
+    overscroll-behavior-y: none; /* prevent browser's native pull-to-refresh */
   }
+
+  /* ── PULL-TO-REFRESH ──────────────────────────────────────────────────── */
+  .ptr-indicator {
+    position: fixed; top: 0; left: 50%; z-index: 2000;
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--surface); border: 1px solid var(--border);
+    box-shadow: 0 3px 14px rgba(0,0,0,0.6);
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: none;
+    transform: translate(-50%, -100%);
+    will-change: transform, opacity;
+  }
+  .ptr-arrow { color: var(--sched); font-size: 13px; line-height: 1; display: block; }
+  .ptr-spinner {
+    display: none; width: 14px; height: 14px;
+    border: 2px solid rgba(126,200,227,0.25);
+    border-top-color: var(--sched); border-radius: 50%;
+    animation: ptr-spin 0.65s linear infinite;
+  }
+  @keyframes ptr-spin { to { transform: rotate(360deg); } }
   body.mobile-view .main-layout {
     flex-direction: column;
     overflow: visible;
@@ -884,6 +950,11 @@
 </head>
 <body>
 
+<div id="ptr" class="ptr-indicator">
+  <span class="ptr-arrow" id="ptrArrow">↓</span>
+  <span class="ptr-spinner" id="ptrSpinner"></span>
+</div>
+
 <div class="titlebar">
   <span class="app-name">Queue</span>
   <div class="titlebar-right">
@@ -897,8 +968,9 @@
     <div class="gear-wrap" id="gearWrap" style="display:none">
       <button class="gear-btn" id="gearBtn" onclick="toggleGearMenu(event)">⚙</button>
       <div class="gear-menu" id="gearMenu">
+        <button class="gear-menu-item" onclick="openRecurringOverlay();closeGearMenu()">Recurring Tasks</button>
         <button class="gear-menu-item" onclick="openHistoryOverlay()">Day History</button>
-        <button class="gear-menu-item" onclick="clearOldHistory();closeGearMenu()">Clear history older than 7 days</button>
+        <button class="gear-menu-item" onclick="openClearHistoryConfirm();closeGearMenu()">Clear history older than 7 days</button>
         <div class="gear-menu-divider"></div>
         <button class="gear-menu-item" onclick="openPasswordModal();closeGearMenu()">Change Password</button>
         <div class="gear-menu-divider"></div>
@@ -1059,7 +1131,10 @@
       </button>
       <button class="break-toggle-btn" id="takeBreakBtn" onclick="takeBreak()" disabled>Take a Break</button>
     </div>
-    <button class="end-day-btn" id="endDayBtn" onclick="openEndDayModal()">End Day</button>
+    <div class="end-btns-row">
+      <button class="end-day-btn" id="endDayBtn" onclick="openEndDayModal()">End Day</button>
+      <button class="end-day-btn" id="dayOffBtn" onclick="enterDayOff()">Day Off</button>
+    </div>
     <div class="day-ended-msg" id="dayEndedMsg">Day Ended — See You Tomorrow</div>
     <button class="end-day-btn" id="resumeDayBtn" onclick="resumeDay()" style="display:none">Resume Day</button>
 
@@ -1082,14 +1157,7 @@
         </div>
         <div>
           <label class="form-label">Duration</label>
-          <select class="duration-select" id="durationInput">
-            <option value="15">15 min</option><option value="30">30 min</option>
-            <option value="45">45 min</option><option value="60" selected>1 hr</option>
-            <option value="90">1 hr 30 min</option><option value="120">2 hr</option>
-            <option value="150">2 hr 30 min</option><option value="180">3 hr</option>
-            <option value="240">4 hr</option><option value="300">5 hr</option>
-            <option value="360">6 hr</option><option value="480">8 hr</option>
-          </select>
+          <select class="duration-select" id="durationInput"></select>
         </div>
         <button class="add-btn" id="addBtn" onclick="addTask()" disabled>Add Flex Task</button>
       </div>
@@ -1114,14 +1182,25 @@
         </div>
         <div>
           <label class="form-label">Duration</label>
-          <select class="duration-select" id="schedDurInput" oninput="checkSchedAdd()">
-            <option value="15">15 min</option><option value="30">30 min</option>
-            <option value="45">45 min</option><option value="60" selected>1 hr</option>
-            <option value="90">1 hr 30 min</option><option value="120">2 hr</option>
-            <option value="150">2 hr 30 min</option><option value="180">3 hr</option>
-            <option value="240">4 hr</option><option value="300">5 hr</option>
-            <option value="360">6 hr</option><option value="480">8 hr</option>
-          </select>
+          <select class="duration-select" id="schedDurInput" oninput="checkSchedAdd()"></select>
+        </div>
+        <div>
+          <label class="form-label">Recurring</label>
+          <div class="recur-toggle-row">
+            <label class="check-label">
+              <input type="checkbox" id="schedRecurringCheck" onchange="toggleRecurringDays()"/>
+              Repeat weekly
+            </label>
+          </div>
+          <div class="recur-day-picker" id="schedDayPicker">
+            <button class="recur-day-btn" data-day="0" onclick="toggleRecurringDay(0)">Sun</button>
+            <button class="recur-day-btn" data-day="1" onclick="toggleRecurringDay(1)">Mon</button>
+            <button class="recur-day-btn" data-day="2" onclick="toggleRecurringDay(2)">Tue</button>
+            <button class="recur-day-btn" data-day="3" onclick="toggleRecurringDay(3)">Wed</button>
+            <button class="recur-day-btn" data-day="4" onclick="toggleRecurringDay(4)">Thu</button>
+            <button class="recur-day-btn" data-day="5" onclick="toggleRecurringDay(5)">Fri</button>
+            <button class="recur-day-btn" data-day="6" onclick="toggleRecurringDay(6)">Sat</button>
+          </div>
         </div>
         <button class="add-sched-btn" id="schedAddBtn" onclick="addScheduledTask()" disabled>Schedule It</button>
       </div>
@@ -1143,6 +1222,13 @@
   </div>
   <div class="break-status" id="breakStatus"></div>
   <button class="end-break-btn" id="endBreakBtn" onclick="endBreak()">End Break</button>
+</div>
+
+<!-- DAY OFF OVERLAY -->
+<div class="day-off-overlay" id="dayOffOverlay">
+  <div class="dob-heading">Day Off</div>
+  <div class="dob-sub">Rest up — see you tomorrow</div>
+  <button class="dob-cancel-btn" onclick="cancelDayOff()">Cancel</button>
 </div>
 
 <!-- END DAY MODAL -->
@@ -1173,6 +1259,32 @@
   </div>
 </div>
 
+<!-- CLEAR HISTORY CONFIRMATION MODAL -->
+<div class="end-day-overlay" id="clearHistoryConfirm" onclick="if(event.target===this)closeClearHistoryConfirm()">
+  <div class="end-day-modal" style="max-width:400px;gap:20px;">
+    <div class="edm-title">Delete Old History?</div>
+    <div style="font-size:13px;color:var(--text-mid);line-height:1.6;">
+      This will permanently delete all day history records older than 7 days.
+      <strong style="color:#fff;display:block;margin-top:10px;">This data cannot be recovered.</strong>
+    </div>
+    <div class="edm-choice-row">
+      <button class="edm-choice-btn" onclick="closeClearHistoryConfirm()">Cancel</button>
+      <button class="edm-choice-btn clear" onclick="clearOldHistory()">Delete Forever</button>
+    </div>
+  </div>
+</div>
+
+<!-- RECURRING TASKS MODAL -->
+<div class="history-overlay" id="recurringOverlay" onclick="if(event.target===this)closeRecurringOverlay()">
+  <div class="history-inner">
+    <div class="history-header">
+      <div class="history-title">Recurring Tasks</div>
+      <button class="history-close" onclick="closeRecurringOverlay()">✕</button>
+    </div>
+    <div id="recurringBody"></div>
+  </div>
+</div>
+
 <!-- BLOCK DETAIL MODAL -->
 <div class="block-detail-overlay" id="blockDetailOverlay" onclick="if(event.target===this)closeBlockDetail()">
   <div class="block-detail-modal">
@@ -1197,14 +1309,7 @@
       <button class="pd-sched-anchor" id="sdAnchorEnd"   onclick="sdSetAnchor('end')"   style="flex:1;font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:4px 0;border-radius:4px;border:1px solid var(--border);background:none;color:var(--text-dim);cursor:pointer;">End</button>
     </div>
     <input class="time-input" id="sdTimeInput" type="time" style="font-size:11px;padding:5px 8px;" oninput="sdCheckSave()" onchange="sdCheckSave()"/>
-    <select class="duration-select" id="sdDurInput" style="font-size:11px;padding:5px 8px;">
-      <option value="15">15 min</option><option value="30">30 min</option>
-      <option value="45">45 min</option><option value="60" selected>1 hr</option>
-      <option value="90">1 hr 30 min</option><option value="120">2 hr</option>
-      <option value="150">2 hr 30 min</option><option value="180">3 hr</option>
-      <option value="240">4 hr</option><option value="300">5 hr</option>
-      <option value="360">6 hr</option><option value="480">8 hr</option>
-    </select>
+    <select class="duration-select" id="sdDurInput" style="font-size:11px;padding:5px 8px;"></select>
     <button id="sdSaveBtn" onclick="commitSchedEdit()" style="width:100%;padding:5px 0;border-radius:4px;border:none;background:var(--sched);color:#0b0a0f;font-family:'Inter',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;">Save</button>
     <button onclick="convertToFlex()" style="width:100%;padding:4px 0;border-radius:4px;border:1px solid var(--border);background:none;color:var(--text-dim);font-family:'Inter',sans-serif;font-size:9px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;">Remove time → Flex</button>
   </div>
@@ -1222,50 +1327,82 @@
 <!-- DURATION EDIT DROPDOWN (shared, positioned by JS) -->
 <div class="p-dropdown" id="durDropdown" onclick="event.stopPropagation()" style="min-width:160px;">
   <div style="padding:4px 6px 6px;display:flex;flex-direction:column;gap:6px;">
-    <select class="duration-select" id="ddDurInput" style="font-size:11px;padding:5px 8px;">
-      <option value="15">15 min</option><option value="30">30 min</option>
-      <option value="45">45 min</option><option value="60">1 hr</option>
-      <option value="90">1 hr 30 min</option><option value="120">2 hr</option>
-      <option value="150">2 hr 30 min</option><option value="180">3 hr</option>
-      <option value="240">4 hr</option><option value="300">5 hr</option>
-      <option value="360">6 hr</option><option value="480">8 hr</option>
-    </select>
+    <select class="duration-select" id="ddDurInput" style="font-size:11px;padding:5px 8px;"></select>
     <button onclick="commitDurEdit()" style="width:100%;padding:5px 0;border-radius:4px;border:none;background:#fff;color:#0b0a0f;font-family:'Inter',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;">Save</button>
   </div>
 </div>
 
 <script>
-  // ── Constants ──────────────────────────────────────────────────────────
-  const DONE_TTL   = 48 * 60 * 60 * 1000;
-  const P_LABELS   = ['','URGENT','HIGH','MEDIUM','LOW'];
-  const P_COLORS   = ['','#ff6b8a','#ffaa60','#f0d060','#7fd4a8'];
-  let   CAL_START  = parseInt(localStorage.getItem('q_calStart') || '360');  // default 6:00am
-  let   CAL_END    = parseInt(localStorage.getItem('q_calEnd')   || '1260'); // default 9:00pm
-  const PX_PER_MIN = 44 / 60;
-  const DEFAULT_DUR = 60;
-  const DAYS   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  // ── App constants ──────────────────────────────────────────────────────
+  const DONE_TTL    = 48 * 60 * 60 * 1000;   // how long completed tasks persist
+  const DEFAULT_DUR = 60;                      // default task duration in minutes
+  const PX_PER_MIN  = 44 / 60;                // calendar pixels per minute
 
-  // ── State ──────────────────────────────────────────────────────────────
-  let tasks           = [];
-  let doneTasks       = [];
-  let selPriority     = null;
-  let doneOpen        = false;
-  let addOpen         = false;
-  let schedOpen       = false;
-  let moreOpen        = false;
-  let dragId          = null;
-  let calDrag         = null;
-  let currentNowId    = null;
-  let pdTargetId      = null;
+  // Priority display arrays (indexed 1–4: Urgent, High, Medium, Low)
+  const P_LABELS = ['','URGENT','HIGH','MEDIUM','LOW'];
+  const P_COLORS = ['','#ff6b8a','#ffaa60','#f0d060','#7fd4a8'];
+  const P_NAMES  = ['','Urgent','High','Medium','Low'];
+  const P_COLS   = ['','rgba(255,107,138,0.2)','rgba(255,165,89,0.2)','rgba(100,200,120,0.2)','rgba(100,150,255,0.2)'];
+  const P_TEXT   = ['','#ff6b8a','#ffa559','#64c878','#6496ff'];
 
-  // ── Break state ─────────────────────────────────────────────────────────
-  let breakBudgetMins = 60;     // daily budget chosen by user
-  let breakUsedMins   = 0;      // cumulative minutes used today
-  let breakDay        = null;   // PST date string this tally belongs to
-  let breakStartMs    = null;   // Date.now() when current break began, null if no break
-  let breakTimerInt   = null;   // setInterval handle
-  let breakTaskId     = null;   // id of the active "Taking a Break" task
+  // Calendar bounds (mutable, persisted to localStorage)
+  let CAL_START = parseInt(localStorage.getItem('q_calStart') || '360');  // default 6:00am
+  let CAL_END   = parseInt(localStorage.getItem('q_calEnd')   || '1260'); // default 9:00pm
+
+  // Date/time label arrays
+  const DAYS          = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const MONTHS        = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const RECUR_DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  // Scheduled task accent color
+  const SCHED_COL = '#7ec8e3';
+
+  // ── Application state ──────────────────────────────────────────────────
+
+  // Task data
+  let tasks              = [];
+  let doneTasks          = [];
+  let recurringTasks     = [];
+  let selectedRecurringDays = new Set();
+
+  // UI panel state
+  let doneOpen  = false;
+  let addOpen   = false;
+  let schedOpen = false;
+  let moreOpen  = false;
+
+  // Auth state
+  let _authMode = 'signin'; // 'signin' | 'signup'
+
+  // Add-form state
+  let selPriority = null;   // selected priority (1–4) for new flex task
+  let schedAnchor = 'start'; // anchor for new scheduled task form ('start' | 'end')
+
+  // Drag & drop state
+  let dragId       = null;  // id of card being dragged in queue
+  let calDrag      = null;  // { blockEl, taskId, mode, ... } for calendar block drag
+
+  // Dropdown edit state (id of the task each edit dropdown is targeting)
+  let pdTargetId = null;    // priority dropdown
+  let sdTargetId = null;    // schedule-edit dropdown
+  let sdAnchor   = 'start'; // anchor selection inside schedule-edit dropdown
+  let ddTargetId = null;    // duration-edit dropdown
+  let stTargetId = null;    // start-time-edit dropdown (flex NOW tasks)
+
+  // Calendar now-line tracking
+  let currentNowId = null;
+
+  // Block detail modal state
+  let _detailBlock = null;
+  let _detailDp    = null;
+
+  // Break feature state
+  let breakBudgetMins = 60;   // daily budget chosen by user (minutes)
+  let breakUsedMins   = 0;    // cumulative minutes used today
+  let breakDay        = null; // PST date string this tally belongs to
+  let breakStartMs    = null; // Date.now() when current break began; null if not on break
+  let breakTimerInt   = null; // setInterval handle for the live break timer
+  let breakTaskId     = null; // id of the active "Taking a Break" task
 
   // ── Firebase config ────────────────────────────────────────────────────
   // 1. Go to https://console.firebase.google.com and create a project
@@ -1301,8 +1438,6 @@
   }
 
   // ── Auth helpers ───────────────────────────────────────────────────────
-  let _authMode = 'signin'; // 'signin' | 'signup'
-
   function toggleAuthMode() {
     _authMode = _authMode === 'signin' ? 'signup' : 'signin';
     const btn     = document.getElementById('authSubmitBtn');
@@ -1518,7 +1653,7 @@
         setUserDoc(null);
         if (_unsubscribeSnapshot) { _unsubscribeSnapshot(); _unsubscribeSnapshot = null; }
         if (_listenerRetryTimer) { clearTimeout(_listenerRetryTimer); _listenerRetryTimer = null; }
-        tasks = []; doneTasks = [];
+        tasks = []; doneTasks = []; recurringTasks = [];
         render();
         showAuthScreen(true);
         setSyncStatus('offline');
@@ -1548,9 +1683,14 @@
     updateTodayHistory();
     if (_stateDoc) {
       setSyncStatus('syncing');
-      _stateDoc.set({ tasks, doneTasks, breakStartMs: breakStartMs || null, breakTaskId: breakTaskId || null })
+      _stateDoc.set({ tasks, doneTasks, recurringTasks, breakStartMs: breakStartMs || null, breakTaskId: breakTaskId || null })
         .then(() => setSyncStatus('synced'))
-        .catch(err => { console.error('[Queue] Save failed:', err); setSyncStatus('error'); });
+        .catch(err => {
+          console.error('[Queue] Save failed:', err);
+          setSyncStatus('error');
+          // Re-establish the listener so the connection recovers automatically
+          setTimeout(() => { if (_currentUser) load(); }, 5000);
+        });
     }
   }
 
@@ -1571,13 +1711,15 @@
     _unsubscribeSnapshot = _stateDoc.onSnapshot(snap => {
       if (!snap.exists) { setSyncStatus('synced'); return; }
       const data = snap.data();
-      tasks     = data.tasks     || [];
-      doneTasks = data.doneTasks || [];
+      tasks          = data.tasks          || [];
+      doneTasks      = data.doneTasks      || [];
+      recurringTasks = data.recurringTasks || [];
       purgeDone();
       try {
         localStorage.setItem('q_tasks', JSON.stringify(tasks));
         localStorage.setItem('q_done',  JSON.stringify(doneTasks));
       } catch(e) {}
+      injectRecurringTasks();
       setSyncStatus('synced');
       render();
 
@@ -1609,6 +1751,80 @@
         if (_currentUser && _stateDoc) load();
       }, 5000);
     });
+  }
+
+  // ── Recurring task injection ────────────────────────────────────────────
+  function injectRecurringTasks() {
+    if (!recurringTasks.length) return;
+    const today     = todayPstDateStr();
+    const dayOfWeek = getPST().getDay(); // 0=Sun … 6=Sat
+    let injected    = false;
+    recurringTasks.forEach((rt, i) => {
+      if (rt.days.includes(dayOfWeek) && rt.lastAddedDate !== today) {
+        const anchorDT = `${today}T${rt.time}`;
+        const dur      = rt.duration;
+        let startTime, endTime;
+        if (rt.anchor === 'start') {
+          startTime = anchorDT;
+          endTime   = `${today}T${fmtMins(parseDateLocalMins(anchorDT) + dur)}`;
+        } else {
+          endTime   = anchorDT;
+          startTime = `${today}T${fmtMins(parseDateLocalMins(anchorDT) - dur)}`;
+        }
+        tasks.push({
+          id: Date.now() + i,
+          type: 'scheduled',
+          title: rt.title,
+          addedAt: Date.now(),
+          startTime, endTime, duration: dur,
+          recurringId: rt.id,
+        });
+        rt.lastAddedDate = today;
+        injected = true;
+      }
+    });
+    if (injected) save();
+  }
+
+  // ── Recurring tasks modal ───────────────────────────────────────────────
+  function openRecurringOverlay() {
+    renderRecurringList();
+    document.getElementById('recurringOverlay').classList.add('active');
+  }
+
+  function closeRecurringOverlay() {
+    document.getElementById('recurringOverlay').classList.remove('active');
+  }
+
+  function deleteRecurring(id) {
+    recurringTasks = recurringTasks.filter(rt => rt.id !== id);
+    save();
+    renderRecurringList();
+  }
+
+  function fmtTime12(hhmm) { return fmtTimePST('T' + hhmm); }
+
+  function renderRecurringList() {
+    const body = document.getElementById('recurringBody');
+    if (!recurringTasks.length) {
+      body.innerHTML = '<div class="recur-empty">No recurring tasks yet.<br>Create one by checking "Repeat weekly" when adding a scheduled task.</div>';
+      return;
+    }
+    body.innerHTML = recurringTasks.map(rt => {
+      const timeLabel = `${rt.anchor === 'start' ? 'Starts' : 'Ends'} at ${fmtTime12(rt.time)}`;
+      const durLabel  = fmtTaskMins(rt.duration);
+      const dayChips = RECUR_DAY_NAMES.map((d, i) =>
+        `<span class="recur-day-chip${rt.days.includes(i) ? ' on' : ''}">${d}</span>`
+      ).join('');
+      return `<div class="recur-task-card">
+        <div class="recur-task-header">
+          <div class="recur-task-title">${rt.title}</div>
+          <button class="recur-delete-btn" onclick="deleteRecurring(${rt.id})">Delete</button>
+        </div>
+        <div class="recur-task-meta">${timeLabel} · ${durLabel}</div>
+        <div class="recur-task-days">${dayChips}</div>
+      </div>`;
+    }).join('');
   }
 
   function purgeDone() {
@@ -1730,6 +1946,28 @@
     return rm ? `${h}h ${rm}m` : `${h}h`;
   }
 
+  // ── General utilities ──────────────────────────────────────────────────
+  // Escape a string for safe HTML insertion
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // Human-readable relative time (e.g. "5m ago", "2h ago")
+  function timeAgo(ts) {
+    const diffMins = Math.floor((Date.now() - ts) / 60000);
+    if (diffMins < 1)  return 'just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    return diffHours < 24 ? `${diffHours}h ago` : `${Math.floor(diffHours / 24)}d ago`;
+  }
+
+  // Format a minute count as a compact duration string (e.g. "45m", "1h 30m")
+  function fmtTaskMins(mins) {
+    if (mins < 60) return `${mins}m`;
+    const hours = Math.floor(mins / 60), remainder = mins % 60;
+    return remainder > 0 ? `${hours}h ${remainder}m` : `${hours}h`;
+  }
+
   // ── Dropdown helpers ───────────────────────────────────────────────────
   function openDropdown(dd, rect, width) {
     dd.classList.add('open');
@@ -1764,9 +2002,6 @@
   document.addEventListener('click', hideAllDropdowns);
 
   // ── Schedule-edit dropdown ─────────────────────────────────────────────
-  let sdTargetId  = null;
-  let sdAnchor    = 'start';
-
   function showSchedDropdown(taskId, event) {
     event.stopPropagation();
     hideAllDropdowns();
@@ -1791,8 +2026,6 @@
   }
 
   // ── Duration-edit dropdown ─────────────────────────────────────────────
-  let ddTargetId = null;
-
   function showDurDropdown(taskId, event) {
     event.stopPropagation();
     hideAllDropdowns();
@@ -1809,8 +2042,6 @@
   }
 
   // ── Start-time-edit dropdown (flex NOW task only) ──────────────────────
-  let stTargetId = null;
-
   function showStartTimeDropdown(taskId, event) {
     event.stopPropagation();
     hideAllDropdowns();
@@ -1928,7 +2159,7 @@
     return t.type === 'scheduled' || (!t.type && (t.startTime || t.endTime));
   }
 
-  // ── getSorted: FLEX tasks only, ordered by flexOrder then priority ──────
+  // getSorted: flex tasks only, by flexOrder then priority
   function getSorted() {
     return [...tasks]
       .filter(t => !isScheduled(t))
@@ -1942,7 +2173,7 @@
       });
   }
 
-  // ── getScheduled: SCHEDULED tasks sorted by startTime ────────────────
+  // getScheduled: scheduled tasks only, sorted by startTime
   function getScheduled() {
     const pst     = getPST();
     const nowMins = pst.getHours() * 60 + pst.getMinutes();
@@ -1959,10 +2190,7 @@
       .sort((a, b) => (a._stMins ?? 9999) - (b._stMins ?? 9999));
   }
 
-  // ── getAllSorted: merged queue order ──────────────────────────────────
-  // 1. Active scheduled tasks (currently in their window) — by startTime
-  // 2. Flex tasks — by priority
-  // 3. Future scheduled tasks (not yet started) — by startTime
+  // getAllSorted: merged queue order — active scheduled → flex → future scheduled
   function getAllSorted(flex) {
     if (!flex) flex = getSorted();
     const scheduled = getScheduled();
@@ -1983,7 +2211,6 @@
   }
 
   // ── renderCard: returns HTML string for a full task card ────────────────
-  const SCHED_COL = '#7ec8e3';
   function renderCard(task, opts) {
     opts = opts || {};
     if (!task) {
@@ -2046,9 +2273,6 @@
   }
 
   // ── Block detail modal ─────────────────────────────────────────────────
-  let _detailBlock = null;
-  let _detailDp    = null;
-
   function openBlockDetail(b, dp) {
     _detailBlock = b;
     _detailDp    = dp;
@@ -2491,8 +2715,6 @@
   }
 
   // ── Scheduled task form ────────────────────────────────────────────────
-  let schedAnchor = 'start'; // 'start' or 'end'
-
   function setAnchor(which) {
     schedAnchor = which;
     const startBtn = document.getElementById('anchorStartBtn');
@@ -2522,9 +2744,33 @@
   }
 
   function checkSchedAdd() {
-    const hasTitle = document.getElementById('schedTitleInput').value.trim().length > 0;
-    const hasTime  = document.getElementById('schedTimeInput').value.length > 0;
-    document.getElementById('schedAddBtn').disabled = !(hasTitle && hasTime);
+    const hasTitle    = document.getElementById('schedTitleInput').value.trim().length > 0;
+    const hasTime     = document.getElementById('schedTimeInput').value.length > 0;
+    const isRecurring = document.getElementById('schedRecurringCheck').checked;
+    const hasDays     = !isRecurring || selectedRecurringDays.size > 0;
+    document.getElementById('schedAddBtn').disabled = !(hasTitle && hasTime && hasDays);
+  }
+
+  function toggleRecurringDays() {
+    const checked = document.getElementById('schedRecurringCheck').checked;
+    document.getElementById('schedDayPicker').classList.toggle('visible', checked);
+    if (!checked) {
+      selectedRecurringDays.clear();
+      document.querySelectorAll('.recur-day-btn').forEach(b => b.classList.remove('active'));
+    }
+    checkSchedAdd();
+  }
+
+  function toggleRecurringDay(day) {
+    if (selectedRecurringDays.has(day)) {
+      selectedRecurringDays.delete(day);
+    } else {
+      selectedRecurringDays.add(day);
+    }
+    document.querySelectorAll('.recur-day-btn').forEach(b => {
+      b.classList.toggle('active', selectedRecurringDays.has(parseInt(b.dataset.day)));
+    });
+    checkSchedAdd();
   }
 
   function addScheduledTask() {
@@ -2545,18 +2791,42 @@
       startTime = `${dp}T${fmtMins(parseDateLocalMins(anchorDT) - dur)}`;
     }
 
-    tasks.push({
-      id: Date.now(), type: 'scheduled', title, addedAt: Date.now(),
-      startTime, endTime, duration: dur,
-    });
+    const isRecurring = document.getElementById('schedRecurringCheck').checked && selectedRecurringDays.size > 0;
+
+    if (isRecurring) {
+      recurringTasks.push({
+        id: Date.now(),
+        title,
+        time: timeVal,
+        anchor: schedAnchor,
+        duration: dur,
+        days: [...selectedRecurringDays].sort(),
+        lastAddedDate: '',
+      });
+      injectRecurringTasks(); // adds today's instance + saves if today is a selected day
+      // if today is not a selected day, injectRecurringTasks() skips the save —
+      // we still need to persist the new template
+      const justAdded = recurringTasks[recurringTasks.length - 1];
+      if (!justAdded.lastAddedDate) save();
+    } else {
+      tasks.push({
+        id: Date.now(), type: 'scheduled', title, addedAt: Date.now(),
+        startTime, endTime, duration: dur,
+      });
+      save();
+    }
 
     // Reset
     document.getElementById('schedTitleInput').value = '';
     document.getElementById('schedTimeInput').value  = '09:00';
     document.getElementById('schedDurInput').value   = '60';
+    document.getElementById('schedRecurringCheck').checked = false;
+    selectedRecurringDays.clear();
+    document.getElementById('schedDayPicker').classList.remove('visible');
+    document.querySelectorAll('.recur-day-btn').forEach(b => b.classList.remove('active'));
     setAnchor('start');
     checkSchedAdd();
-    save(); schedOpen = false;
+    schedOpen = false;
     document.getElementById('addSchedFormWrap').classList.remove('open');
     document.getElementById('addSchedToggleBtn').classList.remove('open');
     render();
@@ -2814,20 +3084,6 @@
     document.getElementById('doneArrow').classList.toggle('open', doneOpen);
   }
 
-  // ── Helpers ────────────────────────────────────────────────────────────
-  function timeAgo(ts) {
-    const m = Math.floor((Date.now() - ts) / 60000);
-    if (m < 1)  return 'just now';
-    if (m < 60) return `${m}m ago`;
-    const h = Math.floor(m / 60);
-    return h < 24 ? `${h}h ago` : `${Math.floor(h/24)}d ago`;
-  }
-  function esc(s) {
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
-
-  // ── Break feature ──────────────────────────────────────────────────────
-
   // ── Calendar bounds ────────────────────────────────────────────────────
   function setCalBounds() {
     const startSel = document.getElementById('calStartSelect');
@@ -2909,6 +3165,7 @@
     });
   }
 
+  // ── Break feature ──────────────────────────────────────────────────────
   function loadBreakState() {
     try {
       const s = JSON.parse(localStorage.getItem('q_break') || '{}');
@@ -3012,11 +3269,10 @@
     const elapsedSec  = Math.floor((Date.now() - breakStartMs) / 1000);
     const elapsedMins = Math.floor(elapsedSec / 60);
     const s           = elapsedSec % 60;
-    const m           = Math.floor(elapsedSec / 60);
     const h           = Math.floor(elapsedSec / 3600);
     const displayTime = h > 0
-      ? `${h}:${String(m % 60).padStart(2,'0')}:${String(s).padStart(2,'0')}`
-      : `${m}:${String(s).padStart(2,'0')}`;
+      ? `${h}:${String(elapsedMins % 60).padStart(2,'0')}:${String(s).padStart(2,'0')}`
+      : `${elapsedMins}:${String(s).padStart(2,'0')}`;
 
     const totalUsed = breakUsedMins + elapsedMins;
     const over      = totalUsed >= breakBudgetMins;
@@ -3173,6 +3429,17 @@
     return { todayDone, timePerTask, priorityBreakdown, stressScore, incompleteTasks };
   }
 
+  function buildPriorityHtml(pb, total, chipClass) {
+    let html = '';
+    for (let p = 1; p <= 4; p++) {
+      const cnt = pb[['','urgent','high','medium','low'][p]] || 0;
+      if (!cnt) continue;
+      const pct = total > 0 ? Math.round(cnt / total * 100) : 0;
+      html += `<span class="${chipClass}" style="background:${P_COLS[p]};color:${P_TEXT[p]}">${P_NAMES[p]} ${pct}%</span>`;
+    }
+    return html;
+  }
+
   function stressColor(score) {
     if (score <= 3) return '#4caf7d';
     if (score <= 6) return '#f0a500';
@@ -3187,33 +3454,18 @@
     return 'High stress day';
   }
 
-  function fmtTaskMins(mins) {
-    if (mins < 60) return `${mins}m`;
-    const h = Math.floor(mins / 60), m = mins % 60;
-    return m > 0 ? `${h}h ${m}m` : `${h}h`;
-  }
-
   function openEndDayModal() {
     const report  = computeDayReport();
     const { timePerTask, priorityBreakdown, stressScore, incompleteTasks } = report;
-    const col     = stressColor(stressScore);
-    const P_NAMES = ['', 'Urgent', 'High', 'Medium', 'Low'];
-    const P_COLS  = ['', 'rgba(255,107,138,0.2)', 'rgba(255,165,89,0.2)', 'rgba(100,200,120,0.2)', 'rgba(100,150,255,0.2)'];
-    const P_TEXT  = ['', '#ff6b8a', '#ffa559', '#64c878', '#6496ff'];
-    const total   = priorityBreakdown.total;
+    const col   = stressColor(stressScore);
+    const total = priorityBreakdown.total;
 
-    let tasksHtml = timePerTask.length
+    const tasksHtml = timePerTask.length
       ? timePerTask.map(r => `<div class="edm-task-row"><span class="edm-task-title">${esc(r.title)}</span><span class="edm-task-time">${fmtTaskMins(r.mins)}</span></div>`).join('')
       : '<div style="color:var(--text-dim);font-size:11px;padding:4px 0">No completed tasks recorded.</div>';
 
-    let priorityHtml = '';
-    for (let p = 1; p <= 4; p++) {
-      const cnt = priorityBreakdown[['','urgent','high','medium','low'][p]];
-      if (!cnt) continue;
-      const pct = total > 0 ? Math.round(cnt / total * 100) : 0;
-      priorityHtml += `<span class="edm-priority-chip" style="background:${P_COLS[p]};color:${P_TEXT[p]}">${P_NAMES[p]} ${pct}%</span>`;
-    }
-    if (!priorityHtml) priorityHtml = '<span style="color:var(--text-dim);font-size:11px">No priority data</span>';
+    const priorityHtml = buildPriorityHtml(priorityBreakdown, total, 'edm-priority-chip')
+      || '<span style="color:var(--text-dim);font-size:11px">No priority data</span>';
 
     document.getElementById('edmBody').innerHTML = `
       <div>
@@ -3309,12 +3561,45 @@
 
   function checkDayEndedReset() {
     const ended = localStorage.getItem('q_dayEnded');
-    if (!ended) return;
-    if (ended < todayPstDateStr()) {
-      // New day — clear greyed state
+    if (ended && ended < todayPstDateStr()) {
+      // New day — clear greyed state and inject any recurring tasks for today
       setDayEndedState(false);
-    } else {
+      injectRecurringTasks();
+    } else if (ended) {
       document.body.classList.add('day-ended');
+    }
+  }
+
+  // ── Day Off ────────────────────────────────────────────────────────────
+  function enterDayOff() {
+    const today = todayPstDateStr();
+    localStorage.setItem('q_dayOff', today);
+    document.getElementById('dayOffOverlay').classList.add('active');
+    if (_db && _currentUser) {
+      _db.collection('users').doc(_currentUser.uid).collection('history').doc(today).set({
+        date: today, dayOff: true, savedAt: Date.now(),
+      }).catch(err => console.error('[Queue] Day off save failed:', err));
+    }
+  }
+
+  function cancelDayOff() {
+    const today = localStorage.getItem('q_dayOff');
+    localStorage.removeItem('q_dayOff');
+    document.getElementById('dayOffOverlay').classList.remove('active');
+    if (today && _db && _currentUser) {
+      _db.collection('users').doc(_currentUser.uid).collection('history').doc(today)
+        .delete()
+        .catch(err => console.error('[Queue] Day off cancel failed:', err));
+    }
+  }
+
+  function checkDayOffState() {
+    const stored = localStorage.getItem('q_dayOff');
+    const today  = todayPstDateStr();
+    if (stored === today) {
+      document.getElementById('dayOffOverlay').classList.add('active');
+    } else if (stored && stored < today) {
+      localStorage.removeItem('q_dayOff'); // stale
     }
   }
 
@@ -3347,30 +3632,29 @@
   }
 
   function renderHistoryDay(day) {
+    // Format date (shared by both paths)
+    const [y,m,d] = day.date.split('-').map(Number);
+    const dateObj  = new Date(y, m-1, d);
+    const dateLabel = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+    if (day.dayOff) {
+      return `<div class="history-day-card">
+        <div class="hdc-header">
+          <div class="hdc-date">${dateLabel}</div>
+          <div class="hdc-day-off-badge">Day Off</div>
+        </div>
+      </div>`;
+    }
+
     const col   = stressColor(day.stressScore || 1);
     const label = stressLabel(day.stressScore || 1);
-    const P_NAMES = ['','Urgent','High','Medium','Low'];
-    const P_COLS  = ['','rgba(255,107,138,0.2)','rgba(255,165,89,0.2)','rgba(100,200,120,0.2)','rgba(100,150,255,0.2)'];
-    const P_TEXT  = ['','#ff6b8a','#ffa559','#64c878','#6496ff'];
 
     const taskRows = (day.timePerTask || []).map(r =>
       `<div class="hdc-task-row"><span class="hdc-task-title">${esc(r.title)}</span><span class="hdc-task-time">${fmtTaskMins(r.mins)}</span></div>`
     ).join('') || '<div style="text-align:center;color:var(--text-dim);font-size:11px;padding:10px 0;letter-spacing:0.06em;font-style:italic">No recorded data</div>';
 
     const pb = day.priorityBreakdown || {};
-    const ptotal = pb.total || 0;
-    let priorityHtml = '';
-    for (let p = 1; p <= 4; p++) {
-      const cnt = pb[['','urgent','high','medium','low'][p]] || 0;
-      if (!cnt) continue;
-      const pct = ptotal > 0 ? Math.round(cnt / ptotal * 100) : 0;
-      priorityHtml += `<span class="hdc-priority-chip" style="background:${P_COLS[p]};color:${P_TEXT[p]}">${P_NAMES[p]} ${pct}%</span>`;
-    }
-
-    // Format date nicely
-    const [y,m,d] = day.date.split('-').map(Number);
-    const dateObj = new Date(y, m-1, d);
-    const dateLabel = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    const priorityHtml = buildPriorityHtml(pb, pb.total || 0, 'hdc-priority-chip');
 
     return `<div class="history-day-card">
       <div class="hdc-header">
@@ -3382,9 +3666,17 @@
     </div>`;
   }
 
+  function openClearHistoryConfirm() {
+    document.getElementById('clearHistoryConfirm').classList.add('active');
+  }
+
+  function closeClearHistoryConfirm() {
+    document.getElementById('clearHistoryConfirm').classList.remove('active');
+  }
+
   function clearOldHistory() {
+    closeClearHistoryConfirm();
     if (!_db || !_currentUser) return;
-    if (!confirm('Delete all history older than 7 days? This cannot be undone.')) return;
     const cutoff = new Date(getPST());
     cutoff.setDate(cutoff.getDate() - 7);
     const cutoffStr = `${cutoff.getFullYear()}-${String(cutoff.getMonth()+1).padStart(2,'0')}-${String(cutoff.getDate()).padStart(2,'0')}`;
@@ -3497,9 +3789,97 @@
     document.body.classList.remove('cal-drawer-open');
   }
 
+  // ── Pull-to-refresh (mobile only) ─────────────────────────────────────
+  (function() {
+    const PTR_THRESHOLD = 72;   // pull distance (px) required to trigger
+    const PTR_MAX       = 88;   // max indicator travel (px)
+    const PTR_DAMPING   = 0.45; // resistance: finger travel → indicator travel
+    const EL_H          = 36;   // indicator circle height (matches CSS)
+
+    const el    = document.getElementById('ptr');
+    const arrow = document.getElementById('ptrArrow');
+    const spin  = document.getElementById('ptrSpinner');
+
+    let touchStartY = null;
+    let pulling     = false;
+    let triggered   = false;
+
+    function ptrReset() {
+      el.style.transition = 'transform 0.25s ease, opacity 0.25s ease';
+      el.style.transform  = 'translate(-50%, -100%)';
+      el.style.opacity    = '0';
+      setTimeout(() => {
+        el.style.transition   = '';
+        el.style.opacity      = '';
+        arrow.style.transform = '';
+        arrow.style.display   = '';
+        spin.style.display    = 'none';
+        triggered = false;
+      }, 260);
+    }
+
+    document.addEventListener('touchstart', e => {
+      if (!document.body.classList.contains('mobile-view')) return;
+      if (window.scrollY > 4 || triggered) return;
+      touchStartY = e.touches[0].clientY;
+      pulling = false;
+    }, { passive: true });
+
+    document.addEventListener('touchmove', e => {
+      if (touchStartY === null || triggered) return;
+      const dy = e.touches[0].clientY - touchStartY;
+      if (dy <= 0) { touchStartY = null; return; }
+
+      pulling = true;
+      e.preventDefault();
+
+      const damped = Math.min(dy * PTR_DAMPING, PTR_MAX);
+      el.style.transition = 'none';
+      el.style.transform  = `translate(-50%, ${-EL_H + damped}px)`;
+      el.style.opacity    = String(Math.min(damped / 28, 1));
+
+      // Arrow rotates as you pull, flips at threshold
+      arrow.style.transform = dy >= PTR_THRESHOLD
+        ? 'rotate(180deg)'
+        : `rotate(${(dy / PTR_THRESHOLD) * 180}deg)`;
+    }, { passive: false });
+
+    document.addEventListener('touchend', e => {
+      if (!pulling || triggered) { touchStartY = null; pulling = false; return; }
+      const dy = e.changedTouches[0].clientY - (touchStartY || 0);
+      touchStartY = null;
+      pulling = false;
+
+      if (dy >= PTR_THRESHOLD) {
+        triggered = true;
+        // Lock indicator visible and swap to spinner
+        const lockY = Math.min(dy * PTR_DAMPING, PTR_MAX) - EL_H;
+        el.style.transition = 'transform 0.15s ease';
+        el.style.transform  = `translate(-50%, ${Math.min(lockY, PTR_MAX * 0.5)}px)`;
+        el.style.opacity    = '1';
+        arrow.style.display = 'none';
+        spin.style.display  = 'block';
+        load();
+        setTimeout(ptrReset, 1000);
+      } else {
+        ptrReset();
+      }
+    }, { passive: true });
+  })();
+
   // ── Init view mode ─────────────────────────────────────────────────────
   (function initViewMode() {
     applyViewMode(isMobileDevice());
+  })();
+
+  // ── Populate duration selects ───────────────────────────────────────────
+  (function() {
+    const DURATION_OPTS = [[15,'15 min'],[30,'30 min'],[45,'45 min'],[60,'1 hr'],[90,'1 hr 30 min'],[120,'2 hr'],[150,'2 hr 30 min'],[180,'3 hr'],[240,'4 hr'],[300,'5 hr'],[360,'6 hr'],[480,'8 hr']];
+    const html = DURATION_OPTS.map(([v,l]) => `<option value="${v}"${v===60?' selected':''}>${l}</option>`).join('');
+    ['durationInput','schedDurInput','sdDurInput','ddDurInput'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = html;
+    });
   })();
 
   // ── Init ───────────────────────────────────────────────────────────────
@@ -3508,6 +3888,8 @@
   loadBreakState();
   loadCalBounds();
   checkDayEndedReset();
+  checkDayOffState();
+  setInterval(checkDayOffState, 60000);
   updateClock();
   render();
 </script>
