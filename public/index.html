@@ -1323,42 +1323,76 @@
 </div>
 
 <script>
-  // ── Constants ──────────────────────────────────────────────────────────
-  const DONE_TTL   = 48 * 60 * 60 * 1000;
-  const P_LABELS   = ['','URGENT','HIGH','MEDIUM','LOW'];
-  const P_COLORS   = ['','#ff6b8a','#ffaa60','#f0d060','#7fd4a8'];
-  const P_NAMES    = ['','Urgent','High','Medium','Low'];
-  const P_COLS     = ['','rgba(255,107,138,0.2)','rgba(255,165,89,0.2)','rgba(100,200,120,0.2)','rgba(100,150,255,0.2)'];
-  const P_TEXT     = ['','#ff6b8a','#ffa559','#64c878','#6496ff'];
-  let   CAL_START  = parseInt(localStorage.getItem('q_calStart') || '360');  // default 6:00am
-  let   CAL_END    = parseInt(localStorage.getItem('q_calEnd')   || '1260'); // default 9:00pm
-  const PX_PER_MIN = 44 / 60;
-  const DEFAULT_DUR = 60;
-  const DAYS   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  // ── App constants ──────────────────────────────────────────────────────
+  const DONE_TTL    = 48 * 60 * 60 * 1000;   // how long completed tasks persist
+  const DEFAULT_DUR = 60;                      // default task duration in minutes
+  const PX_PER_MIN  = 44 / 60;                // calendar pixels per minute
 
-  // ── State ──────────────────────────────────────────────────────────────
-  let tasks           = [];
-  let doneTasks       = [];
-  let recurringTasks        = [];
+  // Priority display arrays (indexed 1–4: Urgent, High, Medium, Low)
+  const P_LABELS = ['','URGENT','HIGH','MEDIUM','LOW'];
+  const P_COLORS = ['','#ff6b8a','#ffaa60','#f0d060','#7fd4a8'];
+  const P_NAMES  = ['','Urgent','High','Medium','Low'];
+  const P_COLS   = ['','rgba(255,107,138,0.2)','rgba(255,165,89,0.2)','rgba(100,200,120,0.2)','rgba(100,150,255,0.2)'];
+  const P_TEXT   = ['','#ff6b8a','#ffa559','#64c878','#6496ff'];
+
+  // Calendar bounds (mutable, persisted to localStorage)
+  let CAL_START = parseInt(localStorage.getItem('q_calStart') || '360');  // default 6:00am
+  let CAL_END   = parseInt(localStorage.getItem('q_calEnd')   || '1260'); // default 9:00pm
+
+  // Date/time label arrays
+  const DAYS          = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const MONTHS        = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const RECUR_DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  // Scheduled task accent color
+  const SCHED_COL = '#7ec8e3';
+
+  // ── Application state ──────────────────────────────────────────────────
+
+  // Task data
+  let tasks              = [];
+  let doneTasks          = [];
+  let recurringTasks     = [];
   let selectedRecurringDays = new Set();
-  let selPriority     = null;
-  let doneOpen        = false;
-  let addOpen         = false;
-  let schedOpen       = false;
-  let moreOpen        = false;
-  let dragId          = null;
-  let calDrag         = null;
-  let currentNowId    = null;
-  let pdTargetId      = null;
 
-  // ── Break state ─────────────────────────────────────────────────────────
-  let breakBudgetMins = 60;     // daily budget chosen by user
-  let breakUsedMins   = 0;      // cumulative minutes used today
-  let breakDay        = null;   // PST date string this tally belongs to
-  let breakStartMs    = null;   // Date.now() when current break began, null if no break
-  let breakTimerInt   = null;   // setInterval handle
-  let breakTaskId     = null;   // id of the active "Taking a Break" task
+  // UI panel state
+  let doneOpen  = false;
+  let addOpen   = false;
+  let schedOpen = false;
+  let moreOpen  = false;
+
+  // Auth state
+  let _authMode = 'signin'; // 'signin' | 'signup'
+
+  // Add-form state
+  let selPriority = null;   // selected priority (1–4) for new flex task
+  let schedAnchor = 'start'; // anchor for new scheduled task form ('start' | 'end')
+
+  // Drag & drop state
+  let dragId       = null;  // id of card being dragged in queue
+  let calDrag      = null;  // { blockEl, taskId, mode, ... } for calendar block drag
+
+  // Dropdown edit state (id of the task each edit dropdown is targeting)
+  let pdTargetId = null;    // priority dropdown
+  let sdTargetId = null;    // schedule-edit dropdown
+  let sdAnchor   = 'start'; // anchor selection inside schedule-edit dropdown
+  let ddTargetId = null;    // duration-edit dropdown
+  let stTargetId = null;    // start-time-edit dropdown (flex NOW tasks)
+
+  // Calendar now-line tracking
+  let currentNowId = null;
+
+  // Block detail modal state
+  let _detailBlock = null;
+  let _detailDp    = null;
+
+  // Break feature state
+  let breakBudgetMins = 60;   // daily budget chosen by user (minutes)
+  let breakUsedMins   = 0;    // cumulative minutes used today
+  let breakDay        = null; // PST date string this tally belongs to
+  let breakStartMs    = null; // Date.now() when current break began; null if not on break
+  let breakTimerInt   = null; // setInterval handle for the live break timer
+  let breakTaskId     = null; // id of the active "Taking a Break" task
 
   // ── Firebase config ────────────────────────────────────────────────────
   // 1. Go to https://console.firebase.google.com and create a project
@@ -1393,8 +1427,6 @@
   }
 
   // ── Auth helpers ───────────────────────────────────────────────────────
-  let _authMode = 'signin'; // 'signin' | 'signup'
-
   function toggleAuthMode() {
     _authMode = _authMode === 'signin' ? 'signup' : 'signin';
     const btn     = document.getElementById('authSubmitBtn');
@@ -1740,8 +1772,6 @@
   }
 
   // ── Recurring tasks modal ───────────────────────────────────────────────
-  const RECUR_DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-
   function openRecurringOverlay() {
     renderRecurringList();
     document.getElementById('recurringOverlay').classList.add('active');
@@ -1901,6 +1931,28 @@
     return rm ? `${h}h ${rm}m` : `${h}h`;
   }
 
+  // ── General utilities ──────────────────────────────────────────────────
+  // Escape a string for safe HTML insertion
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // Human-readable relative time (e.g. "5m ago", "2h ago")
+  function timeAgo(ts) {
+    const diffMins = Math.floor((Date.now() - ts) / 60000);
+    if (diffMins < 1)  return 'just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    return diffHours < 24 ? `${diffHours}h ago` : `${Math.floor(diffHours / 24)}d ago`;
+  }
+
+  // Format a minute count as a compact duration string (e.g. "45m", "1h 30m")
+  function fmtTaskMins(mins) {
+    if (mins < 60) return `${mins}m`;
+    const hours = Math.floor(mins / 60), remainder = mins % 60;
+    return remainder > 0 ? `${hours}h ${remainder}m` : `${hours}h`;
+  }
+
   // ── Dropdown helpers ───────────────────────────────────────────────────
   function openDropdown(dd, rect, width) {
     dd.classList.add('open');
@@ -1935,9 +1987,6 @@
   document.addEventListener('click', hideAllDropdowns);
 
   // ── Schedule-edit dropdown ─────────────────────────────────────────────
-  let sdTargetId  = null;
-  let sdAnchor    = 'start';
-
   function showSchedDropdown(taskId, event) {
     event.stopPropagation();
     hideAllDropdowns();
@@ -1962,8 +2011,6 @@
   }
 
   // ── Duration-edit dropdown ─────────────────────────────────────────────
-  let ddTargetId = null;
-
   function showDurDropdown(taskId, event) {
     event.stopPropagation();
     hideAllDropdowns();
@@ -1980,8 +2027,6 @@
   }
 
   // ── Start-time-edit dropdown (flex NOW task only) ──────────────────────
-  let stTargetId = null;
-
   function showStartTimeDropdown(taskId, event) {
     event.stopPropagation();
     hideAllDropdowns();
@@ -2099,7 +2144,7 @@
     return t.type === 'scheduled' || (!t.type && (t.startTime || t.endTime));
   }
 
-  // ── getSorted: FLEX tasks only, ordered by flexOrder then priority ──────
+  // getSorted: flex tasks only, by flexOrder then priority
   function getSorted() {
     return [...tasks]
       .filter(t => !isScheduled(t))
@@ -2113,7 +2158,7 @@
       });
   }
 
-  // ── getScheduled: SCHEDULED tasks sorted by startTime ────────────────
+  // getScheduled: scheduled tasks only, sorted by startTime
   function getScheduled() {
     const pst     = getPST();
     const nowMins = pst.getHours() * 60 + pst.getMinutes();
@@ -2130,10 +2175,7 @@
       .sort((a, b) => (a._stMins ?? 9999) - (b._stMins ?? 9999));
   }
 
-  // ── getAllSorted: merged queue order ──────────────────────────────────
-  // 1. Active scheduled tasks (currently in their window) — by startTime
-  // 2. Flex tasks — by priority
-  // 3. Future scheduled tasks (not yet started) — by startTime
+  // getAllSorted: merged queue order — active scheduled → flex → future scheduled
   function getAllSorted(flex) {
     if (!flex) flex = getSorted();
     const scheduled = getScheduled();
@@ -2154,7 +2196,6 @@
   }
 
   // ── renderCard: returns HTML string for a full task card ────────────────
-  const SCHED_COL = '#7ec8e3';
   function renderCard(task, opts) {
     opts = opts || {};
     if (!task) {
@@ -2217,9 +2258,6 @@
   }
 
   // ── Block detail modal ─────────────────────────────────────────────────
-  let _detailBlock = null;
-  let _detailDp    = null;
-
   function openBlockDetail(b, dp) {
     _detailBlock = b;
     _detailDp    = dp;
@@ -2662,8 +2700,6 @@
   }
 
   // ── Scheduled task form ────────────────────────────────────────────────
-  let schedAnchor = 'start'; // 'start' or 'end'
-
   function setAnchor(which) {
     schedAnchor = which;
     const startBtn = document.getElementById('anchorStartBtn');
@@ -3033,20 +3069,6 @@
     document.getElementById('doneArrow').classList.toggle('open', doneOpen);
   }
 
-  // ── Helpers ────────────────────────────────────────────────────────────
-  function timeAgo(ts) {
-    const m = Math.floor((Date.now() - ts) / 60000);
-    if (m < 1)  return 'just now';
-    if (m < 60) return `${m}m ago`;
-    const h = Math.floor(m / 60);
-    return h < 24 ? `${h}h ago` : `${Math.floor(h/24)}d ago`;
-  }
-  function esc(s) {
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
-
-  // ── Break feature ──────────────────────────────────────────────────────
-
   // ── Calendar bounds ────────────────────────────────────────────────────
   function setCalBounds() {
     const startSel = document.getElementById('calStartSelect');
@@ -3128,6 +3150,7 @@
     });
   }
 
+  // ── Break feature ──────────────────────────────────────────────────────
   function loadBreakState() {
     try {
       const s = JSON.parse(localStorage.getItem('q_break') || '{}');
@@ -3414,12 +3437,6 @@
     if (score <= 6) return 'Moderate';
     if (score <= 8) return 'Demanding day';
     return 'High stress day';
-  }
-
-  function fmtTaskMins(mins) {
-    if (mins < 60) return `${mins}m`;
-    const h = Math.floor(mins / 60), m = mins % 60;
-    return m > 0 ? `${h}h ${m}m` : `${h}h`;
   }
 
   function openEndDayModal() {
