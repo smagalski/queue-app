@@ -923,6 +923,12 @@
   .break-toggle-btn.over:hover:not(:disabled) { color: var(--p1); }
 
   /* ── END DAY BUTTON ───────────────────────────────────────────────────── */
+  .end-btns-row {
+    display: flex; gap: 8px;
+    margin-top: 20px; padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,0.07);
+  }
+  .end-btns-row .end-day-btn { margin-top: 0; flex: 1; }
   .end-day-btn {
     width: 100%; margin-top: 6px; padding: 9px 14px;
     background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12);
@@ -1114,7 +1120,7 @@
       <div class="clock-date" id="clockDate">---</div>
     </div>
     <div class="calendar-section" id="calendarSection" onclick="toggleCalDrawer(event)">
-      <div class="cal-drawer-label">📅 Timeline</div>
+      <div class="cal-drawer-label">Timeline</div>
 <div class="cal-container" id="calContainer"></div>
     </div>
     <div class="break-budget-panel" id="breakBudgetPanel">
