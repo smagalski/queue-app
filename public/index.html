@@ -1026,6 +1026,37 @@
   .end-break-btn:hover { opacity: 0.85; }
   .end-break-btn.over { background: var(--p1); color: #fff; }
 
+  /* ── END-DAY / DAY-OFF BUTTON ROW ────────────────────────────────────── */
+  .end-btns-row { display: flex; gap: 6px; margin-top: 6px; }
+  .end-btns-row .end-day-btn { flex: 1; margin-top: 0; width: auto; }
+
+  /* ── DAY OFF OVERLAY ──────────────────────────────────────────────────── */
+  .day-off-overlay {
+    position: fixed; inset: 0; z-index: 9000;
+    background: rgba(11,10,15,0.92); backdrop-filter: blur(6px);
+    display: none; flex-direction: column; align-items: center; justify-content: center; gap: 28px;
+  }
+  .day-off-overlay.active { display: flex; }
+  .dob-heading {
+    font-size: 11px; font-weight: 800; letter-spacing: 0.35em; text-transform: uppercase; color: var(--text-dim);
+  }
+  .dob-sub {
+    font-size: 13px; color: var(--text-dim); letter-spacing: 0.06em;
+  }
+  .dob-cancel-btn {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px;
+    color: rgba(255,255,255,0.5); font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase; padding: 13px 36px;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .dob-cancel-btn:hover { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); }
+
+  /* ── DAY OFF history badge ────────────────────────────────────────────── */
+  .hdc-day-off-badge {
+    font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--text-dim); background: rgba(255,255,255,0.06); border-radius: 20px; padding: 4px 10px;
+  }
+
 </style>
 <!-- Firebase SDK (compat v9) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -1956,7 +1987,7 @@
     // Format a datetime-local string ("YYYY-MM-DDTHH:MM") as "H:MMam/pm"
     // Parse T part directly to avoid UTC-shift in new Date(dtStr)
     if (!dtStr) return null;
-    const tm = dtStr.match(/T(\d{2}):(\d{2})/);
+    const tm = typeof dtStr === 'string' ? dtStr.match(/T(\d{2}):(\d{2})/) : null;
     if (tm) {
       let h = parseInt(tm[1], 10), m = parseInt(tm[2], 10);
       const ap = h >= 12 ? 'pm' : 'am';
@@ -1973,13 +2004,7 @@
     return `${h}:${String(m).padStart(2,'0')}${ap}`;
   }
   // Format a Unix ms timestamp as PST "H:MMam/pm"
-  function fmtMsTimePST(ms) {
-    const p = new Date(new Date(ms).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
-    let h = p.getHours(), m = p.getMinutes();
-    const ap = h >= 12 ? 'pm' : 'am';
-    h = h % 12 || 12;
-    return `${h}:${String(m).padStart(2,'0')}${ap}`;
-  }
+  function fmtMsTimePST(ms) { return fmtTimePST(ms); }
   // Convert a Unix ms timestamp to PST minutes-since-midnight
   function msMinsToCalMins(ms) {
     const p = new Date(new Date(ms).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
@@ -3211,27 +3236,24 @@
   }
 
   // ── Inline title editing ───────────────────────────────────────────────
-  function startTitleEdit(taskId, titleEl) {
-    const task = tasks.find(t => t.id === taskId);
-    if (!task || titleEl.querySelector('input')) return;
+  function _doTitleEdit(task, el, onCommit, cssText) {
+    if (!task || el.querySelector('input')) return;
     const original = task.title;
-    const card = titleEl.closest('.task-card');
+    const card = cssText ? null : el.closest('.task-card');
     if (card) card.draggable = false;
     const input = document.createElement('input');
-    input.className = 'title-edit-input';
+    if (cssText) input.style.cssText = cssText;
+    else input.className = 'title-edit-input';
     input.value = original;
-    titleEl.textContent = '';
-    titleEl.appendChild(input);
+    el.textContent = '';
+    el.appendChild(input);
     input.focus();
     input.select();
     const commit = () => {
       if (card) card.draggable = true;
       const newTitle = input.value.trim();
-      if (newTitle && newTitle !== original) {
-        task.title = newTitle;
-        save();
-      }
-      render();
+      if (newTitle && newTitle !== original) { task.title = newTitle; save(); }
+      onCommit();
     };
     input.addEventListener('blur', commit, { once: true });
     input.addEventListener('keydown', e => {
@@ -3240,31 +3262,14 @@
     });
   }
 
+  function startTitleEdit(taskId, titleEl) {
+    _doTitleEdit(tasks.find(t => t.id === taskId), titleEl, render, null);
+  }
+
   function startCalTitleEdit(blockTask, isDone, spanEl) {
-    const arr  = isDone ? doneTasks : tasks;
-    const task = arr.find(t => t.id === blockTask.id);
-    if (!task || spanEl.querySelector('input')) return;
-    const original = task.title;
-    const input = document.createElement('input');
-    input.value = original;
-    input.style.cssText = 'background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,0.5);outline:none;color:inherit;font:inherit;width:100%;padding:0';
-    spanEl.textContent = '';
-    spanEl.appendChild(input);
-    input.focus();
-    input.select();
-    const commit = () => {
-      const newTitle = input.value.trim();
-      if (newTitle && newTitle !== original) {
-        task.title = newTitle;
-        save();
-      }
-      renderCalendar();
-    };
-    input.addEventListener('blur', commit, { once: true });
-    input.addEventListener('keydown', e => {
-      if (e.key === 'Enter')  { e.preventDefault(); input.blur(); }
-      if (e.key === 'Escape') { input.value = original; input.blur(); }
-    });
+    const arr = isDone ? doneTasks : tasks;
+    _doTitleEdit(arr.find(t => t.id === blockTask.id), spanEl, renderCalendar,
+      'background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,0.5);outline:none;color:inherit;font:inherit;width:100%;padding:0');
   }
 
   // ── Break feature ──────────────────────────────────────────────────────
