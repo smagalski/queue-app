@@ -1027,29 +1027,8 @@
   .end-break-btn.over { background: var(--p1); color: #fff; }
 
   /* ── END-DAY / DAY-OFF BUTTON ROW ────────────────────────────────────── */
-  .end-btns-row { display: flex; gap: 6px; margin-top: 6px; }
+  /* (primary definition is .end-btns-row above; only add the flex:1/width:auto override here) */
   .end-btns-row .end-day-btn { flex: 1; margin-top: 0; width: auto; }
-
-  /* ── DAY OFF OVERLAY ──────────────────────────────────────────────────── */
-  .day-off-overlay {
-    position: fixed; inset: 0; z-index: 9000;
-    background: rgba(11,10,15,0.92); backdrop-filter: blur(6px);
-    display: none; flex-direction: column; align-items: center; justify-content: center; gap: 28px;
-  }
-  .day-off-overlay.active { display: flex; }
-  .dob-heading {
-    font-size: 11px; font-weight: 800; letter-spacing: 0.35em; text-transform: uppercase; color: var(--text-dim);
-  }
-  .dob-sub {
-    font-size: 13px; color: var(--text-dim); letter-spacing: 0.06em;
-  }
-  .dob-cancel-btn {
-    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px;
-    color: rgba(255,255,255,0.5); font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700;
-    letter-spacing: 0.14em; text-transform: uppercase; padding: 13px 36px;
-    cursor: pointer; transition: all 0.15s;
-  }
-  .dob-cancel-btn:hover { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); }
 
   /* ── DAY OFF history badge ────────────────────────────────────────────── */
   .hdc-day-off-badge {
@@ -1474,8 +1453,8 @@
   const P_LABELS = ['','URGENT','HIGH','MEDIUM','LOW'];
   const P_COLORS = ['','#ff6b8a','#ffaa60','#f0d060','#7fd4a8'];
   const P_NAMES  = ['','Urgent','High','Medium','Low'];
-  const P_COLS   = ['','rgba(255,107,138,0.2)','rgba(255,165,89,0.2)','rgba(100,200,120,0.2)','rgba(100,150,255,0.2)'];
-  const P_TEXT   = ['','#ff6b8a','#ffa559','#64c878','#6496ff'];
+  const P_COLS   = ['','rgba(255,107,138,0.2)','rgba(255,170,96,0.2)','rgba(240,208,96,0.2)','rgba(127,212,168,0.2)'];
+  const P_TEXT   = ['','#ff6b8a','#ffaa60','#f0d060','#7fd4a8'];
 
   // Calendar bounds (mutable, persisted to localStorage)
   let CAL_START = parseInt(localStorage.getItem('q_calStart') || '360');  // default 6:00am
@@ -1992,7 +1971,7 @@
       let h = parseInt(tm[1], 10), m = parseInt(tm[2], 10);
       const ap = h >= 12 ? 'pm' : 'am';
       h = h % 12 || 12;
-      return `${h}:${String(m).padStart(2,'0')}${ap}`;
+      return `${h}:${pad2(m)}${ap}`;
     }
     // Fallback for ISO strings / ms
     const d = new Date(dtStr);
@@ -2001,7 +1980,7 @@
     let h = p.getHours(), m = p.getMinutes();
     const ap = h >= 12 ? 'pm' : 'am';
     h = h % 12 || 12;
-    return `${h}:${String(m).padStart(2,'0')}${ap}`;
+    return `${h}:${pad2(m)}${ap}`;
   }
   // Format a Unix ms timestamp as PST "H:MMam/pm"
   function fmtMsTimePST(ms) { return fmtTimePST(ms); }
@@ -2013,11 +1992,15 @@
   // Returns today's PST date as "YYYY-MM-DD"
   function todayPstDateStr() {
     const p = getPST();
-    return `${p.getFullYear()}-${String(p.getMonth()+1).padStart(2,'0')}-${String(p.getDate()).padStart(2,'0')}`;
+    return `${p.getFullYear()}-${pad2(p.getMonth()+1)}-${pad2(p.getDate())}`;
   }
-  // Formats minutes-since-midnight as "HH:MM"
+  // Zero-pads a number to 2 digits ("0"–"9" → "00"–"09")
+  function pad2(n) { return String(n).padStart(2, '0'); }
+
+  // Formats minutes-since-midnight as "HH:MM", clamped to 23:59
   function fmtMins(m) {
-    return `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
+    const clamped = Math.max(0, Math.min(m, 1439));
+    return `${pad2(Math.floor(clamped/60))}:${pad2(clamped%60)}`;
   }
   // Formats a break budget duration as "X min" or "X hr"
   function fmtBudgetMins(mins) {
@@ -2031,7 +2014,7 @@
     const m = now.getMinutes();
     const ap = h >= 12 ? 'PM' : 'AM';
     h = h % 12 || 12;
-    document.getElementById('clockTime').textContent = `${h}:${String(m).padStart(2,'0')}`;
+    document.getElementById('clockTime').textContent = `${h}:${pad2(m)}`;
     document.getElementById('clockAmpm').textContent = ap;
     document.getElementById('clockDate').textContent =
       `${DAYS[now.getDay()]}\n${MONTHS[now.getMonth()]} ${now.getDate()}`;
@@ -2059,8 +2042,7 @@
   function endTimeClass(dtStr) {
     const mins = minsUntil(dtStr);
     if (mins === null) return '';
-    if (mins < -60)  return 'end-over';
-    if (mins < 0)    return 'end-warn';
+    if (mins < 0)    return 'end-over';
     if (mins <= 30)  return 'end-urgent';
     if (mins <= 60)  return 'end-warn';
     return '';
@@ -2177,7 +2159,7 @@
     if (!task || !task.calStartTime) return;
     const p = new Date(new Date(task.calStartTime).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
     document.getElementById('stTimeInput').value =
-      `${String(p.getHours()).padStart(2,'0')}:${String(p.getMinutes()).padStart(2,'0')}`;
+      `${pad2(p.getHours())}:${pad2(p.getMinutes())}`;
     openDropdown(document.getElementById('startTimeDropdown'), event.target.getBoundingClientRect(), 160);
   }
 
@@ -2417,7 +2399,7 @@
     if (mins == null) return '';
     const h = Math.floor(mins / 60) % 24;
     const m = mins % 60;
-    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+    return `${pad2(h)}:${pad2(m)}`;
   }
 
   function _renderBlockDetail() {
@@ -3218,11 +3200,10 @@
     if (!startSel || !endSel) return;
     const newStart = parseInt(startSel.value);
     const newEnd   = parseInt(endSel.value);
-    if (newEnd <= newStart + 60) { // enforce at least 1-hr span
-      endSel.value = String(newStart + 60);
-    }
-    CAL_START = parseInt(startSel.value);
-    CAL_END   = parseInt(endSel.value);
+    const clampedEnd = newEnd <= newStart + 60 ? newStart + 60 : newEnd;
+    if (clampedEnd !== newEnd) endSel.value = String(clampedEnd);
+    CAL_START = newStart;
+    CAL_END   = clampedEnd;
     localStorage.setItem('q_calStart', String(CAL_START));
     localStorage.setItem('q_calEnd',   String(CAL_END));
     renderCalendar();
@@ -3378,8 +3359,8 @@
     const s           = elapsedSec % 60;
     const h           = Math.floor(elapsedSec / 3600);
     const displayTime = h > 0
-      ? `${h}:${String(elapsedMins % 60).padStart(2,'0')}:${String(s).padStart(2,'0')}`
-      : `${elapsedMins}:${String(s).padStart(2,'0')}`;
+      ? `${h}:${pad2(elapsedMins % 60)}:${pad2(s)}`
+      : `${elapsedMins}:${pad2(s)}`;
 
     const totalUsed = breakUsedMins + elapsedMins;
     const over      = totalUsed >= breakBudgetMins;
@@ -3485,7 +3466,7 @@
     const todayDone = doneTasks.filter(t => {
       const ts = t.doneAt || 0;
       const p  = new Date(new Date(ts).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
-      return `${p.getFullYear()}-${String(p.getMonth()+1).padStart(2,'0')}-${String(p.getDate()).padStart(2,'0')}` === today;
+      return `${p.getFullYear()}-${pad2(p.getMonth()+1)}-${pad2(p.getDate())}` === today;
     });
 
     // ── Time per task (totalled by title) ──────────────────────────────
@@ -3679,8 +3660,7 @@
 
   // ── Day Off ────────────────────────────────────────────────────────────
   function showDayOffOverlay() {
-    const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-    document.getElementById('dayOffDayName').textContent = dayNames[getPST().getDay()];
+    document.getElementById('dayOffDayName').textContent = DAYS[getPST().getDay()];
     document.getElementById('dayOffOverlay').classList.add('active');
   }
 
@@ -3807,7 +3787,7 @@
     if (!_db || !_currentUser) return;
     const cutoff = new Date(getPST());
     cutoff.setDate(cutoff.getDate() - 7);
-    const cutoffStr = `${cutoff.getFullYear()}-${String(cutoff.getMonth()+1).padStart(2,'0')}-${String(cutoff.getDate()).padStart(2,'0')}`;
+    const cutoffStr = `${cutoff.getFullYear()}-${pad2(cutoff.getMonth()+1)}-${pad2(cutoff.getDate())}`;
 
     _db.collection('users').doc(_currentUser.uid).collection('history')
       .where('date', '<', cutoffStr)
@@ -3839,7 +3819,7 @@
     calDrag.blockEl.style.height = Math.max(minsToY(newEnd) - minsToY(newStart), 12) + 'px';
     const meta = calDrag.blockEl.querySelector('.cal-block-meta');
     if (meta) {
-      const fmt = m => { const h = Math.floor(m/60), mn = m%60, ap = h>=12?'pm':'am'; return `${h%12||12}:${String(mn).padStart(2,'0')}${ap}`; };
+      const fmt = m => { const h = Math.floor(m/60), mn = m%60, ap = h>=12?'pm':'am'; return `${h%12||12}:${pad2(mn)}${ap}`; };
       meta.textContent = calDrag.mode === 'move' ? fmt(newStart) : `${fmt(newStart)} – ${fmt(newEnd)}`;
     }
   });
@@ -4027,7 +4007,14 @@
       client_id: GCAL_CLIENT_ID,
       scope: 'https://www.googleapis.com/auth/calendar.readonly',
       callback(resp) {
-        if (resp.error) { console.error('GCal OAuth error:', resp.error); return; }
+        if (resp.error) {
+          console.error('GCal OAuth error:', resp.error);
+          // Only show an error in the modal if it's already open; user-cancelled flows close silently
+          if (resp.error !== 'access_denied' && resp.error !== 'popup_closed_by_user') {
+            setGcalListMessage('Sign-in failed. Please try again.');
+          }
+          return;
+        }
         _gcalAccessToken = resp.access_token;
         _gcalTokenExpiry = Date.now() + (resp.expires_in - 60) * 1000;
         onSuccess();
@@ -4048,21 +4035,30 @@
     _gcalTokenClient.requestAccessToken({ prompt: '' });
   }
 
+  function setGcalListMessage(msg) {
+    const el = document.getElementById('gcalEventList');
+    if (el) el.innerHTML = `<div class="gcal-empty">${msg}</div>`;
+  }
+
   async function fetchGcalEvents() {
     const overlay = document.getElementById('gcalOverlay');
-    document.getElementById('gcalEventList').innerHTML = '<div class="gcal-empty">Loading…</div>';
+    setGcalListMessage('Loading…');
     document.getElementById('gcalConfirmBtn').style.display = 'none';
     overlay.classList.add('active');
 
-    // Build today's date range in PST/PDT with correct UTC offset
-    const now    = new Date();
-    const laDate = new Date(now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
-    const offsetHrs = Math.round((now.getTime() - laDate.getTime()) / 3600000);
-    const offsetStr = `-0${offsetHrs}:00`;
-    const pst = getPST();
-    const y   = pst.getFullYear();
-    const mo  = String(pst.getMonth() + 1).padStart(2, '0');
-    const d   = String(pst.getDate()).padStart(2, '0');
+    // Build today's date range in PST/PDT with correct UTC offset.
+    // Derive offset in whole minutes to handle half-hour zones correctly,
+    // and pad to two digits so it works for UTC-10 through UTC-01.
+    const now        = new Date();
+    const laDate     = new Date(now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+    const offsetMins = Math.round((now.getTime() - laDate.getTime()) / 60000);
+    const sign       = offsetMins >= 0 ? '-' : '+';
+    const absOff     = Math.abs(offsetMins);
+    const offsetStr  = `${sign}${pad2(Math.floor(absOff / 60))}:${pad2(absOff % 60)}`;
+    // laDate fields already reflect LA local time — no need for a second toLocaleString via getPST()
+    const y   = laDate.getFullYear();
+    const mo  = pad2(laDate.getMonth() + 1);
+    const d   = pad2(laDate.getDate());
     const timeMin = `${y}-${mo}-${d}T00:00:00${offsetStr}`;
     const timeMax = `${y}-${mo}-${d}T23:59:59${offsetStr}`;
 
@@ -4086,7 +4082,7 @@
         return;
       }
       if (!res.ok) {
-        document.getElementById('gcalEventList').innerHTML = '<div class="gcal-empty">Failed to load events. Please try again.</div>';
+        setGcalListMessage('Failed to load events. Please try again.');
         return;
       }
 
@@ -4096,7 +4092,7 @@
       _gcalPendingEvents = events;
       renderGcalEvents(events);
     } catch (e) {
-      document.getElementById('gcalEventList').innerHTML = '<div class="gcal-empty">Error loading events. Please try again.</div>';
+      setGcalListMessage('Error loading events. Please try again.');
     }
   }
 
@@ -4105,7 +4101,7 @@
     const confirmBtn = document.getElementById('gcalConfirmBtn');
 
     if (!events.length) {
-      list.innerHTML = '<div class="gcal-empty">No events found for today.</div>';
+      setGcalListMessage('No events found for today.');
       confirmBtn.style.display = 'none';
       return;
     }
@@ -4163,7 +4159,8 @@
       if (!chk || !chk.checked) return;
       const startMins = dateToMinsPST(new Date(e.start.dateTime));
       const noEnd     = !e.end || !e.end.dateTime;
-      const endMins   = noEnd ? startMins + 30 : dateToMinsPST(new Date(e.end.dateTime));
+      const rawEnd    = noEnd ? startMins + 30 : dateToMinsPST(new Date(e.end.dateTime));
+      const endMins   = rawEnd > startMins ? rawEnd : startMins + 30;
       const dur       = endMins - startMins;
       tasks.push({
         id:        Date.now() + count,
