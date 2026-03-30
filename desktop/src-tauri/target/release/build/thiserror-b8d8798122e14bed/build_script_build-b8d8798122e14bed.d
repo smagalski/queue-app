@@ -1,0 +1,5 @@
+/Users/smagalski/queue-app/desktop/src-tauri/target/release/build/thiserror-b8d8798122e14bed/build_script_build-b8d8798122e14bed.d: /Users/smagalski/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-1.0.69/build.rs
+
+/Users/smagalski/queue-app/desktop/src-tauri/target/release/build/thiserror-b8d8798122e14bed/build_script_build-b8d8798122e14bed: /Users/smagalski/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-1.0.69/build.rs
+
+/Users/smagalski/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-1.0.69/build.rs:

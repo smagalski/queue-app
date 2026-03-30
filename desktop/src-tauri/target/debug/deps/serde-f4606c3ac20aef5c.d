@@ -1,0 +1,14 @@
+/Users/smagalski/queue-app/desktop/src-tauri/target/debug/deps/serde-f4606c3ac20aef5c.d: /Users/smagalski/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /Users/smagalski/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /Users/smagalski/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /Users/smagalski/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /Users/smagalski/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /Users/smagalski/queue-app/desktop/src-tauri/target/debug/build/serde-7bc29a85147aef4b/out/private.rs
+
+/Users/smagalski/queue-app/desktop/src-tauri/target/debug/deps/libserde-f4606c3ac20aef5c.rlib: /Users/smagalski/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /Users/smagalski/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /Users/smagalski/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /Users/smagalski/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /Users/smagalski/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /Users/smagalski/queue-app/desktop/src-tauri/target/debug/build/serde-7bc29a85147aef4b/out/private.rs
+
+/Users/smagalski/queue-app/desktop/src-tauri/target/debug/deps/libserde-f4606c3ac20aef5c.rmeta: /Users/smagalski/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /Users/smagalski/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /Users/smagalski/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /Users/smagalski/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /Users/smagalski/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /Users/smagalski/queue-app/desktop/src-tauri/target/debug/build/serde-7bc29a85147aef4b/out/private.rs
+
+/Users/smagalski/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs:
+/Users/smagalski/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs:
+/Users/smagalski/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs:
+/Users/smagalski/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs:
+/Users/smagalski/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs:
+/Users/smagalski/queue-app/desktop/src-tauri/target/debug/build/serde-7bc29a85147aef4b/out/private.rs:
+
+# env-dep:OUT_DIR=/Users/smagalski/queue-app/desktop/src-tauri/target/debug/build/serde-7bc29a85147aef4b/out

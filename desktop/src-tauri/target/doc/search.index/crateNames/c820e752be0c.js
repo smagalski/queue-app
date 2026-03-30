@@ -1,0 +1,1 @@
+rd_("Actauri_plugin_dialog")

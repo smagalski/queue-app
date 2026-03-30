@@ -1095,6 +1095,8 @@
         <button class="gear-menu-item" onclick="openPasswordModal();closeGearMenu()">Change Password</button>
         <div class="gear-menu-divider"></div>
         <button class="gear-menu-item" onclick="signOut()">Sign Out</button>
+        <div class="gear-menu-divider"></div>
+        <div id="gearVersion" style="font-size:10px;color:var(--text-dim);padding:6px 12px;letter-spacing:0.05em;text-align:center">v1.0.0</div>
       </div>
     </div>
   </div>
@@ -1687,10 +1689,25 @@
   }
 
   // ── Gear menu ──────────────────────────────────────────────────────────
+  const APP_VERSION = '1.0.0';
+
   function toggleGearMenu(e) {
     e.stopPropagation();
     document.getElementById('gearMenu').classList.toggle('open');
   }
+
+  // Show shell version if running inside the Tauri desktop app, otherwise show web version
+  (function initVersionLabel() {
+    const el = document.getElementById('gearVersion');
+    if (!el) return;
+    if (window.__TAURI__) {
+      window.__TAURI__.core.invoke('get_version')
+        .then(v => { el.textContent = `Queue v${v} (desktop)`; })
+        .catch(() => { el.textContent = `v${APP_VERSION}`; });
+    } else {
+      el.textContent = `v${APP_VERSION}`;
+    }
+  })();
   function closeGearMenu() {
     const m = document.getElementById('gearMenu');
     if (m) m.classList.remove('open');

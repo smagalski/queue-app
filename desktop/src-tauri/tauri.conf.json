@@ -1,0 +1,46 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Queue",
+  "version": "0.1.0",
+  "identifier": "com.smagalski.queue",
+  "build": {
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Queue",
+        "url": "http://localhost:8080",
+        "width": 480,
+        "height": 900,
+        "resizable": true,
+        "fullscreen": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "macOS": {
+      "minimumSystemVersion": "12.0"
+    }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEI4QjNFQTg2RTQ1MENFREYKUldUZnpsRGtodXF6dUc5MnV1L3RWRTRWSzJOdCt4L09Qa3NueGpOY3BKSlQ0S3FlZTNTZXVaL04K",
+      "endpoints": [
+        "https://github.com/smagalski/Queue-App/releases/latest/download/latest.json"
+      ]
+    }
+  }
+}
