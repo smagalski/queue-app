@@ -3790,10 +3790,15 @@
     const dayOffBtn = `<button class="hdc-day-off-btn" onclick="markHistoryDayOff('${day.date}')">Mark as Day Off</button>`;
 
     if (day.dayOff) {
+      const hasData = day.stressScore || (day.timePerTask && day.timePerTask.length);
+      const unmarkBtn = `<button class="hdc-day-off-btn" onclick="unmarkHistoryDayOff('${day.date}')">Unmark Day Off</button>`;
       return `<div class="history-day-card">
         <div class="hdc-header">
           <div class="hdc-date">${dateLabel}</div>
-          <div class="hdc-day-off-badge">Day Off</div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="hdc-day-off-badge">Day Off</div>
+            ${hasData ? unmarkBtn : ''}
+          </div>
         </div>
       </div>`;
     }
@@ -3835,9 +3840,17 @@
   function markHistoryDayOff(date) {
     if (!_db || !_currentUser) return;
     _db.collection('users').doc(_currentUser.uid).collection('history').doc(date)
-      .set({ date, dayOff: true, savedAt: Date.now() })
+      .set({ dayOff: true }, { merge: true })
       .then(() => openHistoryOverlay())
       .catch(err => console.error('[Queue] Mark day off failed:', err));
+  }
+
+  function unmarkHistoryDayOff(date) {
+    if (!_db || !_currentUser) return;
+    _db.collection('users').doc(_currentUser.uid).collection('history').doc(date)
+      .update({ dayOff: firebase.firestore.FieldValue.delete() })
+      .then(() => openHistoryOverlay())
+      .catch(err => console.error('[Queue] Unmark day off failed:', err));
   }
 
   function recordTodayActivity() {
