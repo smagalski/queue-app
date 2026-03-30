@@ -561,7 +561,7 @@
 
   /* ── HISTORY OVERLAY ─────────────────────────────────────────────────── */
   .history-overlay {
-    display: none; position: fixed; inset: 0; z-index: 9800;
+    display: none; position: fixed; inset: 0; z-index: 10100;
     background: rgba(0,0,0,0.85); overflow-y: auto;
   }
   .history-overlay.active { display: block; }
@@ -3310,55 +3310,67 @@
   function takeBreak() {
     const all     = getAllSorted();
     const nowTask = all[0];
-    if (!nowTask || breakStartMs) return;
+    if (breakStartMs) return;
 
     const pst     = getPST();
     const nowMins = pst.getHours() * 60 + pst.getMinutes();
+    const bId     = Date.now();
 
-    // ── Calculate how many minutes remain on the interrupted task ──────────
-    let remaining = nowTask.duration || DEFAULT_DUR;
-    if (!isScheduled(nowTask) && nowTask.calStartTime) {
-      const elapsedMins = Math.floor((Date.now() - nowTask.calStartTime) / 60000);
-      remaining = Math.max((nowTask.duration || DEFAULT_DUR) - elapsedMins, 1);
-    } else if (isScheduled(nowTask) && nowTask._etMins != null) {
-      remaining = Math.max(nowTask._etMins - nowMins, 1);
+    if (nowTask) {
+      // ── Calculate how many minutes remain on the interrupted task ────────
+      let remaining = nowTask.duration || DEFAULT_DUR;
+      if (!isScheduled(nowTask) && nowTask.calStartTime) {
+        const elapsedMins = Math.floor((Date.now() - nowTask.calStartTime) / 60000);
+        remaining = Math.max((nowTask.duration || DEFAULT_DUR) - elapsedMins, 1);
+      } else if (isScheduled(nowTask) && nowTask._etMins != null) {
+        remaining = Math.max(nowTask._etMins - nowMins, 1);
+      }
+
+      // ── Mark current task done (inline to avoid double render) ──────────
+      tasks = tasks.filter(t => t.id !== nowTask.id);
+      const doneAt = Date.now();
+      const dp     = todayPstDateStr();
+      const doneEntry = { ...nowTask, doneAt };
+      // strip computed properties
+      delete doneEntry._eff; delete doneEntry._stMins; delete doneEntry._etMins; delete doneEntry._active;
+      if (isScheduled(nowTask) && nowTask.startTime) {
+        doneEntry.endTime = `${dp}T${fmtMins(nowMins)}`;
+      } else if (!isScheduled(nowTask) && nowTask.calStartTime) {
+        doneEntry.startTime = `${dp}T${fmtMins(msMinsToCalMins(nowTask.calStartTime))}`;
+        doneEntry.endTime   = `${dp}T${fmtMins(nowMins)}`;
+      }
+      doneTasks.unshift(doneEntry);
+
+      // ── Shift any existing ordered flex tasks down by 2 (break + resume) ─
+      tasks.forEach(t => {
+        if (!isScheduled(t) && t.flexOrder !== undefined) t.flexOrder += 2;
+      });
+
+      // ── Create "Taking a Break" task at position 0 ──────────────────────
+      const rId = bId + 1;
+      const breakTask = {
+        id: bId, title: 'BREAK', priority: 1,
+        addedAt: Date.now(), duration: breakBudgetMins, flexOrder: 0, isBreak: true,
+      };
+      // ── Create resume duplicate at position 1 ────────────────────────────
+      const resumeTask = {
+        id: rId, title: nowTask.title,
+        priority: nowTask.priority || 3,
+        addedAt: Date.now() + 1, duration: remaining, flexOrder: 1,
+      };
+      tasks.push(breakTask, resumeTask);
+    } else {
+      // ── No current task — just add the break task ────────────────────────
+      tasks.forEach(t => {
+        if (!isScheduled(t) && t.flexOrder !== undefined) t.flexOrder += 1;
+      });
+      const breakTask = {
+        id: bId, title: 'BREAK', priority: 1,
+        addedAt: Date.now(), duration: breakBudgetMins, flexOrder: 0, isBreak: true,
+      };
+      tasks.push(breakTask);
     }
 
-    // ── Mark current task done (inline to avoid double render) ────────────
-    tasks = tasks.filter(t => t.id !== nowTask.id);
-    const doneAt = Date.now();
-    const dp     = todayPstDateStr();
-    const doneEntry = { ...nowTask, doneAt };
-    // strip computed properties
-    delete doneEntry._eff; delete doneEntry._stMins; delete doneEntry._etMins; delete doneEntry._active;
-    if (isScheduled(nowTask) && nowTask.startTime) {
-      doneEntry.endTime = `${dp}T${fmtMins(nowMins)}`;
-    } else if (!isScheduled(nowTask) && nowTask.calStartTime) {
-      doneEntry.startTime = `${dp}T${fmtMins(msMinsToCalMins(nowTask.calStartTime))}`;
-      doneEntry.endTime   = `${dp}T${fmtMins(nowMins)}`;
-    }
-    doneTasks.unshift(doneEntry);
-
-    // ── Shift any existing ordered flex tasks down by 2 ───────────────────
-    tasks.forEach(t => {
-      if (!isScheduled(t) && t.flexOrder !== undefined) t.flexOrder += 2;
-    });
-
-    // ── Create "Taking a Break" task at position 0 ────────────────────────
-    const bId = Date.now();
-    const rId = bId + 1;
-    const breakTask = {
-      id: bId, title: 'BREAK', priority: 1,
-      addedAt: Date.now(), duration: breakBudgetMins, flexOrder: 0, isBreak: true,
-    };
-    // ── Create resume duplicate at position 1 ─────────────────────────────
-    const resumeTask = {
-      id: rId, title: nowTask.title,
-      priority: nowTask.priority || 3,
-      addedAt: Date.now() + 1, duration: remaining, flexOrder: 1,
-    };
-
-    tasks.push(breakTask, resumeTask);
     breakTaskId  = bId;
     breakStartMs = Date.now();
 
@@ -3474,7 +3486,7 @@
     const hasNow = all.length > 0;
     const btn    = document.getElementById('takeBreakBtn');
     if (btn) {
-      btn.disabled = !hasNow || !!breakStartMs;
+      btn.disabled = !!breakStartMs;
       btn.classList.toggle('over', over);
     }
   }
@@ -3696,10 +3708,12 @@
   }
 
   function cancelDayOff() {
-    const today = localStorage.getItem('q_dayOff') || todayPstDateStr();
+    const stored = localStorage.getItem('q_dayOff');
+    const today  = todayPstDateStr();
     localStorage.removeItem('q_dayOff');
     document.getElementById('dayOffOverlay').classList.remove('active');
-    if (_db && _currentUser) {
+    // Only delete from Firestore if the stored date is today — never delete a past day's record
+    if (_db && _currentUser && stored === today) {
       _db.collection('users').doc(_currentUser.uid).collection('history').doc(today)
         .delete()
         .catch(err => console.error('[Queue] Day off cancel failed:', err));
