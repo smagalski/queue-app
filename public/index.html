@@ -1,3 +1,4 @@
+<!-- Queue App -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -592,6 +593,14 @@
   .hdc-task-time  { color: var(--text-dim); }
   .hdc-priority-row { display: flex; gap: 6px; flex-wrap: wrap; }
   .hdc-priority-chip { padding: 2px 8px; border-radius: 20px; font-size: 9px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+  .hdc-day-off-btn {
+    background: none; border: 1px solid var(--border); border-radius: 6px;
+    color: var(--text-dim); font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; padding: 4px 10px; cursor: pointer; transition: all 0.15s;
+    font-family: 'Inter', sans-serif;
+  }
+  .hdc-day-off-btn:hover { border-color: rgba(255,255,255,0.25); color: #fff; }
+  .hdc-no-summary { font-size: 11px; color: var(--text-dim); font-style: italic; padding: 4px 0; }
   .history-empty { text-align: center; color: var(--text-dim); font-size: 13px; padding: 60px 0; }
 
   /* ── GOOGLE CALENDAR IMPORT ─────────────────────────────────────────── */
@@ -1782,6 +1791,7 @@
         showAuthScreen(false);
         load();
         checkDayOffFirestore();
+        recordTodayActivity();
       } else {
         setUserDoc(null);
         if (_unsubscribeSnapshot) { _unsubscribeSnapshot(); _unsubscribeSnapshot = null; }
@@ -3774,10 +3784,10 @@
   }
 
   function renderHistoryDay(day) {
-    // Format date (shared by both paths)
     const [y,m,d] = day.date.split('-').map(Number);
-    const dateObj  = new Date(y, m-1, d);
-    const dateLabel = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    const dateObj   = new Date(y, m-1, d);
+    const dateLabel = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    const dayOffBtn = `<button class="hdc-day-off-btn" onclick="markHistoryDayOff('${day.date}')">Mark as Day Off</button>`;
 
     if (day.dayOff) {
       return `<div class="history-day-card">
@@ -3788,12 +3798,23 @@
       </div>`;
     }
 
+    // Active-only entry — app was opened but day wasn't ended
+    if (!day.stressScore && !(day.timePerTask && day.timePerTask.length)) {
+      return `<div class="history-day-card">
+        <div class="hdc-header">
+          <div class="hdc-date">${dateLabel}</div>
+          ${dayOffBtn}
+        </div>
+        <div class="hdc-no-summary">No day summary recorded</div>
+      </div>`;
+    }
+
     const col   = stressColor(day.stressScore || 1);
     const label = stressLabel(day.stressScore || 1);
 
     const taskRows = (day.timePerTask || []).map(r =>
       `<div class="hdc-task-row"><span class="hdc-task-title">${esc(r.title)}</span><span class="hdc-task-time">${fmtTaskMins(r.mins)}</span></div>`
-    ).join('') || '<div style="text-align:center;color:var(--text-dim);font-size:11px;padding:10px 0;letter-spacing:0.06em;font-style:italic">No recorded data</div>';
+    ).join('');
 
     const pb = day.priorityBreakdown || {};
     const priorityHtml = buildPriorityHtml(pb, pb.total || 0, 'hdc-priority-chip');
@@ -3801,11 +3822,30 @@
     return `<div class="history-day-card">
       <div class="hdc-header">
         <div class="hdc-date">${dateLabel}</div>
-        <div class="hdc-stress" style="background:${col}22;color:${col}">Stress ${day.stressScore || '—'}/10 · ${label}</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="hdc-stress" style="background:${col}22;color:${col}">Stress ${day.stressScore || '—'}/10 · ${label}</div>
+          ${dayOffBtn}
+        </div>
       </div>
-      <div class="hdc-tasks">${taskRows}</div>
+      ${taskRows ? `<div class="hdc-tasks">${taskRows}</div>` : ''}
       ${priorityHtml ? `<div class="hdc-priority-row">${priorityHtml}</div>` : ''}
     </div>`;
+  }
+
+  function markHistoryDayOff(date) {
+    if (!_db || !_currentUser) return;
+    _db.collection('users').doc(_currentUser.uid).collection('history').doc(date)
+      .set({ date, dayOff: true, savedAt: Date.now() })
+      .then(() => openHistoryOverlay())
+      .catch(err => console.error('[Queue] Mark day off failed:', err));
+  }
+
+  function recordTodayActivity() {
+    if (!_db || !_currentUser) return;
+    const today = todayPstDateStr();
+    _db.collection('users').doc(_currentUser.uid).collection('history').doc(today)
+      .set({ date: today, savedAt: Date.now() }, { merge: true })
+      .catch(() => {});
   }
 
   function openClearHistoryConfirm() {
