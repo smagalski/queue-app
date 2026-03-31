@@ -352,7 +352,8 @@
   .card-slot.drag-over { background: rgba(255,255,255,0.03); outline: 1px dashed rgba(255,255,255,0.22); outline-offset: 3px; }
 
   /* ── DRAGGABLE FLEX CARDS ────────────────────────────────────────────── */
-  .task-card.flex-card { cursor: grab; user-select: none; }
+  .task-card.flex-card { cursor: grab; user-select: none; -webkit-user-drag: none; }
+  body.ptr-dragging .task-card.flex-card { cursor: grabbing; }
   .task-card.flex-card:active { cursor: grabbing; }
   .task-card.flex-card.dragging { opacity: 0.35; }
   .task-card.more-drag-over { outline: 2px dashed rgba(255,255,255,0.3); outline-offset: 2px; }
@@ -954,21 +955,22 @@
   }
   .end-day-btn:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.25); color: rgba(255,255,255,0.75); }
   .day-ended-msg {
-    width: 100%; margin-top: 6px; padding: 9px 14px; box-sizing: border-box;
-    text-align: center; font-family: 'Inter', sans-serif; font-weight: 700;
-    font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
-    color: rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.08);
+    width: 100%; margin-top: 6px; padding: 12px 14px; box-sizing: border-box;
+    text-align: center; font-family: 'Inter', sans-serif; font-weight: 800;
+    font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: #fff; border: 1px solid rgba(255,255,255,0.35);
     border-radius: 8px; display: none;
+    background: rgba(255,255,255,0.06);
+    text-shadow: 0 0 20px rgba(255,255,255,0.4);
   }
   body.day-ended .day-ended-msg  { display: block; }
   body.day-ended .end-day-btn    { display: none; }
   body.day-ended #resumeDayBtn   { display: block !important; }
 
   /* ── DAY ENDED GREY STATE ─────────────────────────────────────────────── */
-  body.day-ended .right-panel { opacity: 0.35; pointer-events: none; }
-  body.day-ended .add-btns-row,
-  body.day-ended .add-form-wrap,
-  body.day-ended .add-sched-form-wrap { opacity: 0.35; pointer-events: none; }
+  body.day-ended .task-panel > *:not(.day-ended-bar) { opacity: 0.2; pointer-events: none; transition: opacity 0.3s; }
+  body.day-ended .left-panel { opacity: 0.2; pointer-events: none; transition: opacity 0.3s; }
+  .day-ended-bar { display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
   /* ── BREAK BUDGET PANEL (left panel, bottom) ─────────────────────────── */
   .break-budget-panel {
     flex-shrink: 0; border-top: 1px solid var(--border);
@@ -1235,9 +1237,9 @@
 
     <!-- DRAG-FROM-MORE: sticky drop strip (shown only while dragging from More) -->
     <div id="moreDragStrip">
-      <div class="mds-slot" ondragover="mdsDragOver(event,0)" ondragleave="mdsDragLeave(event)" ondrop="mdsSlotDrop(event,0)">NOW</div>
-      <div class="mds-slot" ondragover="mdsDragOver(event,1)" ondragleave="mdsDragLeave(event)" ondrop="mdsSlotDrop(event,1)">UP NEXT</div>
-      <div class="mds-slot" ondragover="mdsDragOver(event,2)" ondragleave="mdsDragLeave(event)" ondrop="mdsSlotDrop(event,2)">ON DECK</div>
+      <div class="mds-slot" data-slot="0">NOW</div>
+      <div class="mds-slot" data-slot="1">UP NEXT</div>
+      <div class="mds-slot" data-slot="2">ON DECK</div>
     </div>
 
     <!-- MORE -->
@@ -1276,8 +1278,10 @@
       <button class="end-day-btn" id="endDayBtn" onclick="openEndDayModal()">End Day</button>
       <button class="end-day-btn" id="dayOffBtn" onclick="enterDayOff()">Day Off</button>
     </div>
-    <div class="day-ended-msg" id="dayEndedMsg">Day Ended — See You Tomorrow</div>
-    <button class="end-day-btn" id="resumeDayBtn" onclick="resumeDay()" style="display:none">Resume Day</button>
+    <div class="day-ended-bar" id="dayEndedBar">
+      <div class="day-ended-msg" id="dayEndedMsg">Day Ended — See You Tomorrow</div>
+      <button class="end-day-btn" id="resumeDayBtn" onclick="resumeDay()" style="display:none">Resume Day</button>
+    </div>
 
     <!-- FLEX TASK FORM -->
     <div class="add-form-wrap" id="addFormWrap">
@@ -2425,11 +2429,9 @@
 
     const dragAttrs = taskSched
       ? `onmousedown="schedDragAttempt(event,${task.id})"`
-      : `draggable="true" ondragstart="cardDragStart(event,${task.id})" ondragend="cardDragEnd(event)"`;
+      : `onmousedown="flexCardMouseDown(event,${task.id})"`;
 
-    const moreAttrs = opts.inMore
-      ? ` ondragover="moreCardDragOver(event,${task.id})" ondrop="moreCardDrop(event,${task.id})"`
-      : '';
+    const moreAttrs = ''; // reordering handled by pointer-event system via elementFromPoint
 
     return `<div class="task-card ${taskSched ? 'sched-card' : 'flex-card'}" data-id="${task.id}" ${dragAttrs}${moreAttrs} style="--card-bar:${col};border-color:${col}">
       <button class="delete-btn" onclick="deleteTaskById(${task.id})" title="Delete">✕</button>
@@ -3007,44 +3009,105 @@
     document.getElementById('moreArrow').classList.toggle('open', moreOpen);
   }
 
-  // ── Queue drag-and-drop ──────────────────────────────────────────────────
-  function cardDragStart(e, id) {
-    dragId = id;
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', String(id));
-    setTimeout(() => {
-      const card = document.querySelector(`[data-id="${id}"]`);
-      if (card) card.classList.add('dragging');
-      // Show sticky drop strip when dragging from the More section
-      if (card && card.closest('.more-cards')) {
-        const strip = document.getElementById('moreDragStrip');
-        if (strip) strip.classList.add('visible');
+  // ── Pointer-event drag (reliable in WKWebView + all browsers) ───────────
+  const DRAG_THRESHOLD = 6;
+  let _ptrDrag = null;
+
+  function flexCardMouseDown(e, id) {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    const card = e.currentTarget;
+    const rect = card.getBoundingClientRect();
+    _ptrDrag = {
+      id,
+      startX: e.clientX, startY: e.clientY,
+      offsetX: e.clientX - rect.left, offsetY: e.clientY - rect.top,
+      width: rect.width,
+      ghost: null, active: false, sourceCard: card,
+    };
+    document.addEventListener('mousemove', _ptrMove);
+    document.addEventListener('mouseup',   _ptrUp);
+  }
+
+  function _ptrMove(e) {
+    if (!_ptrDrag) return;
+    const dx = e.clientX - _ptrDrag.startX, dy = e.clientY - _ptrDrag.startY;
+    if (!_ptrDrag.active && Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
+
+    if (!_ptrDrag.active) {
+      _ptrDrag.active = true;
+      dragId = _ptrDrag.id;
+      document.body.classList.add('ptr-dragging');
+      _ptrDrag.sourceCard.style.opacity = '0.3';
+      const ghost = _ptrDrag.sourceCard.cloneNode(true);
+      ghost.style.cssText = `position:fixed;pointer-events:none;z-index:9999;width:${_ptrDrag.width}px;opacity:0.85;transition:none;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.5)`;
+      document.body.appendChild(ghost);
+      _ptrDrag.ghost = ghost;
+      // Show sticky strip if dragging from More
+      if (_ptrDrag.sourceCard.closest('.more-cards'))
+        document.getElementById('moreDragStrip')?.classList.add('visible');
+    }
+
+    _ptrDrag.ghost.style.left = `${e.clientX - _ptrDrag.offsetX}px`;
+    _ptrDrag.ghost.style.top  = `${e.clientY - _ptrDrag.offsetY}px`;
+
+    // Hit-test under ghost
+    _ptrDrag.ghost.style.visibility = 'hidden';
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    _ptrDrag.ghost.style.visibility = '';
+    document.querySelectorAll('.drag-over,.more-drag-over').forEach(x =>
+      x.classList.remove('drag-over', 'more-drag-over'));
+    if (!el) return;
+    const slot     = el.closest('.card-slot');
+    const mdsSlot  = el.closest('.mds-slot');
+    const moreCard = el.closest('.more-cards .task-card');
+    const moreZone = el.closest('.more-cards');
+    if      (slot)     slot.classList.add('drag-over');
+    else if (mdsSlot)  mdsSlot.classList.add('drag-over');
+    else if (moreCard) moreCard.classList.add('more-drag-over');
+    else if (moreZone) moreZone.classList.add('drag-over');
+  }
+
+  function _ptrUp(e) {
+    document.removeEventListener('mousemove', _ptrMove);
+    document.removeEventListener('mouseup',   _ptrUp);
+    if (!_ptrDrag) return;
+    const { id, ghost, sourceCard, active } = _ptrDrag;
+    _ptrDrag = null;
+    document.body.classList.remove('ptr-dragging');
+    document.getElementById('moreDragStrip')?.classList.remove('visible');
+    document.querySelectorAll('.drag-over,.more-drag-over').forEach(x =>
+      x.classList.remove('drag-over', 'more-drag-over'));
+
+    if (!active) return;
+
+    ghost.style.visibility = 'hidden';
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    ghost.remove();
+    sourceCard.style.opacity = '';
+    dragId = null;
+
+    if (el) {
+      const slot     = el.closest('.card-slot');
+      const mdsSlot  = el.closest('.mds-slot');
+      const moreCard = el.closest('.more-cards .task-card');
+      const moreZone = el.closest('.more-cards');
+      if (slot) {
+        reorderFlexToAllIndex(id, parseInt(slot.id.split('-')[1]));
+      } else if (mdsSlot) {
+        reorderFlexToAllIndex(id, parseInt(mdsSlot.dataset.slot));
+      } else if (moreCard && moreCard.dataset.id !== String(id)) {
+        const targetIdx = getAllSorted().findIndex(t => t.id === parseInt(moreCard.dataset.id));
+        if (targetIdx >= 0) reorderFlexToAllIndex(id, targetIdx);
+      } else if (moreZone) {
+        const task = tasks.find(t => t.id === id);
+        if (task && !isScheduled(task)) {
+          task.flexOrder = getSorted().reduce((m, t) => Math.max(m, t.flexOrder ?? 0), 0) + 1;
+          task.priority  = 4;
+          save();
+        }
       }
-    }, 0);
-  }
-
-  function cardDragEnd(e) {
-    dragId = null;
-    document.querySelectorAll('.dragging').forEach(c => c.classList.remove('dragging'));
-    document.querySelectorAll('.drag-over').forEach(c => c.classList.remove('drag-over'));
-    document.querySelectorAll('.more-drag-over').forEach(c => c.classList.remove('more-drag-over'));
-    const strip = document.getElementById('moreDragStrip');
-    if (strip) strip.classList.remove('visible');
-  }
-
-  function mdsDragOver(e, slotIdx) {
-    if (!dragId) return;
-    e.preventDefault(); e.stopPropagation();
-    document.querySelectorAll('.mds-slot').forEach(s => s.classList.remove('drag-over'));
-    e.currentTarget.classList.add('drag-over');
-  }
-  function mdsDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
-  function mdsSlotDrop(e, slotIdx) {
-    e.preventDefault(); e.stopPropagation();
-    document.querySelectorAll('.mds-slot').forEach(s => s.classList.remove('drag-over'));
-    if (!dragId) return;
-    reorderFlexToAllIndex(dragId, slotIdx);
-    dragId = null;
+    }
     render();
   }
 
