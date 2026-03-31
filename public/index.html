@@ -527,6 +527,10 @@
   .edm-task-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
   .edm-task-title { font-size: 12px; color: var(--text-mid); }
   .edm-task-time  { font-size: 11px; color: var(--text-dim); }
+  .edm-cat-header { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; margin-bottom: 2px; }
+  .edm-cat-label  { font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); }
+  .edm-cat-total  { font-size: 10px; color: var(--text-dim); font-weight: 600; }
+  .edm-cat-block  { border-left: 2px solid rgba(255,255,255,0.08); padding-left: 10px; margin-bottom: 4px; }
   .edm-priority-row { display: flex; gap: 8px; flex-wrap: wrap; }
   .edm-priority-chip {
     padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 600;
@@ -610,6 +614,10 @@
   .hdc-task-row { display: flex; justify-content: space-between; font-size: 11px; padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
   .hdc-task-title { color: var(--text-mid); }
   .hdc-task-time  { color: var(--text-dim); }
+  .hdc-cat-header { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; margin-bottom: 2px; }
+  .hdc-cat-label  { font-size: 8px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); }
+  .hdc-cat-total  { font-size: 10px; color: var(--text-dim); font-weight: 600; }
+  .hdc-cat-block  { border-left: 2px solid rgba(255,255,255,0.08); padding-left: 8px; margin-bottom: 4px; }
   .hdc-priority-row { display: flex; gap: 6px; flex-wrap: wrap; }
   .hdc-priority-chip { padding: 2px 8px; border-radius: 20px; font-size: 9px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
   .hdc-day-off-btn {
@@ -3690,6 +3698,64 @@
     return { todayDone, timePerTask, priorityBreakdown, stressScore, incompleteTasks };
   }
 
+  const TASK_CATEGORIES = [
+    {
+      key: 'work',
+      label: 'Work',
+      keywords: ['work','meeting','call','email','client','project','report','review','presentation','interview',
+                 'networking','network','deadline','invoice','proposal','budget','pitch','standup','sprint',
+                 'slack','zoom','teams','sync','planning','strategy','analysis','research','develop','code','design']
+    },
+    {
+      key: 'chores',
+      label: 'Chores & Errands',
+      keywords: ['chore','errand','clean','cleaning','laundry','dishes','vacuum','grocery','groceries','shopping',
+                 'house','home','lawn','yard','trash','garbage','recycling','cook','cooking','meal','dinner',
+                 'lunch','breakfast','pickup','drop off','drop-off','appointment','doctor','dentist','pharmacy',
+                 'repair','fix','maintenance','bills','bank','post office','mail']
+    },
+  ];
+
+  function categorizeTaskRows(timePerTask, rowFn, catHeaderFn, catBlockFn) {
+    if (!timePerTask || !timePerTask.length) return '';
+    const buckets = {};
+    TASK_CATEGORIES.forEach(c => { buckets[c.key] = []; });
+    buckets._other = [];
+
+    for (const r of timePerTask) {
+      const title = (r.title || '').toLowerCase();
+      let matched = false;
+      for (const cat of TASK_CATEGORIES) {
+        if (cat.keywords.some(kw => title.includes(kw))) {
+          buckets[cat.key].push(r);
+          matched = true;
+          break;
+        }
+      }
+      if (!matched) buckets._other.push(r);
+    }
+
+    let html = '';
+    for (const cat of TASK_CATEGORIES) {
+      const rows = buckets[cat.key];
+      if (!rows.length) continue;
+      const subtotal = rows.reduce((s, r) => s + (r.mins || 0), 0);
+      html += catHeaderFn(cat.label, fmtTaskMins(subtotal));
+      html += catBlockFn(rows.map(r => rowFn(r)).join(''));
+    }
+    if (buckets._other.length) {
+      const hasCategories = TASK_CATEGORIES.some(c => buckets[c.key].length > 0);
+      if (hasCategories) {
+        const subtotal = buckets._other.reduce((s, r) => s + (r.mins || 0), 0);
+        html += catHeaderFn('Other', fmtTaskMins(subtotal));
+        html += catBlockFn(buckets._other.map(r => rowFn(r)).join(''));
+      } else {
+        html += buckets._other.map(r => rowFn(r)).join('');
+      }
+    }
+    return html;
+  }
+
   function buildPriorityHtml(pb, total, chipClass) {
     let html = '';
     for (let p = 1; p <= 4; p++) {
@@ -3721,8 +3787,11 @@
     const col   = stressColor(stressScore);
     const total = priorityBreakdown.total;
 
+    const _edmRow   = r => `<div class="edm-task-row"><span class="edm-task-title">${esc(r.title)}</span><span class="edm-task-time">${fmtTaskMins(r.mins)}</span></div>`;
+    const _edmHead  = (label, total) => `<div class="edm-cat-header"><span class="edm-cat-label">${label}</span><span class="edm-cat-total">${total}</span></div>`;
+    const _edmBlock = rows => `<div class="edm-cat-block">${rows}</div>`;
     const tasksHtml = timePerTask.length
-      ? timePerTask.map(r => `<div class="edm-task-row"><span class="edm-task-title">${esc(r.title)}</span><span class="edm-task-time">${fmtTaskMins(r.mins)}</span></div>`).join('')
+      ? categorizeTaskRows(timePerTask, _edmRow, _edmHead, _edmBlock)
       : '<div style="color:var(--text-dim);font-size:11px;padding:4px 0">No completed tasks recorded.</div>';
 
     const priorityHtml = buildPriorityHtml(priorityBreakdown, total, 'edm-priority-chip')
@@ -3949,9 +4018,10 @@
     const col   = stressColor(day.stressScore || 1);
     const label = stressLabel(day.stressScore || 1);
 
-    const taskRows = (day.timePerTask || []).map(r =>
-      `<div class="hdc-task-row"><span class="hdc-task-title">${esc(r.title)}</span><span class="hdc-task-time">${fmtTaskMins(r.mins)}</span></div>`
-    ).join('');
+    const _hdcRow   = r => `<div class="hdc-task-row"><span class="hdc-task-title">${esc(r.title)}</span><span class="hdc-task-time">${fmtTaskMins(r.mins)}</span></div>`;
+    const _hdcHead  = (label, total) => `<div class="hdc-cat-header"><span class="hdc-cat-label">${label}</span><span class="hdc-cat-total">${total}</span></div>`;
+    const _hdcBlock = rows => `<div class="hdc-cat-block">${rows}</div>`;
+    const taskRows  = categorizeTaskRows(day.timePerTask, _hdcRow, _hdcHead, _hdcBlock);
 
     const pb = day.priorityBreakdown || {};
     const priorityHtml = buildPriorityHtml(pb, pb.total || 0, 'hdc-priority-chip');
