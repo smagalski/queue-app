@@ -1,4 +1,3 @@
-use tauri::Manager;
 use tauri_plugin_updater::UpdaterExt;
 
 #[tauri::command]
