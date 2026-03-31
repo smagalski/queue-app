@@ -279,7 +279,19 @@
   .task-input:focus, .time-input:focus, .duration-select:focus { border-color: rgba(255,255,255,0.35); }
   .task-input::placeholder { color: var(--text-dim); }
   .time-input::-webkit-calendar-picker-indicator { filter: invert(0.35); cursor: pointer; }
+  .duration-select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='rgba(255,255,255,0.3)'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 28px;
+  }
   .duration-select option { background: #1a1724; }
+  /* Remove native macOS shiny appearance on all selects */
+  select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+  }
 
   .form-row-half { display: flex; gap: 12px; align-items: flex-start; }
   .form-row-half > div { flex: 1; }
@@ -982,10 +994,15 @@
     text-transform: uppercase; color: var(--text-dim);
   }
   .bbp-select {
-    background: transparent; border: none; color: #fff;
-    font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 700;
-    letter-spacing: 0.05em; cursor: pointer; outline: none; padding: 0;
+    background: var(--surface2); border: 1px solid rgba(255,255,255,0.12); border-radius: 5px;
+    color: #fff; font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 700;
+    letter-spacing: 0.05em; cursor: pointer; outline: none;
+    padding: 4px 22px 4px 8px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='rgba(255,255,255,0.4)'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 7px center;
   }
+  .bbp-select:hover { border-color: rgba(255,255,255,0.25); }
   .bbp-select option { background: var(--surface2); color: #fff; }
   .bbp-bar-wrap {
     height: 3px; background: rgba(152,99,243,0.18); border-radius: 2px; overflow: hidden;
