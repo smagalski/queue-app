@@ -562,30 +562,6 @@
   .edm-choice-btn.clear:hover { background: rgba(255,107,138,0.1); }
   .edm-incomplete-count { font-size: 12px; color: var(--text-mid); text-align: center; margin-bottom: 10px; }
 
-  /* ── DAY OFF OVERLAY ─────────────────────────────────────────────────── */
-  .day-off-overlay {
-    position: fixed; inset: 0; z-index: 9500;
-    background: rgba(11,10,15,0.92); backdrop-filter: blur(6px);
-    display: none; flex-direction: column; align-items: center; justify-content: center; gap: 28px;
-  }
-  .day-off-overlay.active { display: flex; }
-  .dob-heading {
-    font-size: 88px; font-weight: 800; letter-spacing: -0.03em; color: #fff; line-height: 1;
-  }
-  .dob-title {
-    font-size: 13px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-dim);
-  }
-  .dob-sub {
-    font-size: 11px; color: var(--text-dim); letter-spacing: 0.06em; text-align: center;
-  }
-  .dob-cancel-btn {
-    background: #fff; border: none; border-radius: 6px; color: #0b0a0f;
-    font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700;
-    letter-spacing: 0.14em; text-transform: uppercase; padding: 13px 36px;
-    cursor: pointer; transition: opacity 0.15s;
-  }
-  .dob-cancel-btn:hover { opacity: 0.85; }
-
   /* ── HISTORY OVERLAY ─────────────────────────────────────────────────── */
   .history-overlay {
     display: none; position: fixed; inset: 0; z-index: 10100;
@@ -962,12 +938,8 @@
   .break-toggle-btn.over:hover:not(:disabled) { color: var(--p1); }
 
   /* ── END DAY BUTTON ───────────────────────────────────────────────────── */
-  .end-btns-row {
-    display: flex; gap: 8px;
-    margin-top: 20px; padding-top: 16px;
-    border-top: 1px solid rgba(255,255,255,0.07);
-  }
-  .end-btns-row .end-day-btn { margin-top: 0; flex: 1; }
+  .end-btns-row { display: flex; gap: 6px; margin-top: 6px; }
+  .end-btns-row .end-day-btn { flex: 1; margin-top: 0; width: auto; }
   .end-day-btn {
     width: 100%; margin-top: 6px; padding: 9px 14px;
     background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12);
@@ -1071,10 +1043,6 @@
   .end-break-btn:hover { opacity: 0.85; }
   .end-break-btn.over { background: var(--p1); color: #fff; }
 
-  /* ── END-DAY / DAY-OFF BUTTON ROW ────────────────────────────────────── */
-  .end-btns-row { display: flex; gap: 6px; margin-top: 6px; }
-  .end-btns-row .end-day-btn { flex: 1; margin-top: 0; width: auto; }
-
   /* ── DAY OFF OVERLAY ──────────────────────────────────────────────────── */
   .day-off-overlay {
     position: fixed; inset: 0; z-index: 9000;
@@ -1082,6 +1050,9 @@
     display: none; flex-direction: column; align-items: center; justify-content: center; gap: 28px;
   }
   .day-off-overlay.active { display: flex; }
+  .dob-title {
+    font-size: 13px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-dim);
+  }
   .dob-heading {
     font-size: 11px; font-weight: 800; letter-spacing: 0.35em; text-transform: uppercase; color: var(--text-dim);
   }
@@ -1531,7 +1502,6 @@
   const P_COLORS = ['','#ff6b8a','#ffaa60','#f0d060','#7fd4a8'];
   const P_NAMES  = ['','Urgent','High','Medium','Low'];
   const P_COLS   = ['','rgba(255,107,138,0.15)','rgba(255,170,96,0.15)','rgba(240,208,96,0.15)','rgba(127,212,168,0.15)'];
-  const P_TEXT   = ['','#ff6b8a','#ffaa60','#f0d060','#7fd4a8'];
 
   // Calendar bounds (mutable, persisted to localStorage)
   let CAL_START = parseInt(localStorage.getItem('q_calStart') || '360');  // default 6:00am
@@ -2017,7 +1987,7 @@
     }
     body.innerHTML = recurringTasks.map(rt => {
       const timeLabel = `${rt.anchor === 'start' ? 'Starts' : 'Ends'} at ${fmtTime12(rt.time)}`;
-      const durLabel  = fmtTaskMins(rt.duration);
+      const durLabel  = fmtDuration(rt.duration);
       const dayChips = RECUR_DAY_NAMES.map((d, i) =>
         `<span class="recur-day-chip${rt.days.includes(i) ? ' on' : ''}">${d}</span>`
       ).join('');
@@ -2158,13 +2128,6 @@
     if (diffMins < 60) return `${diffMins}m ago`;
     const diffHours = Math.floor(diffMins / 60);
     return diffHours < 24 ? `${diffHours}h ago` : `${Math.floor(diffHours / 24)}d ago`;
-  }
-
-  // Format a minute count as a compact duration string (e.g. "45m", "1h 30m")
-  function fmtTaskMins(mins) {
-    if (mins < 60) return `${mins}m`;
-    const hours = Math.floor(mins / 60), remainder = mins % 60;
-    return remainder > 0 ? `${hours}h ${remainder}m` : `${hours}h`;
   }
 
   // ── Dropdown helpers ───────────────────────────────────────────────────
@@ -3743,14 +3706,14 @@
       const rows = buckets[cat.key];
       if (!rows.length) continue;
       const subtotal = rows.reduce((s, r) => s + (r.mins || 0), 0);
-      html += catHeaderFn(cat.label, fmtTaskMins(subtotal));
+      html += catHeaderFn(cat.label, fmtDuration(subtotal));
       html += catBlockFn(rows.map(r => rowFn(r)).join(''));
     }
     if (buckets._other.length) {
       const hasCategories = TASK_CATEGORIES.some(c => buckets[c.key].length > 0);
       if (hasCategories) {
         const subtotal = buckets._other.reduce((s, r) => s + (r.mins || 0), 0);
-        html += catHeaderFn('Other', fmtTaskMins(subtotal));
+        html += catHeaderFn('Other', fmtDuration(subtotal));
         html += catBlockFn(buckets._other.map(r => rowFn(r)).join(''));
       } else {
         html += buckets._other.map(r => rowFn(r)).join('');
@@ -3790,7 +3753,7 @@
     const col   = stressColor(stressScore);
     const total = priorityBreakdown.total;
 
-    const _edmRow   = r => `<div class="edm-task-row"><span class="edm-task-title">${esc(r.title)}</span><span class="edm-task-time">${fmtTaskMins(r.mins)}</span></div>`;
+    const _edmRow   = r => `<div class="edm-task-row"><span class="edm-task-title">${esc(r.title)}</span><span class="edm-task-time">${fmtDuration(r.mins)}</span></div>`;
     const _edmHead  = (label, total) => `<div class="edm-cat-header"><span class="edm-cat-label">${label}</span><span class="edm-cat-total">${total}</span></div>`;
     const _edmBlock = rows => `<div class="edm-cat-block">${rows}</div>`;
     const tasksHtml = timePerTask.length
@@ -3905,8 +3868,7 @@
 
   // ── Day Off ────────────────────────────────────────────────────────────
   function showDayOffOverlay() {
-    const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-    document.getElementById('dayOffDayName').textContent = dayNames[getPST().getDay()];
+    document.getElementById('dayOffDayName').textContent = DAYS[getPST().getDay()];
     document.getElementById('dayOffOverlay').classList.add('active');
   }
 
@@ -4021,7 +3983,7 @@
     const col   = stressColor(day.stressScore || 1);
     const label = stressLabel(day.stressScore || 1);
 
-    const _hdcRow   = r => `<div class="hdc-task-row"><span class="hdc-task-title">${esc(r.title)}</span><span class="hdc-task-time">${fmtTaskMins(r.mins)}</span></div>`;
+    const _hdcRow   = r => `<div class="hdc-task-row"><span class="hdc-task-title">${esc(r.title)}</span><span class="hdc-task-time">${fmtDuration(r.mins)}</span></div>`;
     const _hdcHead  = (label, total) => `<div class="hdc-cat-header"><span class="hdc-cat-label">${label}</span><span class="hdc-cat-total">${total}</span></div>`;
     const _hdcBlock = rows => `<div class="hdc-cat-block">${rows}</div>`;
     const taskRows  = categorizeTaskRows(day.timePerTask, _hdcRow, _hdcHead, _hdcBlock);
