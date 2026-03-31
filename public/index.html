@@ -1519,8 +1519,8 @@
   const P_LABELS = ['','URGENT','HIGH','MEDIUM','LOW'];
   const P_COLORS = ['','#ff6b8a','#ffaa60','#f0d060','#7fd4a8'];
   const P_NAMES  = ['','Urgent','High','Medium','Low'];
-  const P_COLS   = ['','rgba(255,107,138,0.2)','rgba(255,165,89,0.2)','rgba(100,200,120,0.2)','rgba(100,150,255,0.2)'];
-  const P_TEXT   = ['','#ff6b8a','#ffa559','#64c878','#6496ff'];
+  const P_COLS   = ['','rgba(255,107,138,0.15)','rgba(255,170,96,0.15)','rgba(240,208,96,0.15)','rgba(127,212,168,0.15)'];
+  const P_TEXT   = ['','#ff6b8a','#ffaa60','#f0d060','#7fd4a8'];
 
   // Calendar bounds (mutable, persisted to localStorage)
   let CAL_START = parseInt(localStorage.getItem('q_calStart') || '360');  // default 6:00am
@@ -3696,7 +3696,7 @@
       const cnt = pb[['','urgent','high','medium','low'][p]] || 0;
       if (!cnt) continue;
       const pct = total > 0 ? Math.round(cnt / total * 100) : 0;
-      html += `<span class="${chipClass}" style="background:${P_COLS[p]};color:${P_TEXT[p]}">${P_NAMES[p]} ${pct}%</span>`;
+      html += `<span class="${chipClass}" style="background:${P_COLS[p]};color:${P_COLORS[p]};border:1px solid ${P_COLORS[p]}40">${P_NAMES[p]} ${pct}%</span>`;
     }
     return html;
   }
