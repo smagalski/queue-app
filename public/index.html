@@ -2543,12 +2543,25 @@
     return [...tasks]
       .filter(t => isScheduled(t))
       .map(t => {
-        const stMins = t.startTime ? parseDateLocalMins(t.startTime) : null;
-        const dur    = t.duration || DEFAULT_DUR;
-        const etMins = t.endTime  ? parseDateLocalMins(t.endTime)
-                     : stMins != null ? stMins + dur : null;
-        const active = stMins != null && nowMins >= stMins && (etMins == null || nowMins < etMins);
-        return { ...t, _eff: { priority: 2, escalated: false }, _stMins: stMins, _etMins: etMins, _active: active };
+        const stMins  = t.startTime ? parseDateLocalMins(t.startTime) : null;
+        const dur     = t.duration || DEFAULT_DUR;
+        const etMins  = t.endTime  ? parseDateLocalMins(t.endTime)
+                      : stMins != null ? stMins + dur : null;
+        const started = stMins != null && nowMins >= stMins;
+        const overrun = started && etMins != null && nowMins >= etMins;
+        const active  = started && (etMins == null || nowMins < etMins || overrun);
+        // When running over, show current time as the live end time and suppress red styling
+        const displayEndTime = overrun
+          ? `${todayPstDateStr()}T${fmtMins(nowMins)}`
+          : t.endTime;
+        return {
+          ...t,
+          endTime: displayEndTime,           // display only; original in tasks[] unchanged
+          _eff: { priority: 2, escalated: false },
+          _stMins: stMins,
+          _etMins: overrun ? null : etMins,  // null = open-ended → no end-over styling
+          _active: active,
+        };
       })
       .sort((a, b) => (a._stMins ?? 9999) - (b._stMins ?? 9999));
   }
