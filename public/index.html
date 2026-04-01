@@ -4268,8 +4268,13 @@
     }
   });
 
+  // Rerender calendar immediately when the sidebar resizes (no scroll delay)
+  const _calSection = document.querySelector('.calendar-section');
+  if (_calSection && typeof ResizeObserver !== 'undefined') {
+    new ResizeObserver(() => renderCalendar()).observe(_calSection);
+  }
+
   // Full re-render every 30s (for time labels, escalation, etc.)
-  // renderCalendar is cheap but we skip the scroll reset via _calScrolled flag
   setInterval(render, 30000);
   // Check day-ended reset every minute (catches midnight rollover)
   setInterval(checkDayEndedReset, 60000);
