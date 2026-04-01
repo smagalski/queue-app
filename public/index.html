@@ -4443,12 +4443,27 @@
   let _gcalTokenExpiry  = 0;
   let _gcalPendingEvents = null;
 
+  function _showGcalOverlayConnecting() {
+    const overlay = document.getElementById('gcalOverlay');
+    document.getElementById('gcalEventList').innerHTML = '<div class="gcal-empty">Connecting to Google Calendar…</div>';
+    document.getElementById('gcalConfirmBtn').style.display = 'none';
+    overlay.classList.add('active');
+  }
+
+  function _showGcalError(msg) {
+    document.getElementById('gcalEventList').innerHTML = `<div class="gcal-empty" style="color:#f87171;">${msg}</div>`;
+  }
+
   function _buildGcalTokenClient(onSuccess) {
     return google.accounts.oauth2.initTokenClient({
       client_id: GCAL_CLIENT_ID,
       scope: 'https://www.googleapis.com/auth/calendar.readonly',
       callback(resp) {
-        if (resp.error) { console.error('GCal OAuth error:', resp.error); return; }
+        if (resp.error) {
+          console.error('GCal OAuth error:', resp.error);
+          _showGcalError('Google sign-in failed: ' + (resp.error_description || resp.error) + '<br><small>Make sure pop-ups are allowed and try again.</small>');
+          return;
+        }
         _gcalAccessToken = resp.access_token;
         _gcalTokenExpiry = Date.now() + (resp.expires_in - 60) * 1000;
         onSuccess();
@@ -4461,12 +4476,18 @@
       alert('Google Calendar import is not configured.\n\nSet GCAL_CLIENT_ID in the source to your OAuth 2.0 Web Client ID.\nFind it at: Firebase Console → Auth → Sign-in providers → Google → Web SDK configuration.');
       return;
     }
+    if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
+      _showGcalOverlayConnecting();
+      _showGcalError('Google Identity Services failed to load.<br><small>Check your internet connection and reload the page.</small>');
+      return;
+    }
     if (_gcalAccessToken && Date.now() < _gcalTokenExpiry) {
       fetchGcalEvents();
       return;
     }
+    _showGcalOverlayConnecting();
     _gcalTokenClient = _buildGcalTokenClient(fetchGcalEvents);
-    _gcalTokenClient.requestAccessToken({ prompt: '' });
+    _gcalTokenClient.requestAccessToken({ prompt: 'select_account' });
   }
 
   async function fetchGcalEvents() {
@@ -4501,9 +4522,9 @@
       if (res.status === 401) {
         _gcalAccessToken = null;
         _gcalTokenExpiry  = 0;
-        overlay.classList.remove('active');
+        _showGcalOverlayConnecting();
         _gcalTokenClient = _buildGcalTokenClient(fetchGcalEvents);
-        _gcalTokenClient.requestAccessToken({ prompt: '' });
+        _gcalTokenClient.requestAccessToken({ prompt: 'select_account' });
         return;
       }
       if (!res.ok) {
