@@ -250,7 +250,7 @@
     cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px; transition: all 0.2s;
   }
   .add-toggle-btn:hover { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.25); }
-  .add-toggle-btn.open { border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom-color: transparent; }
+  .add-toggle-btn.open { }
   .add-toggle-icon { font-size: 15px; line-height: 1; transition: transform 0.2s; font-weight: 300; }
   .add-toggle-btn.open .add-toggle-icon { transform: rotate(45deg); }
   .add-toggle-btn.pcolor-1 { border-color: rgba(255,107,138,0.5); color: var(--p1); background: rgba(255,107,138,0.07); }
@@ -261,8 +261,8 @@
   .add-form-wrap { overflow: hidden; max-height: 0; transition: max-height 0.3s ease; }
   .add-form-wrap.open { max-height: 560px; }
   .add-form {
-    background: var(--surface); border: 1px solid rgba(255,255,255,0.12); border-top: none;
-    border-radius: 0 0 8px 8px; padding: 14px; display: flex; flex-direction: column; gap: 12px;
+    background: var(--surface); border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 12px;
     transition: border-color 0.25s;
   }
   .add-form.pcolor-1 { border-color: rgba(255,107,138,0.4); }
@@ -415,13 +415,35 @@
     cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px; transition: all 0.2s;
   }
   .add-sched-toggle-btn:hover { background: rgba(126,200,227,0.13); border-color: rgba(126,200,227,0.5); }
-  .add-sched-toggle-btn.open { border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom-color: transparent; }
+  .add-sched-toggle-btn.open { }
   .add-sched-toggle-btn.open .add-toggle-icon { transform: rotate(45deg); }
-  .add-sched-form-wrap { overflow: hidden; max-height: 0; transition: max-height 0.3s ease; }
-  .add-sched-form-wrap.open { max-height: 620px; }
+  .add-sched-form-wrap { display: none; }
+
+  /* ── ADD TASK MODAL OVERLAY ──────────────────────────────────────────── */
+  .add-modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 8000;
+    background: rgba(0,0,0,0.65); align-items: center; justify-content: center;
+  }
+  .add-modal-overlay.active { display: flex; }
+  .add-modal {
+    position: relative; width: 360px; max-width: 95vw;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .add-modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 9px; font-weight: 700; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--text-dim);
+  }
+  .add-modal-close {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 50%;
+    color: var(--text-mid); font-size: 11px; width: 26px; height: 26px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .add-modal-close:hover { background: rgba(255,255,255,0.1); color: #fff; }
   .add-sched-form {
-    background: var(--surface); border: 1px solid rgba(126,200,227,0.3); border-top: none;
-    border-radius: 0 0 8px 8px; padding: 14px; display: flex; flex-direction: column; gap: 12px;
+    background: var(--surface); border: 1px solid rgba(126,200,227,0.3);
+    border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 12px;
   }
   .add-sched-btn {
     width: 100%; height: 34px; background: var(--sched); border: none; border-radius: 5px;
@@ -473,6 +495,14 @@
     white-space: nowrap; flex-shrink: 0;
   }
   .recur-delete-btn:hover { border-color: #ff6b8a; color: #ff6b8a; }
+  .recur-edit-btn {
+    background: none; border: 1px solid var(--border); border-radius: 5px;
+    color: var(--text-dim); font-size: 10px; font-weight: 600; letter-spacing: 0.06em;
+    text-transform: uppercase; padding: 4px 9px; cursor: pointer; transition: all 0.12s;
+    white-space: nowrap; flex-shrink: 0;
+  }
+  .recur-edit-btn:hover { border-color: var(--text-mid); color: #fff; }
+  .recur-task-card-editing { border-color: rgba(126,200,227,0.35); }
   .recur-empty {
     color: var(--text-dim); font-size: 13px; text-align: center; padding: 40px 0;
   }
@@ -487,6 +517,14 @@
   .signout-btn:hover { border-color: #fff; color: #fff; background: rgba(255,255,255,0.05); }
 
   /* ── GEAR MENU ────────────────────────────────────────────────────────── */
+  .undo-btn-top {
+    background: none; border: 1px solid var(--border); border-radius: 50%;
+    color: var(--text-dim); font-size: 16px; width: 28px; height: 28px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s; padding: 0; line-height: 1;
+  }
+  .undo-btn-top:hover:not(:disabled) { border-color: #fff; color: #fff; background: rgba(255,255,255,0.05); }
+  .undo-btn-top:disabled { opacity: 0.25; cursor: default; }
   .gear-wrap { position: relative; }
   .gear-btn {
     background: none; border: 1px solid var(--border); border-radius: 4px;
@@ -1097,6 +1135,7 @@
       <button class="seg-btn" id="segDesktop" onclick="applyViewMode(false)">🖥</button>
       <button class="seg-btn" id="segMobile"  onclick="applyViewMode(true)">📱</button>
     </div>
+    <button class="undo-btn-top" id="undoBtn" onclick="undoLast()" title="Undo" disabled>↺</button>
     <div class="gear-wrap" id="gearWrap" style="display:none">
       <button class="gear-btn" id="gearBtn" onclick="toggleGearMenu(event)">⚙</button>
       <div class="gear-menu" id="gearMenu">
@@ -1108,7 +1147,7 @@
         <div class="gear-menu-divider"></div>
         <button class="gear-menu-item" onclick="signOut()">Sign Out</button>
         <div class="gear-menu-divider"></div>
-        <div id="gearVersion" style="font-size:10px;color:var(--text-dim);padding:6px 12px;letter-spacing:0.05em;text-align:center">v1.0.0</div>
+        <div id="gearVersion" style="font-size:10px;color:var(--text-dim);padding:6px 12px;letter-spacing:0.05em;text-align:center">v1.0.1</div>
       </div>
     </div>
   </div>
@@ -1282,33 +1321,44 @@
       <button class="end-day-btn" id="resumeDayBtn" onclick="resumeDay()" style="display:none">Resume Day</button>
     </div>
 
-    <!-- FLEX TASK FORM -->
-    <div class="add-form-wrap" id="addFormWrap">
-      <div class="add-form" id="addFormInner">
-        <div>
-          <label class="form-label">Task Name</label>
-          <input class="task-input" id="taskInput" placeholder="What needs doing?" maxlength="120"
-                 onkeydown="if(event.key==='Enter') addTask()"/>
+    <!-- FLEX TASK MODAL -->
+    <div class="add-modal-overlay" id="addTaskOverlay" onclick="if(event.target===this)closeAddForm()">
+      <div class="add-modal">
+        <div class="add-modal-header">
+          <span>New Flex Task</span>
+          <button class="add-modal-close" onclick="closeAddForm()">✕</button>
         </div>
-        <div>
-          <label class="form-label">Priority</label>
-          <div class="priority-group">
-            <button class="p-btn" id="pb1" onclick="selectP(1)">Urgent</button>
-            <button class="p-btn" id="pb2" onclick="selectP(2)">High</button>
-            <button class="p-btn" id="pb3" onclick="selectP(3)">Medium</button>
-            <button class="p-btn" id="pb4" onclick="selectP(4)">Low</button>
+        <div class="add-form" id="addFormInner">
+          <div>
+            <label class="form-label">Task Name</label>
+            <input class="task-input" id="taskInput" placeholder="What needs doing?" maxlength="120"
+                   onkeydown="if(event.key==='Enter') addTask()"/>
           </div>
+          <div>
+            <label class="form-label">Priority</label>
+            <div class="priority-group">
+              <button class="p-btn" id="pb1" onclick="selectP(1)">Urgent</button>
+              <button class="p-btn" id="pb2" onclick="selectP(2)">High</button>
+              <button class="p-btn" id="pb3" onclick="selectP(3)">Medium</button>
+              <button class="p-btn" id="pb4" onclick="selectP(4)">Low</button>
+            </div>
+          </div>
+          <div>
+            <label class="form-label">Duration</label>
+            <select class="duration-select" id="durationInput"></select>
+          </div>
+          <button class="add-btn" id="addBtn" onclick="addTask()" disabled>Add Flex Task</button>
         </div>
-        <div>
-          <label class="form-label">Duration</label>
-          <select class="duration-select" id="durationInput"></select>
-        </div>
-        <button class="add-btn" id="addBtn" onclick="addTask()" disabled>Add Flex Task</button>
       </div>
     </div>
 
-    <!-- SCHEDULED TASK FORM -->
-    <div class="add-sched-form-wrap" id="addSchedFormWrap">
+    <!-- SCHEDULED TASK MODAL -->
+    <div class="add-modal-overlay" id="addSchedOverlay" onclick="if(event.target===this)closeSchedForm()">
+      <div class="add-modal">
+        <div class="add-modal-header">
+          <span>New Scheduled Task</span>
+          <button class="add-modal-close" onclick="closeSchedForm()">✕</button>
+        </div>
       <div class="add-sched-form" id="addSchedFormInner">
         <div>
           <label class="form-label">Task Name</label>
@@ -1349,6 +1399,7 @@
         <button class="add-sched-btn" id="schedAddBtn" onclick="addScheduledTask()" disabled>Schedule It</button>
       </div>
     </div>
+  </div>
 
 
   </div>
@@ -1521,6 +1572,31 @@
   let tasks              = [];
   let doneTasks          = [];
   let recurringTasks     = [];
+
+  // Undo stack — each entry is a snapshot of { tasks, doneTasks, recurringTasks }
+  let undoStack = [];
+  function pushUndo() {
+    undoStack.push({
+      tasks:          JSON.parse(JSON.stringify(tasks)),
+      doneTasks:      JSON.parse(JSON.stringify(doneTasks)),
+      recurringTasks: JSON.parse(JSON.stringify(recurringTasks)),
+    });
+    if (undoStack.length > 50) undoStack.shift();
+    updateUndoBtn();
+  }
+  function undoLast() {
+    if (!undoStack.length) return;
+    const snap = undoStack.pop();
+    tasks          = snap.tasks;
+    doneTasks      = snap.doneTasks;
+    recurringTasks = snap.recurringTasks;
+    updateUndoBtn();
+    save(); render();
+  }
+  function updateUndoBtn() {
+    const btn = document.getElementById('undoBtn');
+    if (btn) btn.disabled = undoStack.length === 0;
+  }
   let selectedRecurringDays = new Set();
 
   // UI panel state
@@ -1546,6 +1622,7 @@
   let sdAnchor   = 'start'; // anchor selection inside schedule-edit dropdown
   let ddTargetId = null;    // duration-edit dropdown
   let stTargetId = null;    // start-time-edit dropdown (flex NOW tasks)
+  let _editingRecurId = null; // which recurring task is being edited
 
   // Calendar now-line tracking
   let currentNowId = null;
@@ -1972,12 +2049,22 @@
   }
 
   function deleteRecurring(id) {
+    pushUndo();
     recurringTasks = recurringTasks.filter(rt => rt.id !== id);
     save();
     renderRecurringList();
   }
 
   function fmtTime12(hhmm) { return fmtTimePST('T' + hhmm); }
+
+  // Build a duration <select> HTML string with the given value pre-selected
+  function _durSelectHtml(id, selected) {
+    const opts = [[15,'15 min'],[30,'30 min'],[45,'45 min'],[60,'1 hr'],[90,'1 hr 30 min'],
+                  [120,'2 hr'],[150,'2 hr 30 min'],[180,'3 hr'],[240,'4 hr'],[300,'5 hr'],[360,'6 hr'],[480,'8 hr']];
+    return `<select class="duration-select" id="${id}" style="font-size:11px;padding:5px 8px;">${
+      opts.map(([v,l]) => `<option value="${v}"${v===selected?' selected':''}>${l}</option>`).join('')
+    }</select>`;
+  }
 
   function renderRecurringList() {
     const body = document.getElementById('recurringBody');
@@ -1986,6 +2073,55 @@
       return;
     }
     body.innerHTML = recurringTasks.map(rt => {
+      if (_editingRecurId === rt.id) {
+        // ── Edit form ────────────────────────────────────────────────────
+        const anchorStartStyle = rt.anchor === 'start'
+          ? 'border-color:var(--sched);color:var(--sched);background:rgba(126,200,227,0.1)'
+          : '';
+        const anchorEndStyle = rt.anchor === 'end'
+          ? 'border-color:var(--sched);color:var(--sched);background:rgba(126,200,227,0.1)'
+          : '';
+        const dayBtns = RECUR_DAY_NAMES.map((d, i) =>
+          `<button class="recur-day-btn${rt.days.includes(i) ? ' active' : ''}" onclick="toggleRecurEditDay(${rt.id},${i})">${d}</button>`
+        ).join('');
+        return `<div class="recur-task-card recur-task-card-editing">
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div>
+              <label class="form-label">Task Name</label>
+              <input class="task-input" id="reTitle_${rt.id}" value="${esc(rt.title)}" maxlength="120"
+                     onkeydown="if(event.key==='Enter')saveRecurEdit(${rt.id});if(event.key==='Escape')cancelRecurEdit()"/>
+            </div>
+            <div>
+              <label class="form-label">Anchor</label>
+              <div style="display:flex;gap:6px;">
+                <button class="p-btn" id="reAnchorStart_${rt.id}" onclick="setRecurEditAnchor(${rt.id},'start')"
+                        style="${anchorStartStyle};flex:1">Start time</button>
+                <button class="p-btn" id="reAnchorEnd_${rt.id}"   onclick="setRecurEditAnchor(${rt.id},'end')"
+                        style="${anchorEndStyle};flex:1">End time</button>
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;">
+              <div style="flex:1">
+                <label class="form-label">Time</label>
+                <input class="time-input" id="reTime_${rt.id}" type="time" value="${rt.time}"/>
+              </div>
+              <div style="flex:1">
+                <label class="form-label">Duration</label>
+                ${_durSelectHtml(`reDur_${rt.id}`, rt.duration)}
+              </div>
+            </div>
+            <div>
+              <label class="form-label">Days</label>
+              <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:4px;">${dayBtns}</div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:2px;">
+              <button class="add-btn" style="flex:1;height:30px;font-size:9px" onclick="saveRecurEdit(${rt.id})">Save</button>
+              <button class="recur-delete-btn" onclick="cancelRecurEdit()">Cancel</button>
+            </div>
+          </div>
+        </div>`;
+      }
+      // ── Read-only view ───────────────────────────────────────────────
       const timeLabel = `${rt.anchor === 'start' ? 'Starts' : 'Ends'} at ${fmtTime12(rt.time)}`;
       const durLabel  = fmtDuration(rt.duration);
       const dayChips = RECUR_DAY_NAMES.map((d, i) =>
@@ -1993,13 +2129,72 @@
       ).join('');
       return `<div class="recur-task-card">
         <div class="recur-task-header">
-          <div class="recur-task-title">${rt.title}</div>
-          <button class="recur-delete-btn" onclick="deleteRecurring(${rt.id})">Delete</button>
+          <div class="recur-task-title">${esc(rt.title)}</div>
+          <div style="display:flex;gap:6px;">
+            <button class="recur-edit-btn" onclick="startRecurEdit(${rt.id})">Edit</button>
+            <button class="recur-delete-btn" onclick="deleteRecurring(${rt.id})">Delete</button>
+          </div>
         </div>
         <div class="recur-task-meta">${timeLabel} · ${durLabel}</div>
         <div class="recur-task-days">${dayChips}</div>
       </div>`;
     }).join('');
+  }
+
+  function startRecurEdit(id) {
+    _editingRecurId = id;
+    renderRecurringList();
+  }
+  function cancelRecurEdit() {
+    _editingRecurId = null;
+    renderRecurringList();
+  }
+  function setRecurEditAnchor(id, anchor) {
+    // Update the in-memory rt object temporarily so button styles update
+    const rt = recurringTasks.find(r => r.id === id);
+    if (rt) rt.anchor = anchor;
+    renderRecurringList();
+  }
+  function toggleRecurEditDay(id, day) {
+    const rt = recurringTasks.find(r => r.id === id);
+    if (!rt) return;
+    if (rt.days.includes(day)) rt.days = rt.days.filter(d => d !== day);
+    else { rt.days = [...rt.days, day].sort(); }
+    renderRecurringList();
+  }
+  function saveRecurEdit(id) {
+    const rt = recurringTasks.find(r => r.id === id);
+    if (!rt) return;
+    const newTitle  = document.getElementById(`reTitle_${id}`).value.trim();
+    const newTime   = document.getElementById(`reTime_${id}`).value;
+    const newDur    = parseInt(document.getElementById(`reDur_${id}`).value);
+    if (!newTitle || !newTime || !newDur) return;
+    pushUndo();
+    rt.title    = newTitle;
+    rt.time     = newTime;
+    rt.duration = newDur;
+    // anchor and days were mutated in-place via setRecurEditAnchor / toggleRecurEditDay
+
+    // Update any currently-scheduled tasks spawned from this recurring template
+    const today = todayPstDateStr();
+    tasks.forEach(t => {
+      if (t.recurringId !== id) return;
+      t.title    = newTitle;
+      t.duration = newDur;
+      const anchorDT = `${today}T${newTime}`;
+      if (rt.anchor === 'start') {
+        t.startTime = anchorDT;
+        t.endTime   = `${today}T${fmtMins(parseDateLocalMins(anchorDT) + newDur)}`;
+      } else {
+        t.endTime   = anchorDT;
+        t.startTime = `${today}T${fmtMins(parseDateLocalMins(anchorDT) - newDur)}`;
+      }
+    });
+
+    _editingRecurId = null;
+    save();
+    render();
+    renderRecurringList();
   }
 
   function purgeDone() {
@@ -2150,7 +2345,13 @@
   function changeTaskPriority(newP) {
     if (!pdTargetId) return;
     const task = tasks.find(t => t.id === pdTargetId);
-    if (task) { task.priority = newP; save(); }
+    pushUndo();
+    if (task) {
+      task.priority = newP;
+      // Clear endTime on flex tasks so a manual priority override wins over escalation
+      if (!isScheduled(task)) delete task.endTime;
+      save();
+    }
     hidePriorityDropdown();
     render();
   }
@@ -2815,19 +3016,18 @@
 
   // ── Add form ───────────────────────────────────────────────────────────
   function toggleAddForm() {
-    // Close sched form if open
-    if (schedOpen) {
-      schedOpen = false;
-      document.getElementById('addSchedFormWrap').classList.remove('open');
-      document.getElementById('addSchedToggleBtn').classList.remove('open');
-    }
-    addOpen = !addOpen;
-    document.getElementById('addFormWrap').classList.toggle('open', addOpen);
-    document.getElementById('addToggleBtn').classList.toggle('open', addOpen);
-    if (addOpen) {
-      if (!selPriority) selectP(3); // pre-select Medium
-      setTimeout(() => document.getElementById('taskInput').focus(), 240);
-    }
+    if (schedOpen) closeSchedForm();
+    if (addOpen) { closeAddForm(); return; }
+    addOpen = true;
+    if (!selPriority) selectP(3);
+    document.getElementById('addTaskOverlay').classList.add('active');
+    document.getElementById('addToggleBtn').classList.add('open');
+    setTimeout(() => document.getElementById('taskInput').focus(), 50);
+  }
+  function closeAddForm() {
+    addOpen = false;
+    document.getElementById('addTaskOverlay').classList.remove('active');
+    document.getElementById('addToggleBtn').classList.remove('open');
   }
   function selectP(n) {
     selPriority = n;
@@ -2850,6 +3050,7 @@
   function addTask() {
     const title = document.getElementById('taskInput').value.trim();
     if (!title || !selPriority) return;
+    pushUndo();
     const durInp = document.getElementById('durationInput');
     const flexOrder = tasks.filter(t => !isScheduled(t)).length;
     tasks.push({
@@ -2868,9 +3069,7 @@
       document.getElementById('addBtn').classList.remove(c);
     });
     checkAdd();
-    save(); addOpen = false;
-    document.getElementById('addFormWrap').classList.remove('open');
-    document.getElementById('addToggleBtn').classList.remove('open');
+    save(); closeAddForm();
     render();
   }
 
@@ -2886,21 +3085,20 @@
   }
 
   function toggleSchedForm() {
-    if (addOpen) {
-      addOpen = false;
-      document.getElementById('addFormWrap').classList.remove('open');
-      document.getElementById('addToggleBtn').classList.remove('open');
-    }
-    schedOpen = !schedOpen;
-    document.getElementById('addSchedFormWrap').classList.toggle('open', schedOpen);
-    document.getElementById('addSchedToggleBtn').classList.toggle('open', schedOpen);
-    if (schedOpen) {
-      // Pre-fill with 9:00am so the field is never blank
-      const ti = document.getElementById('schedTimeInput');
-      if (!ti.value) ti.value = '09:00';
-      checkSchedAdd();
-      setTimeout(() => document.getElementById('schedTitleInput').focus(), 240);
-    }
+    if (addOpen) closeAddForm();
+    if (schedOpen) { closeSchedForm(); return; }
+    schedOpen = true;
+    const ti = document.getElementById('schedTimeInput');
+    if (!ti.value) ti.value = '09:00';
+    checkSchedAdd();
+    document.getElementById('addSchedOverlay').classList.add('active');
+    document.getElementById('addSchedToggleBtn').classList.add('open');
+    setTimeout(() => document.getElementById('schedTitleInput').focus(), 50);
+  }
+  function closeSchedForm() {
+    schedOpen = false;
+    document.getElementById('addSchedOverlay').classList.remove('active');
+    document.getElementById('addSchedToggleBtn').classList.remove('open');
   }
 
   function checkSchedAdd() {
@@ -2937,6 +3135,7 @@
     const title   = document.getElementById('schedTitleInput').value.trim();
     const timeVal = document.getElementById('schedTimeInput').value; // "HH:MM"
     if (!title || !timeVal) return;
+    pushUndo();
 
     const dur      = parseInt(document.getElementById('schedDurInput').value) || DEFAULT_DUR;
     const dp       = todayPstDateStr();
@@ -2986,9 +3185,7 @@
     document.querySelectorAll('.recur-day-btn').forEach(b => b.classList.remove('active'));
     setAnchor('start');
     checkSchedAdd();
-    schedOpen = false;
-    document.getElementById('addSchedFormWrap').classList.remove('open');
-    document.getElementById('addSchedToggleBtn').classList.remove('open');
+    closeSchedForm();
     render();
   }
 
@@ -3183,33 +3380,13 @@
     dragId = null;
   }
 
-  function moreCardDragOver(e, targetId) {
-    if (!dragId || dragId === targetId) return;
-    e.preventDefault();
-    e.stopPropagation();
-    document.getElementById('moreCards').classList.remove('drag-over');
-    document.querySelectorAll('.more-cards .task-card').forEach(c => c.classList.remove('more-drag-over'));
-    const target = document.querySelector(`.more-cards [data-id="${targetId}"]`);
-    if (target) target.classList.add('more-drag-over');
-  }
-
-  function moreCardDrop(e, targetId) {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!dragId) return;
-    const all = getAllSorted();
-    const targetIdx = all.findIndex(t => t.id === targetId);
-    if (targetIdx >= 0) reorderFlexToAllIndex(dragId, targetIdx);
-    dragId = null;
-    render();
-  }
-
   function reorderFlexToAllIndex(draggedId, targetAllIndex) {
     const all         = getAllSorted();
     const flex        = getSorted();
     const displaced   = all[targetAllIndex];
     const draggedTask = tasks.find(t => t.id === draggedId);
     if (!draggedTask || isScheduled(draggedTask)) return;
+    pushUndo();
 
     // Dropped past end of list → send to back with Low priority
     if (!displaced) {
@@ -3285,12 +3462,14 @@
 
   // ── Delete / Done / Undo ───────────────────────────────────────────────
   function deleteTaskById(id) {
+    pushUndo();
     tasks = tasks.filter(t => t.id !== id);
     save(); render();
   }
   function markDoneById(id) {
     const task = tasks.find(t => t.id === id);
     if (!task) return;
+    pushUndo();
     tasks = tasks.filter(t => t.id !== id);
     const doneAt  = Date.now();
     const dp      = todayPstDateStr();
@@ -3311,6 +3490,7 @@
   function unmarkDone(id) {
     const task = doneTasks.find(t => t.id === id);
     if (!task) return;
+    pushUndo();
     doneTasks = doneTasks.filter(t => t.id !== id);
     const { doneAt, ...restored } = task;
     // Assign flexOrder at end of current flex list so it doesn't lose its place
@@ -3368,7 +3548,7 @@
     const commit = () => {
       if (card) card.draggable = true;
       const newTitle = input.value.trim();
-      if (newTitle && newTitle !== original) { task.title = newTitle; save(); }
+      if (newTitle && newTitle !== original) { pushUndo(); task.title = newTitle; save(); }
       onCommit();
     };
     input.addEventListener('blur', commit, { once: true });
@@ -3427,6 +3607,7 @@
     const all     = getAllSorted();
     const nowTask = all[0];
     if (breakStartMs) return;
+    pushUndo();
 
     const pst     = getPST();
     const nowMins = pst.getHours() * 60 + pst.getMinutes();
@@ -3539,6 +3720,7 @@
 
   function endBreak() {
     if (!breakStartMs) return;
+    pushUndo();
 
     // Tally elapsed minutes into daily total
     const elapsedMins = Math.floor((Date.now() - breakStartMs) / 60000);
@@ -4059,6 +4241,14 @@
   setInterval(updateClock, 1000);
   // Lightweight tick: move the now-line every minute without rebuilding the calendar
   setInterval(updateCalNowLine, 60000);
+  // ESC closes add-task modals
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      if (addOpen) closeAddForm();
+      if (schedOpen) closeSchedForm();
+    }
+  });
+
   // Full re-render every 30s (for time labels, escalation, etc.)
   // renderCalendar is cheap but we skip the scroll reset via _calScrolled flag
   setInterval(render, 30000);
@@ -4097,6 +4287,7 @@
 
   // ── View mode (mobile / desktop) ──────────────────────────────────────
   function isMobileDevice() {
+    if (window.__TAURI__) return false; // desktop app always uses desktop view
     return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || window.innerWidth < 600;
   }
 
@@ -4113,10 +4304,6 @@
       if (segDesktop) segDesktop.classList.add('active');
       if (segMobile)  segMobile.classList.remove('active');
     }
-  }
-
-  function toggleViewMode() {
-    applyViewMode(!document.body.classList.contains('mobile-view'));
   }
 
   // ── Calendar drawer (mobile only) ─────────────────────────────────────
