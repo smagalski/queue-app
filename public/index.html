@@ -1321,87 +1321,87 @@
       <button class="end-day-btn" id="resumeDayBtn" onclick="resumeDay()" style="display:none">Resume Day</button>
     </div>
 
-    <!-- FLEX TASK MODAL -->
-    <div class="add-modal-overlay" id="addTaskOverlay" onclick="if(event.target===this)closeAddForm()">
-      <div class="add-modal">
-        <div class="add-modal-header">
-          <span>New Flex Task</span>
-          <button class="add-modal-close" onclick="closeAddForm()">✕</button>
-        </div>
-        <div class="add-form" id="addFormInner">
-          <div>
-            <label class="form-label">Task Name</label>
-            <input class="task-input" id="taskInput" placeholder="What needs doing?" maxlength="120"
-                   onkeydown="if(event.key==='Enter') addTask()"/>
-          </div>
-          <div>
-            <label class="form-label">Priority</label>
-            <div class="priority-group">
-              <button class="p-btn" id="pb1" onclick="selectP(1)">Urgent</button>
-              <button class="p-btn" id="pb2" onclick="selectP(2)">High</button>
-              <button class="p-btn" id="pb3" onclick="selectP(3)">Medium</button>
-              <button class="p-btn" id="pb4" onclick="selectP(4)">Low</button>
-            </div>
-          </div>
-          <div>
-            <label class="form-label">Duration</label>
-            <select class="duration-select" id="durationInput"></select>
-          </div>
-          <button class="add-btn" id="addBtn" onclick="addTask()" disabled>Add Flex Task</button>
-        </div>
-      </div>
-    </div>
 
-    <!-- SCHEDULED TASK MODAL -->
-    <div class="add-modal-overlay" id="addSchedOverlay" onclick="if(event.target===this)closeSchedForm()">
-      <div class="add-modal">
-        <div class="add-modal-header">
-          <span>New Scheduled Task</span>
-          <button class="add-modal-close" onclick="closeSchedForm()">✕</button>
-        </div>
-      <div class="add-sched-form" id="addSchedFormInner">
-        <div>
-          <label class="form-label">Task Name</label>
-          <input class="task-input" id="schedTitleInput" placeholder="Meeting, appointment..." maxlength="120"
-                 oninput="checkSchedAdd()" onkeydown="if(event.key==='Enter') addScheduledTask()"/>
-        </div>
-        <!-- Start vs End toggle -->
-        <div>
-          <label class="form-label">Anchor</label>
-          <div style="display:flex;gap:6px;margin-bottom:8px;">
-            <button class="p-btn sel-sched active-anchor" id="anchorStartBtn" onclick="setAnchor('start');checkSchedAdd()" style="flex:1;border-color:var(--sched);color:var(--sched);background:rgba(126,200,227,0.1)">Start time</button>
-            <button class="p-btn" id="anchorEndBtn" onclick="setAnchor('end');checkSchedAdd()" style="flex:1">End time</button>
-          </div>
-          <input class="time-input" id="schedTimeInput" type="time" oninput="checkSchedAdd()" onchange="checkSchedAdd()"/>
-        </div>
-        <div>
-          <label class="form-label">Duration</label>
-          <select class="duration-select" id="schedDurInput" oninput="checkSchedAdd()"></select>
-        </div>
-        <div>
-          <label class="form-label">Recurring</label>
-          <div class="recur-toggle-row">
-            <label class="check-label">
-              <input type="checkbox" id="schedRecurringCheck" onchange="toggleRecurringDays()"/>
-              Repeat weekly
-            </label>
-          </div>
-          <div class="recur-day-picker" id="schedDayPicker">
-            <button class="recur-day-btn" data-day="0" onclick="toggleRecurringDay(0)">Sun</button>
-            <button class="recur-day-btn" data-day="1" onclick="toggleRecurringDay(1)">Mon</button>
-            <button class="recur-day-btn" data-day="2" onclick="toggleRecurringDay(2)">Tue</button>
-            <button class="recur-day-btn" data-day="3" onclick="toggleRecurringDay(3)">Wed</button>
-            <button class="recur-day-btn" data-day="4" onclick="toggleRecurringDay(4)">Thu</button>
-            <button class="recur-day-btn" data-day="5" onclick="toggleRecurringDay(5)">Fri</button>
-            <button class="recur-day-btn" data-day="6" onclick="toggleRecurringDay(6)">Sat</button>
-          </div>
-        </div>
-        <button class="add-sched-btn" id="schedAddBtn" onclick="addScheduledTask()" disabled>Schedule It</button>
+
+  </div>
+</div>
+
+<!-- FLEX TASK MODAL -->
+<div class="add-modal-overlay" id="addTaskOverlay" onclick="if(event.target===this)closeAddForm()">
+  <div class="add-modal">
+    <div class="add-modal-header">
+      <span>New Flex Task</span>
+      <button class="add-modal-close" onclick="closeAddForm()">✕</button>
+    </div>
+    <div class="add-form" id="addFormInner">
+      <div>
+        <label class="form-label">Task Name</label>
+        <input class="task-input" id="taskInput" placeholder="What needs doing?" maxlength="120"
+               onkeydown="if(event.key==='Enter') addTask()"/>
       </div>
+      <div>
+        <label class="form-label">Priority</label>
+        <div class="priority-group">
+          <button class="p-btn" id="pb1" onclick="selectP(1)">Urgent</button>
+          <button class="p-btn" id="pb2" onclick="selectP(2)">High</button>
+          <button class="p-btn" id="pb3" onclick="selectP(3)">Medium</button>
+          <button class="p-btn" id="pb4" onclick="selectP(4)">Low</button>
+        </div>
+      </div>
+      <div>
+        <label class="form-label">Duration</label>
+        <select class="duration-select" id="durationInput"></select>
+      </div>
+      <button class="add-btn" id="addBtn" onclick="addTask()" disabled>Add Flex Task</button>
     </div>
   </div>
+</div>
 
-
+<!-- SCHEDULED TASK MODAL -->
+<div class="add-modal-overlay" id="addSchedOverlay" onclick="if(event.target===this)closeSchedForm()">
+  <div class="add-modal">
+    <div class="add-modal-header">
+      <span>New Scheduled Task</span>
+      <button class="add-modal-close" onclick="closeSchedForm()">✕</button>
+    </div>
+    <div class="add-sched-form" id="addSchedFormInner">
+      <div>
+        <label class="form-label">Task Name</label>
+        <input class="task-input" id="schedTitleInput" placeholder="Meeting, appointment..." maxlength="120"
+               oninput="checkSchedAdd()" onkeydown="if(event.key==='Enter') addScheduledTask()"/>
+      </div>
+      <div>
+        <label class="form-label">Anchor</label>
+        <div style="display:flex;gap:6px;margin-bottom:8px;">
+          <button class="p-btn sel-sched active-anchor" id="anchorStartBtn" onclick="setAnchor('start');checkSchedAdd()" style="flex:1;border-color:var(--sched);color:var(--sched);background:rgba(126,200,227,0.1)">Start time</button>
+          <button class="p-btn" id="anchorEndBtn" onclick="setAnchor('end');checkSchedAdd()" style="flex:1">End time</button>
+        </div>
+        <input class="time-input" id="schedTimeInput" type="time" oninput="checkSchedAdd()" onchange="checkSchedAdd()"/>
+      </div>
+      <div>
+        <label class="form-label">Duration</label>
+        <select class="duration-select" id="schedDurInput" oninput="checkSchedAdd()"></select>
+      </div>
+      <div>
+        <label class="form-label">Recurring</label>
+        <div class="recur-toggle-row">
+          <label class="check-label">
+            <input type="checkbox" id="schedRecurringCheck" onchange="toggleRecurringDays()"/>
+            Repeat weekly
+          </label>
+        </div>
+        <div class="recur-day-picker" id="schedDayPicker">
+          <button class="recur-day-btn" data-day="0" onclick="toggleRecurringDay(0)">Sun</button>
+          <button class="recur-day-btn" data-day="1" onclick="toggleRecurringDay(1)">Mon</button>
+          <button class="recur-day-btn" data-day="2" onclick="toggleRecurringDay(2)">Tue</button>
+          <button class="recur-day-btn" data-day="3" onclick="toggleRecurringDay(3)">Wed</button>
+          <button class="recur-day-btn" data-day="4" onclick="toggleRecurringDay(4)">Thu</button>
+          <button class="recur-day-btn" data-day="5" onclick="toggleRecurringDay(5)">Fri</button>
+          <button class="recur-day-btn" data-day="6" onclick="toggleRecurringDay(6)">Sat</button>
+        </div>
+      </div>
+      <button class="add-sched-btn" id="schedAddBtn" onclick="addScheduledTask()" disabled>Schedule It</button>
+    </div>
   </div>
 </div>
 
