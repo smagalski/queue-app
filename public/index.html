@@ -77,9 +77,7 @@
   }
 
   /* ── CALENDAR ─────────────────────────────────────────────────────────── */
-  .calendar-section { flex: 1; overflow-y: auto; overflow-x: hidden; }
-  .calendar-section::-webkit-scrollbar { width: 3px; }
-  .calendar-section::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .calendar-section { flex: 1; overflow: hidden; }
 
   .cal-container { position: relative; margin: 0 8px 16px 8px; padding-top: 8px; }
 
@@ -1546,7 +1544,7 @@
   // ── App constants ──────────────────────────────────────────────────────
   const DONE_TTL    = 48 * 60 * 60 * 1000;   // how long completed tasks persist
   const DEFAULT_DUR = 60;                      // default task duration in minutes
-  const PX_PER_MIN  = 44 / 60;                // calendar pixels per minute
+  let PX_PER_MIN    = 44 / 60;                // calendar pixels per minute (recalculated each render)
 
   // Priority display arrays (indexed 1–4: Urgent, High, Medium, Low)
   const P_LABELS = ['','URGENT','HIGH','MEDIUM','LOW'];
@@ -2824,6 +2822,14 @@
   }
 
   function renderCalendar() {
+    // Fit the timeline to the available section height (no scroll)
+    const calSection = document.querySelector('.calendar-section');
+    if (calSection) {
+      const availH = calSection.clientHeight;
+      // cal-container has padding-top: 8px and margin-bottom: 16px → 24px overhead
+      PX_PER_MIN = Math.max(0.2, (availH - 24) / (CAL_END - CAL_START));
+    }
+
     const pst      = getPST();
     const todayStr = pst.toDateString();
     const nowMins  = pst.getHours() * 60 + pst.getMinutes();
