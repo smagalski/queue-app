@@ -644,6 +644,10 @@
   .hdc-day-off-btn:hover { border-color: rgba(255,255,255,0.25); color: #fff; }
   .hdc-no-summary { font-size: 11px; color: var(--text-dim); font-style: italic; padding: 4px 0; }
   .history-empty { text-align: center; color: var(--text-dim); font-size: 13px; padding: 60px 0; }
+  .hdc-task-row[draggable] { cursor: grab; }
+  .hdc-task-row[draggable]:active { cursor: grabbing; }
+  .hdc-cat-section { border-radius: 4px; transition: background 0.12s; }
+  .hdc-cat-section.drag-over { background: rgba(255,255,255,0.06); outline: 1px dashed rgba(255,255,255,0.18); }
 
   /* ── GOOGLE CALENDAR IMPORT ─────────────────────────────────────────── */
   .gcal-import-btn {
@@ -1570,6 +1574,10 @@
   let tasks              = [];
   let doneTasks          = [];
   let recurringTasks     = [];
+
+  // History overlay cache
+  let _historyDays = [];
+  let _histDrag    = null;
 
   // Undo stack — each entry is a snapshot of { tasks, doneTasks, recurringTasks }
   let undoStack = [];
@@ -3071,10 +3079,28 @@
     if (!title || !selPriority) return;
     pushUndo();
     const durInp = document.getElementById('durationInput');
-    const flexOrder = tasks.filter(t => !isScheduled(t)).length;
+    // Find insertion slot: after current task (index 0), before first lower-priority task
+    const sorted = getSorted();
+    let newFlexOrder;
+    let inserted = false;
+    for (let i = 1; i < sorted.length; i++) {
+      if ((sorted[i].priority ?? 4) > selPriority) {
+        const targetFO = sorted[i].flexOrder ?? i;
+        for (const t of sorted) {
+          const task = tasks.find(x => x.id === t.id);
+          if (task && (task.flexOrder ?? 0) >= targetFO) task.flexOrder = (task.flexOrder ?? 0) + 1;
+        }
+        newFlexOrder = targetFO;
+        inserted = true;
+        break;
+      }
+    }
+    if (!inserted) {
+      newFlexOrder = sorted.length > 0 ? (sorted[sorted.length - 1].flexOrder ?? sorted.length - 1) + 1 : 0;
+    }
     tasks.push({
       id:       Date.now(), type: 'flex', title, priority: selPriority,
-      addedAt:  Date.now(), flexOrder,
+      addedAt:  Date.now(), flexOrder: newFlexOrder,
       duration: parseInt(durInp.value) || DEFAULT_DUR,
     });
     // Reset
@@ -3847,7 +3873,7 @@
     // ── Stress score ───────────────────────────────────────────────────
     // All three factors use nonBreak counts — breaks are excluded.
     // Hours carries 3× weight; volume 1×; urgency 0.5× (priority mix matters less).
-    // Calibrated: ~6h mixed-priority day → 4, 10h active day → 8.
+    // Calibrated: ~6h mixed-priority day → ~3, 10h active day → ~7.
     const urgencyRaw  = Math.min(pCount[1] + pCount[2], 10);              // urgent + high tasks, max 10
     const urgencyNorm = urgencyRaw / 10;
     const volumeRaw   = Math.min(Math.max(total, 3), 20);                  // task count (excl. breaks)
@@ -3857,7 +3883,7 @@
     const hoursRaw    = Math.min(Math.max(workHours, 4), 10);              // active hours, floor 4, max 10
     const hoursNorm   = (hoursRaw - 4) / 6;
     const rawScore    = (3 * hoursNorm + volumeNorm + 0.5 * urgencyNorm) / 4.5 * 10;
-    const stressScore = Math.min(Math.max(Math.round(rawScore), 1), 10);
+    const stressScore = Math.min(Math.max(Math.round(rawScore - 1.5), 1), 10);
 
     // ── Incomplete tasks ───────────────────────────────────────────────
     const incompleteTasks = [...tasks];
@@ -3883,41 +3909,58 @@
     },
   ];
 
-  function categorizeTaskRows(timePerTask, rowFn, catHeaderFn, catBlockFn) {
+  function categorizeTaskRows(timePerTask, rowFn, catHeaderFn, catBlockFn, opts) {
     if (!timePerTask || !timePerTask.length) return '';
+    const overrides = (opts && opts.overrides) || {};
+    const date      = (opts && opts.date)      || null;
+
     const buckets = {};
     TASK_CATEGORIES.forEach(c => { buckets[c.key] = []; });
     buckets._other = [];
 
-    for (const r of timePerTask) {
+    for (let i = 0; i < timePerTask.length; i++) {
+      const r = timePerTask[i];
+      const overrideCat = overrides[r.title];
+      if (overrideCat) {
+        (buckets[overrideCat] !== undefined ? buckets[overrideCat] : buckets._other).push({ r, i });
+        continue;
+      }
       const title = (r.title || '').toLowerCase();
       let matched = false;
       for (const cat of TASK_CATEGORIES) {
         if (cat.keywords.some(kw => title.includes(kw))) {
-          buckets[cat.key].push(r);
+          buckets[cat.key].push({ r, i });
           matched = true;
           break;
         }
       }
-      if (!matched) buckets._other.push(r);
+      if (!matched) buckets._other.push({ r, i });
     }
+
+    const wrapCat = (catKey, inner) => date
+      ? `<div class="hdc-cat-section" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="historyDrop(event,'${date}','${catKey}');this.classList.remove('drag-over')">${inner}</div>`
+      : inner;
 
     let html = '';
     for (const cat of TASK_CATEGORIES) {
-      const rows = buckets[cat.key];
-      if (!rows.length) continue;
-      const subtotal = rows.reduce((s, r) => s + (r.mins || 0), 0);
-      html += catHeaderFn(cat.label, fmtDuration(subtotal));
-      html += catBlockFn(rows.map(r => rowFn(r)).join(''));
+      const items = buckets[cat.key];
+      if (!items.length) continue;
+      const subtotal = items.reduce((s, {r}) => s + (r.mins || 0), 0);
+      html += wrapCat(cat.key,
+        catHeaderFn(cat.label, fmtDuration(subtotal)) +
+        catBlockFn(items.map(({r, i}) => rowFn(r, i)).join(''))
+      );
     }
     if (buckets._other.length) {
       const hasCategories = TASK_CATEGORIES.some(c => buckets[c.key].length > 0);
       if (hasCategories) {
-        const subtotal = buckets._other.reduce((s, r) => s + (r.mins || 0), 0);
-        html += catHeaderFn('Other', fmtDuration(subtotal));
-        html += catBlockFn(buckets._other.map(r => rowFn(r)).join(''));
+        const subtotal = buckets._other.reduce((s, {r}) => s + (r.mins || 0), 0);
+        html += wrapCat('_other',
+          catHeaderFn('Other', fmtDuration(subtotal)) +
+          catBlockFn(buckets._other.map(({r, i}) => rowFn(r, i)).join(''))
+        );
       } else {
-        html += buckets._other.map(r => rowFn(r)).join('');
+        html += buckets._other.map(({r, i}) => rowFn(r, i)).join('');
       }
     }
     return html;
@@ -4016,7 +4059,9 @@
     document.getElementById('endDayOverlay').classList.remove('active');
     localStorage.setItem('q_dayEndedChoice', choice);
     setDayEndedState(true);
-    save();   // triggers updateTodayHistory() which writes to Firestore
+    // Always write a fresh history record immediately with current task data
+    saveDayHistory(today, report.todayDone, report.incompleteTasks, choice, report.stressScore, report.priorityBreakdown, report.timePerTask);
+    save();   // also triggers updateTodayHistory() as a backup sync
     render();
   }
 
@@ -4028,7 +4073,7 @@
       incompleteTasks:  incomplete.map(t => ({ id: t.id, title: t.title, priority: t.priority, duration: t.duration })),
       choice,
       savedAt:          Date.now(),
-    }).catch(err => console.error('[Queue] History save failed:', err));
+    }, { merge: true }).catch(err => console.error('[Queue] History save failed:', err));
   }
 
   function updateTodayHistory() {
@@ -4135,10 +4180,12 @@
       .get()
       .then(snap => {
         if (snap.empty) {
+          _historyDays = [];
           body.innerHTML = '<div class="history-empty">No day history yet.<br>Press "End Day" to start recording.</div>';
           return;
         }
-        body.innerHTML = snap.docs.map(d => renderHistoryDay(d.data())).join('');
+        _historyDays = snap.docs.map(d => d.data());
+        body.innerHTML = _historyDays.map(d => renderHistoryDay(d)).join('');
       })
       .catch(err => {
         console.error('[Queue] History load failed:', err);
@@ -4148,6 +4195,30 @@
 
   function closeHistoryOverlay() {
     document.getElementById('historyOverlay').classList.remove('active');
+  }
+
+  function historyDragStart(event, date, taskIdx) {
+    _histDrag = { date, taskIdx };
+    event.dataTransfer.effectAllowed = 'move';
+  }
+
+  function historyDrop(event, date, category) {
+    event.preventDefault();
+    if (!_histDrag || _histDrag.date !== date) { _histDrag = null; return; }
+    const day = _historyDays.find(d => d.date === date);
+    if (!day || !day.timePerTask) { _histDrag = null; return; }
+    const task = day.timePerTask[_histDrag.taskIdx];
+    if (!task) { _histDrag = null; return; }
+    const overrides = Object.assign({}, day.categoryOverrides || {});
+    overrides[task.title] = category;
+    day.categoryOverrides = overrides;
+    if (_db && _currentUser) {
+      _db.collection('users').doc(_currentUser.uid).collection('history').doc(date)
+        .update({ categoryOverrides: overrides })
+        .catch(err => console.error('[Queue] Category override save failed:', err));
+    }
+    document.getElementById('historyBody').innerHTML = _historyDays.map(d => renderHistoryDay(d)).join('');
+    _histDrag = null;
   }
 
   function renderHistoryDay(day) {
@@ -4184,10 +4255,10 @@
     const col   = stressColor(day.stressScore || 1);
     const label = stressLabel(day.stressScore || 1);
 
-    const _hdcRow   = r => `<div class="hdc-task-row"><span class="hdc-task-title">${esc(r.title)}</span><span class="hdc-task-time">${fmtDuration(r.mins)}</span></div>`;
+    const _hdcRow   = (r, i) => `<div class="hdc-task-row" draggable="true" ondragstart="historyDragStart(event,'${day.date}',${i})"><span class="hdc-task-title">${esc(r.title)}</span><span class="hdc-task-time">${fmtDuration(r.mins)}</span></div>`;
     const _hdcHead  = (label, total) => `<div class="hdc-cat-header"><span class="hdc-cat-label">${label}</span><span class="hdc-cat-total">${total}</span></div>`;
     const _hdcBlock = rows => `<div class="hdc-cat-block">${rows}</div>`;
-    const taskRows  = categorizeTaskRows(day.timePerTask, _hdcRow, _hdcHead, _hdcBlock);
+    const taskRows  = categorizeTaskRows(day.timePerTask, _hdcRow, _hdcHead, _hdcBlock, { date: day.date, overrides: day.categoryOverrides || {} });
 
     const pb = day.priorityBreakdown || {};
     const priorityHtml = buildPriorityHtml(pb, pb.total || 0, 'hdc-priority-chip');
