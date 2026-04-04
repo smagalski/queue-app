@@ -1036,6 +1036,140 @@
     color: var(--text-dim); background: rgba(255,255,255,0.06); border-radius: 20px; padding: 4px 10px;
   }
 
+  /* ── CATEGORY TALLY PANEL (left panel, below break budget) ───────────── */
+  .cat-tally-panel {
+    flex-shrink: 0; border-top: 1px solid var(--border);
+    padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 5px;
+  }
+  .cat-tally-label {
+    font-size: 8px; font-weight: 700; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--text-dim); margin-bottom: 3px;
+  }
+  .cat-tally-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 6px;
+  }
+  .cat-tally-name {
+    font-size: 8px; font-weight: 700; letter-spacing: 0.1em; color: var(--text-mid);
+  }
+  .cat-tally-time {
+    font-size: 9px; font-weight: 600; color: var(--text-dim); font-variant-numeric: tabular-nums;
+  }
+  .cat-tally-bar-wrap {
+    flex: 1; height: 2px; background: rgba(255,255,255,0.08); border-radius: 1px; overflow: hidden; min-width: 20px;
+  }
+  .cat-tally-bar { height: 100%; border-radius: 1px; transition: width 0.5s ease; }
+  .cat-tally-empty { font-size: 9px; color: var(--text-dim); font-style: italic; }
+  body.mobile-view .cat-tally-panel { display: none; }
+
+  /* ── END DAY — CATEGORY SECTIONS ─────────────────────────────────────── */
+  .edm-cat-section {
+    border: 1px solid transparent; border-radius: 8px;
+    padding: 6px 8px 2px; transition: border-color 0.15s, background 0.15s;
+  }
+  .edm-cat-section.edm-drag-over {
+    border-color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.04);
+  }
+  .edm-cat-header {
+    font-size: 8px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--text-dim); margin-bottom: 4px; padding: 0 2px;
+  }
+  .edm-cat-tasks { display: flex; flex-direction: column; }
+  .edm-cat-empty {
+    font-size: 10px; color: var(--text-dim); padding: 6px 2px; font-style: italic;
+  }
+  .edm-drag-row {
+    display: flex; align-items: center; gap: 8px; padding: 8px 2px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    cursor: grab; user-select: none;
+  }
+  .edm-drag-row:last-child { border-bottom: none; }
+  .edm-drag-row:active { cursor: grabbing; }
+  .edm-drag-row.edm-dragging { opacity: 0.4; }
+  .edm-drag-handle {
+    font-size: 11px; color: var(--text-dim); flex-shrink: 0; line-height: 1; opacity: 0.5;
+  }
+  .edm-drag-row .edm-task-title { flex: 1; font-size: 12px; color: var(--text-mid); }
+  .edm-drag-row .edm-task-time  { font-size: 11px; color: var(--text-dim); flex-shrink: 0; }
+
+  /* ── CATEGORY MANAGER MODAL ──────────────────────────────────────────── */
+  .cat-mgr-overlay {
+    display: none; position: fixed; inset: 0; z-index: 9900;
+    background: rgba(0,0,0,0.85); overflow-y: auto;
+  }
+  .cat-mgr-overlay.active { display: block; }
+  .cat-mgr-modal {
+    max-width: 560px; margin: 0 auto; padding: 32px 20px 60px;
+    display: flex; flex-direction: column; gap: 20px;
+  }
+  .cat-mgr-header {
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .cat-mgr-title { font-size: 20px; font-weight: 800; color: #fff; }
+  .cat-mgr-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px 18px; display: flex; flex-direction: column; gap: 10px;
+  }
+  .cat-mgr-card-header {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  }
+  .cat-mgr-cat-name { font-size: 14px; font-weight: 700; color: #fff; }
+  .cat-mgr-delete-btn {
+    background: none; border: 1px solid var(--border); border-radius: 5px;
+    color: var(--text-dim); font-size: 10px; font-weight: 600; letter-spacing: 0.06em;
+    text-transform: uppercase; padding: 4px 9px; cursor: pointer; transition: all 0.12s;
+    white-space: nowrap; flex-shrink: 0;
+  }
+  .cat-mgr-delete-btn:hover { border-color: #ff6b8a; color: #ff6b8a; }
+  .cat-mgr-chips { display: flex; flex-wrap: wrap; gap: 6px; min-height: 20px; }
+  .cat-mgr-chip {
+    display: flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 20px;
+    background: rgba(255,255,255,0.07); border: 1px solid var(--border);
+    font-size: 10px; color: var(--text-mid); font-weight: 500;
+  }
+  .cat-mgr-chip-remove {
+    background: none; border: none; color: var(--text-dim); font-size: 11px; cursor: pointer;
+    padding: 0 0 0 2px; line-height: 1; transition: color 0.1s; display: flex; align-items: center;
+  }
+  .cat-mgr-chip-remove:hover { color: #ff6b8a; }
+  .cat-mgr-add-kw {
+    display: flex; gap: 6px;
+  }
+  .cat-mgr-add-kw input {
+    flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+    color: #fff; font-family: 'Inter', sans-serif; font-size: 11px; padding: 6px 10px;
+    outline: none; transition: border-color 0.15s;
+  }
+  .cat-mgr-add-kw input:focus { border-color: rgba(255,255,255,0.3); }
+  .cat-mgr-add-kw input::placeholder { color: var(--text-dim); }
+  .cat-mgr-add-kw-btn {
+    background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px;
+    color: #fff; font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase; padding: 6px 12px; cursor: pointer;
+    transition: all 0.12s; white-space: nowrap;
+  }
+  .cat-mgr-add-kw-btn:hover { background: rgba(255,255,255,0.13); border-color: rgba(255,255,255,0.3); }
+  .cat-mgr-no-kw { font-size: 10px; color: var(--text-dim); font-style: italic; }
+  .cat-mgr-new-row {
+    display: flex; gap: 8px;
+  }
+  .cat-mgr-new-row input {
+    flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+    color: #fff; font-family: 'Inter', sans-serif; font-size: 12px; padding: 9px 12px;
+    outline: none; transition: border-color 0.15s;
+  }
+  .cat-mgr-new-row input:focus { border-color: rgba(255,255,255,0.3); }
+  .cat-mgr-new-row input::placeholder { color: var(--text-dim); }
+  .cat-mgr-new-btn {
+    background: #fff; border: none; border-radius: 6px;
+    color: #0b0a0f; font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase; padding: 9px 16px; cursor: pointer;
+    transition: opacity 0.15s; white-space: nowrap;
+  }
+  .cat-mgr-new-btn:hover { opacity: 0.85; }
+  .cat-mgr-catch-all-note {
+    font-size: 9px; color: var(--text-dim); margin-top: -4px; font-style: italic;
+  }
+
 </style>
 <!-- Firebase SDK (compat v9) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -1065,6 +1199,7 @@
       <div class="gear-menu" id="gearMenu">
         <button class="gear-menu-item" onclick="openRecurringOverlay();closeGearMenu()">Recurring Tasks</button>
         <button class="gear-menu-item" onclick="openHistoryOverlay()">Day History</button>
+        <button class="gear-menu-item" onclick="openCategoryManager();closeGearMenu()">Manage Categories</button>
         <button class="gear-menu-item" onclick="openClearHistoryConfirm();closeGearMenu()">Clear history older than 7 days</button>
         <div class="gear-menu-divider"></div>
         <button class="gear-menu-item" onclick="openPasswordModal();closeGearMenu()">Change Password</button>
@@ -1169,6 +1304,10 @@
           <option value="1380">11 PM</option>
         </select>
       </div>
+    </div>
+    <div class="cat-tally-panel" id="catTallyPanel">
+      <div class="cat-tally-label">Today by Category</div>
+      <div id="catTallyRows"></div>
     </div>
   </div>
 
@@ -1382,6 +1521,22 @@
   </div>
 </div>
 
+<!-- CATEGORY MANAGER MODAL -->
+<div class="cat-mgr-overlay" id="catMgrOverlay" onclick="if(event.target===this)closeCategoryManager()">
+  <div class="cat-mgr-modal">
+    <div class="cat-mgr-header">
+      <div class="cat-mgr-title">Manage Categories</div>
+      <button class="history-close" onclick="closeCategoryManager()">✕</button>
+    </div>
+    <div id="catMgrBody"></div>
+    <div class="cat-mgr-new-row">
+      <input id="catMgrNewName" placeholder="New category name…" maxlength="40"
+             onkeydown="if(event.key==='Enter')addCategory()"/>
+      <button class="cat-mgr-new-btn" onclick="addCategory()">Add Category</button>
+    </div>
+  </div>
+</div>
+
 <!-- GOOGLE CALENDAR IMPORT LIGHTBOX -->
 <div class="gcal-overlay" id="gcalOverlay" onclick="if(event.target===this)closeGcalLightbox()">
   <div class="gcal-modal">
@@ -1468,13 +1623,30 @@
   // Scheduled task accent color
   const SCHED_COL = '#7ec8e3';
 
+  // ── Category rules ─────────────────────────────────────────────────────
+  const DEFAULT_CATEGORY_RULES = [
+    { id: 'work',   name: 'Work',
+      keywords: ['meeting','call','email','client','invoice','edit','shoot','review','submit',
+                 'schedule','film','record','prep','script','plan','produce','sync','pitch','budget','hire'] },
+    { id: 'chores', name: 'Chores & Errands',
+      keywords: ['groceries','laundry','dishes','clean','vacuum','trash','errand','pickup',
+                 'drop off','pharmacy','target','store','shop','mail','bank','gas','appointment'] },
+    { id: 'other',  name: 'Other', keywords: [] },
+  ];
+
   // ── Application state ──────────────────────────────────────────────────
 
   // Task data
   let tasks              = [];
   let doneTasks          = [];
   let recurringTasks     = [];
+  let categoryRules      = [];
   let selectedRecurringDays = new Set();
+
+  // End-day modal drag state
+  let _edmDragTaskId = null;
+  let _edmOverrides  = {};  // { taskId -> categoryId } — live during modal session
+  let _edmReport     = null;
 
   // UI panel state
   let doneOpen  = false;
@@ -1795,7 +1967,7 @@
     updateTodayHistory();
     if (_stateDoc) {
       setSyncStatus('syncing');
-      _stateDoc.set({ tasks, doneTasks, recurringTasks, breakStartMs: breakStartMs || null, breakTaskId: breakTaskId || null })
+      _stateDoc.set({ tasks, doneTasks, recurringTasks, categoryRules, breakStartMs: breakStartMs || null, breakTaskId: breakTaskId || null })
         .then(() => setSyncStatus('synced'))
         .catch(err => {
           console.error('[Queue] Save failed:', err);
@@ -1826,6 +1998,12 @@
       tasks          = data.tasks          || [];
       doneTasks      = data.doneTasks      || [];
       recurringTasks = data.recurringTasks || [];
+      categoryRules  = data.categoryRules  || [];
+      if (!categoryRules.length) {
+        categoryRules = JSON.parse(JSON.stringify(DEFAULT_CATEGORY_RULES));
+        // persist defaults on next tick so we don't write inside the snapshot handler
+        setTimeout(() => save(), 0);
+      }
       purgeDone();
       try {
         localStorage.setItem('q_tasks', JSON.stringify(tasks));
@@ -2018,6 +2196,7 @@
     document.getElementById('clockAmpm').textContent = ap;
     document.getElementById('clockDate').textContent =
       `${DAYS[now.getDay()]}\n${MONTHS[now.getMonth()]} ${now.getDate()}`;
+    renderCategoryTally();
   }
 
   // ── End-time helpers (for escalation + display) ────────────────────────
@@ -3517,6 +3696,85 @@
     return { todayDone, timePerTask, priorityBreakdown, stressScore, incompleteTasks };
   }
 
+  // ── Category helpers ───────────────────────────────────────────────────
+  // Returns the category id for a task title, checking overrides first.
+  function getCategoryForTask(title, overrides, taskId) {
+    if (overrides && taskId != null && overrides[taskId] != null) return overrides[taskId];
+    if (!categoryRules.length) return 'other';
+    const lower = String(title || '').toLowerCase();
+    for (const cat of categoryRules) {
+      if (!cat.keywords || !cat.keywords.length) continue; // skip catch-all
+      if (cat.keywords.some(kw => lower.includes(kw.toLowerCase()))) return cat.id;
+    }
+    return categoryRules[categoryRules.length - 1].id; // last = catch-all
+  }
+
+  // ── Category tally (live panel in left panel) ──────────────────────────
+  const CAT_TALLY_COLORS = ['#7ec8e3','#9863f3','#f0d060','#7fd4a8','#ffaa60','#ff6b8a'];
+  function renderCategoryTally() {
+    const el = document.getElementById('catTallyRows');
+    if (!el) return;
+    if (!categoryRules.length) { el.innerHTML = ''; return; }
+
+    const todayStr = getPST().toDateString();
+    const catMins  = {};
+    for (const cat of categoryRules) catMins[cat.id] = 0;
+
+    // Sum completed tasks for today
+    for (const task of doneTasks) {
+      if (task.isBreak) continue;
+      const donePst = new Date(new Date(task.doneAt).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+      if (donePst.toDateString() !== todayStr) continue;
+      let mins = 0;
+      if (task.startTime && task.endTime) {
+        mins = parseDateLocalMins(task.endTime) - parseDateLocalMins(task.startTime);
+      } else {
+        mins = task.duration || 0;
+      }
+      if (mins <= 0) continue;
+      const catId = getCategoryForTask(task.title, {}, task.id);
+      if (catMins[catId] !== undefined) catMins[catId] += mins;
+      else catMins[categoryRules[categoryRules.length - 1].id] += mins;
+    }
+
+    // Add elapsed time on the current active task (NOW slot)
+    const allSorted = getAllSorted();
+    const nowTask = allSorted[0];
+    if (nowTask && !nowTask.isBreak) {
+      let elapsedMins = 0;
+      if (nowTask.calStartTime) {
+        elapsedMins = Math.floor((Date.now() - nowTask.calStartTime) / 60000);
+      } else if (isScheduled(nowTask) && nowTask._stMins != null) {
+        const nowMins = getPST().getHours() * 60 + getPST().getMinutes();
+        elapsedMins = Math.max(0, nowMins - nowTask._stMins);
+      }
+      if (elapsedMins > 0) {
+        const catId = getCategoryForTask(nowTask.title, {}, nowTask.id);
+        if (catMins[catId] !== undefined) catMins[catId] += elapsedMins;
+        else catMins[categoryRules[categoryRules.length - 1].id] += elapsedMins;
+      }
+    }
+
+    const entries = categoryRules
+      .map((cat, i) => ({ cat, mins: catMins[cat.id] || 0, color: CAT_TALLY_COLORS[i % CAT_TALLY_COLORS.length] }))
+      .filter(e => e.mins > 0);
+
+    if (entries.length === 0) {
+      el.innerHTML = '<div class="cat-tally-empty">No activity yet</div>';
+      return;
+    }
+
+    const maxMins = Math.max(...entries.map(e => e.mins));
+    el.innerHTML = entries.map(({ cat, mins, color }) => {
+      const pct = maxMins > 0 ? Math.round((mins / maxMins) * 100) : 0;
+      return `<div class="cat-tally-row">
+        <span class="cat-tally-name" style="color:${color}">${esc(cat.name.toUpperCase())}</span>
+        <div class="cat-tally-bar-wrap"><div class="cat-tally-bar" style="width:${pct}%;background:${color}"></div></div>
+        <span class="cat-tally-time">${fmtTaskMins(mins)}</span>
+      </div>`;
+    }).join('');
+  }
+
   function buildPriorityHtml(pb, total, chipClass) {
     let html = '';
     for (let p = 1; p <= 4; p++) {
@@ -3543,22 +3801,32 @@
   }
 
   function openEndDayModal() {
-    const report  = computeDayReport();
-    const { timePerTask, priorityBreakdown, stressScore, incompleteTasks } = report;
+    const report = computeDayReport();
+    _edmReport   = report;
+    _edmOverrides = {};
+
+    // Try to load any previously-saved overrides for today from Firestore
+    if (_db && _currentUser) {
+      _db.collection('users').doc(_currentUser.uid).collection('history')
+        .doc(todayPstDateStr()).get()
+        .then(doc => {
+          if (doc.exists && doc.data().taskCategoryOverrides) {
+            Object.assign(_edmOverrides, doc.data().taskCategoryOverrides);
+            _renderEdmCategories();
+          }
+        }).catch(() => {});
+    }
+
+    const { priorityBreakdown, stressScore, incompleteTasks } = report;
     const col   = stressColor(stressScore);
     const total = priorityBreakdown.total;
-
-    const tasksHtml = timePerTask.length
-      ? timePerTask.map(r => `<div class="edm-task-row"><span class="edm-task-title">${esc(r.title)}</span><span class="edm-task-time">${fmtTaskMins(r.mins)}</span></div>`).join('')
-      : '<div style="color:var(--text-dim);font-size:11px;padding:4px 0">No completed tasks recorded.</div>';
-
     const priorityHtml = buildPriorityHtml(priorityBreakdown, total, 'edm-priority-chip')
       || '<span style="color:var(--text-dim);font-size:11px">No priority data</span>';
 
     document.getElementById('edmBody').innerHTML = `
       <div>
         <div class="edm-section-label">Time Spent</div>
-        ${tasksHtml}
+        <div id="edmCatSections"></div>
       </div>
       <div>
         <div class="edm-section-label">Priority Breakdown</div>
@@ -3572,11 +3840,119 @@
         </div>
       </div>`;
 
+    _renderEdmCategories();
+
     const inc = incompleteTasks.length;
     document.getElementById('edmIncompleteCount').textContent =
       inc > 0 ? `${inc} task${inc > 1 ? 's' : ''} remaining in queue` : 'No remaining tasks';
 
     document.getElementById('endDayOverlay').classList.add('active');
+  }
+
+  function _renderEdmCategories() {
+    const el = document.getElementById('edmCatSections');
+    if (!el || !_edmReport) return;
+
+    const { todayDone } = _edmReport;
+    const rules = categoryRules.length ? categoryRules : DEFAULT_CATEGORY_RULES;
+
+    // Group tasks by resolved category
+    const grouped = {};
+    for (const cat of rules) grouped[cat.id] = [];
+
+    for (const task of todayDone) {
+      if (task.isBreak) continue;
+      let mins = 0;
+      if (task.startTime && task.endTime) {
+        mins = parseDateLocalMins(task.endTime) - parseDateLocalMins(task.startTime);
+      } else {
+        mins = task.duration || 0;
+      }
+      const catId = getCategoryForTask(task.title, _edmOverrides, task.id);
+      if (!grouped[catId]) grouped[catId] = [];
+      grouped[catId].push({ task, mins });
+    }
+
+    const hasTasks = todayDone.filter(t => !t.isBreak).length > 0;
+    if (!hasTasks) {
+      el.innerHTML = '<div style="color:var(--text-dim);font-size:11px;padding:4px 0">No completed tasks recorded.</div>';
+      return;
+    }
+
+    let html = '';
+    for (const cat of rules) {
+      const items = grouped[cat.id] || [];
+      // Skip empty non-catch-all sections
+      if (items.length === 0 && cat.keywords && cat.keywords.length > 0) continue;
+      if (items.length === 0 && !cat.keywords.length) continue; // skip empty catch-all too
+
+      html += `<div class="edm-cat-section" data-cat="${esc(cat.id)}"
+        ondragover="edmDragOver(event,'${esc(cat.id)}')"
+        ondragleave="edmDragLeave(event)"
+        ondrop="edmDrop(event,'${esc(cat.id)}')">
+        <div class="edm-cat-header">${esc(cat.name.toUpperCase())}</div>
+        <div class="edm-cat-tasks">`;
+
+      for (const { task, mins } of items) {
+        html += `<div class="edm-drag-row" draggable="true" data-tid="${task.id}"
+          ondragstart="edmDragStart(event,${task.id})"
+          ondragend="edmDragEnd(event)">
+          <span class="edm-drag-handle">⠿</span>
+          <span class="edm-task-title">${esc(task.title)}</span>
+          ${mins > 0 ? `<span class="edm-task-time">${fmtTaskMins(mins)}</span>` : ''}
+        </div>`;
+      }
+
+      html += `</div></div>`;
+    }
+
+    el.innerHTML = html || '<div style="color:var(--text-dim);font-size:11px;padding:4px 0">No completed tasks recorded.</div>';
+  }
+
+  // Drag-drop handlers for end-day category sections
+  function edmDragStart(event, taskId) {
+    _edmDragTaskId = taskId;
+    event.dataTransfer.effectAllowed = 'move';
+    event.currentTarget.classList.add('edm-dragging');
+  }
+
+  function edmDragEnd(event) {
+    _edmDragTaskId = null;
+    event.currentTarget.classList.remove('edm-dragging');
+    document.querySelectorAll('.edm-cat-section').forEach(s => s.classList.remove('edm-drag-over'));
+  }
+
+  function edmDragOver(event, catId) {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    document.querySelectorAll('.edm-cat-section').forEach(s => s.classList.remove('edm-drag-over'));
+    const section = event.currentTarget.closest('.edm-cat-section') || event.currentTarget;
+    section.classList.add('edm-drag-over');
+  }
+
+  function edmDragLeave(event) {
+    const section = event.currentTarget.closest('.edm-cat-section') || event.currentTarget;
+    if (!section.contains(event.relatedTarget)) {
+      section.classList.remove('edm-drag-over');
+    }
+  }
+
+  function edmDrop(event, catId) {
+    event.preventDefault();
+    const section = event.currentTarget.closest('.edm-cat-section') || event.currentTarget;
+    section.classList.remove('edm-drag-over');
+    if (_edmDragTaskId != null && catId) {
+      _edmOverrides[_edmDragTaskId] = catId;
+      _renderEdmCategories();
+      // Persist immediately via merge so overrides survive if user closes without committing
+      if (_db && _currentUser) {
+        _db.collection('users').doc(_currentUser.uid).collection('history')
+          .doc(todayPstDateStr())
+          .set({ taskCategoryOverrides: _edmOverrides }, { merge: true })
+          .catch(() => {});
+      }
+    }
+    _edmDragTaskId = null;
   }
 
   function commitEndDay(choice) {
@@ -3611,15 +3987,21 @@
     render();
   }
 
-  function saveDayHistory(date, dayDone, incomplete, choice, stressScore, priorityBreakdown, timePerTask) {
+  function saveDayHistory(date, dayDone, incomplete, choice, stressScore, priorityBreakdown, timePerTask, taskCategoryOverrides) {
     if (!_db || !_currentUser) return;
-    _db.collection('users').doc(_currentUser.uid).collection('history').doc(date).set({
+    const payload = {
       date, stressScore, priorityBreakdown, timePerTask,
       doneTasks:        dayDone,
       incompleteTasks:  incomplete.map(t => ({ id: t.id, title: t.title, priority: t.priority, duration: t.duration })),
       choice,
       savedAt:          Date.now(),
-    }).catch(err => console.error('[Queue] History save failed:', err));
+    };
+    if (taskCategoryOverrides && Object.keys(taskCategoryOverrides).length) {
+      payload.taskCategoryOverrides = taskCategoryOverrides;
+    }
+    _db.collection('users').doc(_currentUser.uid).collection('history').doc(date)
+      .set(payload)
+      .catch(err => console.error('[Queue] History save failed:', err));
   }
 
   function updateTodayHistory() {
@@ -3628,7 +4010,7 @@
     if (ended !== today || !_db || !_currentUser) return;
     const choice = localStorage.getItem('q_dayEndedChoice') || null;
     const report = computeDayReport();
-    saveDayHistory(today, report.todayDone, report.incompleteTasks, choice, report.stressScore, report.priorityBreakdown, report.timePerTask);
+    saveDayHistory(today, report.todayDone, report.incompleteTasks, choice, report.stressScore, report.priorityBreakdown, report.timePerTask, _edmOverrides);
   }
 
   function setDayEndedState(ended) {
@@ -3772,6 +4154,105 @@
       <div class="hdc-tasks">${taskRows}</div>
       ${priorityHtml ? `<div class="hdc-priority-row">${priorityHtml}</div>` : ''}
     </div>`;
+  }
+
+  // ── Category Manager ───────────────────────────────────────────────────
+  function openCategoryManager() {
+    if (!categoryRules.length) {
+      categoryRules = JSON.parse(JSON.stringify(DEFAULT_CATEGORY_RULES));
+    }
+    renderCategoryManager();
+    document.getElementById('catMgrOverlay').classList.add('active');
+  }
+
+  function closeCategoryManager() {
+    document.getElementById('catMgrOverlay').classList.remove('active');
+  }
+
+  function _saveCategoryRules() {
+    save(); // persists categoryRules via the main save()
+  }
+
+  function renderCategoryManager() {
+    const rules = categoryRules.length ? categoryRules : DEFAULT_CATEGORY_RULES;
+    const body  = document.getElementById('catMgrBody');
+    if (!body) return;
+
+    body.innerHTML = rules.map((cat, i) => {
+      const isCatchAll = !cat.keywords || cat.keywords.length === 0;
+      const chipsHtml  = isCatchAll
+        ? `<span class="cat-mgr-no-kw">Catches everything not matched above</span>`
+        : (cat.keywords.length
+            ? cat.keywords.map(kw =>
+                `<span class="cat-mgr-chip">${esc(kw)}<button class="cat-mgr-chip-remove" onclick="removeCategoryKeyword('${esc(cat.id)}','${esc(kw)}')" title="Remove">✕</button></span>`
+              ).join('')
+            : '<span class="cat-mgr-no-kw">No keywords — add one below</span>'
+          );
+
+      const addKwRow = isCatchAll ? '' : `
+        <div class="cat-mgr-add-kw">
+          <input id="catKwInput_${esc(cat.id)}" placeholder="Add keyword…" maxlength="40"
+                 onkeydown="if(event.key==='Enter')addCategoryKeyword('${esc(cat.id)}')"/>
+          <button class="cat-mgr-add-kw-btn" onclick="addCategoryKeyword('${esc(cat.id)}')">Add</button>
+        </div>`;
+
+      // "Other" (last / catch-all) cannot be deleted
+      const deleteBtn = (i === rules.length - 1)
+        ? ''
+        : `<button class="cat-mgr-delete-btn" onclick="deleteCategory('${esc(cat.id)}')">Delete</button>`;
+
+      return `<div class="cat-mgr-card">
+        <div class="cat-mgr-card-header">
+          <span class="cat-mgr-cat-name">${esc(cat.name)}</span>
+          ${deleteBtn}
+        </div>
+        <div class="cat-mgr-chips" id="catChips_${esc(cat.id)}">${chipsHtml}</div>
+        ${addKwRow}
+      </div>`;
+    }).join('');
+  }
+
+  function addCategoryKeyword(catId) {
+    const input = document.getElementById(`catKwInput_${catId}`);
+    if (!input) return;
+    const kw = input.value.trim().toLowerCase();
+    if (!kw) return;
+    const cat = categoryRules.find(c => c.id === catId);
+    if (!cat) return;
+    if (!cat.keywords.includes(kw)) {
+      cat.keywords.push(kw);
+      _saveCategoryRules();
+    }
+    input.value = '';
+    renderCategoryManager();
+  }
+
+  function removeCategoryKeyword(catId, kw) {
+    const cat = categoryRules.find(c => c.id === catId);
+    if (!cat) return;
+    cat.keywords = cat.keywords.filter(k => k !== kw);
+    _saveCategoryRules();
+    renderCategoryManager();
+  }
+
+  function addCategory() {
+    const input = document.getElementById('catMgrNewName');
+    if (!input) return;
+    const name = input.value.trim();
+    if (!name) return;
+    // Insert before the last catch-all entry
+    const newCat = { id: 'cat_' + Date.now(), name, keywords: [] };
+    const lastIdx = categoryRules.length - 1;
+    categoryRules.splice(Math.max(lastIdx, 0), 0, newCat);
+    input.value = '';
+    _saveCategoryRules();
+    renderCategoryManager();
+  }
+
+  function deleteCategory(catId) {
+    categoryRules = categoryRules.filter(c => c.id !== catId);
+    _saveCategoryRules();
+    renderCategoryManager();
   }
 
   function openClearHistoryConfirm() {
