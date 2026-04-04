@@ -1625,12 +1625,13 @@
 
   // ── Category rules ─────────────────────────────────────────────────────
   const DEFAULT_CATEGORY_RULES = [
+    { id: 'chores', name: 'Chores & Errands',
+      keywords: ['groceries','laundry','dishes','clean','vacuum','trash','errand','pickup',
+                 'drop off','pharmacy','target','store','shop','mail','bank','gas','appointment',
+                 'house','yardwork','yard','lawn'] },
     { id: 'work',   name: 'Work',
       keywords: ['meeting','call','email','client','invoice','edit','shoot','review','submit',
                  'schedule','film','record','prep','script','plan','produce','sync','pitch','budget','hire'] },
-    { id: 'chores', name: 'Chores & Errands',
-      keywords: ['groceries','laundry','dishes','clean','vacuum','trash','errand','pickup',
-                 'drop off','pharmacy','target','store','shop','mail','bank','gas','appointment'] },
     { id: 'other',  name: 'Other', keywords: [] },
   ];
 
@@ -2001,8 +2002,9 @@
       categoryRules  = data.categoryRules  || [];
       if (!categoryRules.length) {
         categoryRules = JSON.parse(JSON.stringify(DEFAULT_CATEGORY_RULES));
-        // persist defaults on next tick so we don't write inside the snapshot handler
         setTimeout(() => save(), 0);
+      } else {
+        _migrateCategoryRules();
       }
       purgeDone();
       try {
@@ -3694,6 +3696,31 @@
     const incompleteTasks = [...tasks];
 
     return { todayDone, timePerTask, priorityBreakdown, stressScore, incompleteTasks };
+  }
+
+  // ── Category migration ─────────────────────────────────────────────────
+  // Runs once after loading from Firestore to apply ordering/keyword fixes.
+  function _migrateCategoryRules() {
+    let changed = false;
+
+    // Ensure new Chores keywords exist
+    const chores = categoryRules.find(c => c.id === 'chores');
+    if (chores) {
+      for (const kw of ['house','yardwork','yard','lawn']) {
+        if (!chores.keywords.includes(kw)) { chores.keywords.push(kw); changed = true; }
+      }
+    }
+
+    // Ensure Chores & Errands is ordered before Work
+    const workIdx   = categoryRules.findIndex(c => c.id === 'work');
+    const choresIdx = categoryRules.findIndex(c => c.id === 'chores');
+    if (workIdx !== -1 && choresIdx !== -1 && workIdx < choresIdx) {
+      const choresCat = categoryRules.splice(choresIdx, 1)[0];
+      categoryRules.splice(workIdx, 0, choresCat);
+      changed = true;
+    }
+
+    if (changed) setTimeout(() => save(), 0);
   }
 
   // ── Category helpers ───────────────────────────────────────────────────
