@@ -4166,9 +4166,42 @@
     const col   = stressColor(day.stressScore || 1);
     const label = stressLabel(day.stressScore || 1);
 
-    const taskRows = (day.timePerTask || []).map(r =>
-      `<div class="hdc-task-row"><span class="hdc-task-title">${esc(r.title)}</span><span class="hdc-task-time">${fmtTaskMins(r.mins)}</span></div>`
-    ).join('') || '<div style="text-align:center;color:var(--text-dim);font-size:11px;padding:10px 0;letter-spacing:0.06em;font-style:italic">No recorded data</div>';
+    // Build title-keyed overrides from ID-keyed taskCategoryOverrides
+    const titleOverrides = {};
+    if (day.taskCategoryOverrides && day.doneTasks) {
+      for (const t of day.doneTasks) {
+        if (day.taskCategoryOverrides[t.id] != null) {
+          titleOverrides[t.title] = day.taskCategoryOverrides[t.id];
+        }
+      }
+    }
+
+    // Group timePerTask entries by category
+    const rules = categoryRules.length ? categoryRules : DEFAULT_CATEGORY_RULES;
+    const grouped = {};
+    for (const cat of rules) grouped[cat.id] = [];
+    for (const r of (day.timePerTask || [])) {
+      const catId = getCategoryForTask(r.title, titleOverrides, r.title);
+      if (!grouped[catId]) grouped[catId] = [];
+      grouped[catId].push(r);
+    }
+
+    // Render category sections (reuse edm-cat-* classes for visual parity)
+    let taskHtml = '';
+    for (const cat of rules) {
+      const items = grouped[cat.id] || [];
+      if (items.length === 0) continue;
+      taskHtml += `<div class="edm-cat-section">
+        <div class="edm-cat-header">${esc(cat.name.toUpperCase())}</div>
+        <div class="edm-cat-tasks">`;
+      for (const r of items) {
+        taskHtml += `<div class="hdc-task-row"><span class="hdc-task-title">${esc(r.title)}</span><span class="hdc-task-time">${fmtTaskMins(r.mins)}</span></div>`;
+      }
+      taskHtml += `</div></div>`;
+    }
+    if (!taskHtml) {
+      taskHtml = '<div style="text-align:center;color:var(--text-dim);font-size:11px;padding:10px 0;letter-spacing:0.06em;font-style:italic">No recorded data</div>';
+    }
 
     const pb = day.priorityBreakdown || {};
     const priorityHtml = buildPriorityHtml(pb, pb.total || 0, 'hdc-priority-chip');
@@ -4178,7 +4211,7 @@
         <div class="hdc-date">${dateLabel}</div>
         <div class="hdc-stress" style="background:${col}22;color:${col}">Stress ${day.stressScore || '—'}/10 · ${label}</div>
       </div>
-      <div class="hdc-tasks">${taskRows}</div>
+      <div class="hdc-tasks">${taskHtml}</div>
       ${priorityHtml ? `<div class="hdc-priority-row">${priorityHtml}</div>` : ''}
     </div>`;
   }
