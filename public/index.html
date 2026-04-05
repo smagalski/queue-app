@@ -2828,7 +2828,7 @@
       const durHtml = `<span class="duration-display">${fmtDuration(task.duration || DEFAULT_DUR)}</span>`;
       card.innerHTML = `
         <div class="task-card ${isScheduled(task) ? 'sched-card' : 'flex-card'}" style="--card-bar:${col};border-color:${col};cursor:default">
-          <div class="card-task-title">${esc(task.title)}</div>
+          <div class="card-task-title" ondblclick="startDoneTitleEdit(${task.id},this)" style="cursor:text">${esc(task.title)}</div>
           <div class="task-meta" style="display:flex">${badgeHtml}${durHtml}
             <span class="task-age" style="color:var(--done-color)">✓ Done</span>
           </div>
@@ -3650,6 +3650,11 @@
 
   function startTitleEdit(taskId, titleEl) {
     _doTitleEdit(tasks.find(t => t.id === taskId), titleEl, render, null);
+  }
+
+  function startDoneTitleEdit(taskId, titleEl) {
+    _doTitleEdit(doneTasks.find(t => t.id === taskId), titleEl,
+      () => { save(); _renderBlockDetail(); renderCalendar(); }, null);
   }
 
   function startCalTitleEdit(blockTask, isDone, spanEl) {
