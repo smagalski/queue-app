@@ -1730,6 +1730,9 @@
   <button class="pd-btn pd-btn-4" onclick="changeTaskPriority(4)">Low</button>
 </div>
 
+<!-- CATEGORY DROPDOWN (shared, populated dynamically) -->
+<div class="p-dropdown" id="categoryDropdown" onclick="event.stopPropagation()"></div>
+
 <!-- SCHEDULE EDIT DROPDOWN (shared, positioned by JS) -->
 <div class="p-dropdown sched-dropdown" id="schedDropdown" onclick="event.stopPropagation()">
   <div style="padding:4px 6px 6px;display:flex;flex-direction:column;gap:6px;min-width:200px;">
@@ -1831,6 +1834,7 @@
 
   // Dropdown edit state (id of the task each edit dropdown is targeting)
   let pdTargetId = null;    // priority dropdown
+  let cdTargetId = null;    // category dropdown
   let sdTargetId = null;    // schedule-edit dropdown
   let sdAnchor   = 'start'; // anchor selection inside schedule-edit dropdown
   let ddTargetId = null;    // duration-edit dropdown
@@ -1864,10 +1868,11 @@
   let intervalSecs      = null;   // remaining seconds in current interval
   let intervalTimerHandle       = null;   // setInterval handle
   let intervalIsPaused          = false;  // timer is paused
+  let intervalAdaptive          = false;  // adaptive mode (timer = task duration)
   let intervalCountingUp        = false;  // counting up after last interval (auto-complete off)
   let intervalCountUpStartMs    = null;   // when count-up began
-  let shortTasksSinceBreak = 0;   // < 45 min task counter for break cadence
   let _intervalSchedPromptShown = false;  // prevent duplicate scheduled interrupt prompt
+  let _iaIdSeed = 0; // counter for unique auto-break IDs
 
   // ── Firebase config ────────────────────────────────────────────────────
   // 1. Go to https://console.firebase.google.com and create a project
@@ -2447,7 +2452,7 @@
     dd.style.top  = (rect.bottom + 4) + 'px';
     dd.style.left = left + 'px';
   }
-  function hideAllDropdowns() { hidePriorityDropdown(); hideSchedDropdown(); hideDurDropdown(); hideStartTimeDropdown(); }
+  function hideAllDropdowns() { hidePriorityDropdown(); hideCategoryDropdown(); hideSchedDropdown(); hideDurDropdown(); hideStartTimeDropdown(); }
 
   // ── Priority dropdown ──────────────────────────────────────────────────
   function showPriorityDropdown(taskId, event) {
@@ -2467,6 +2472,34 @@
   function hidePriorityDropdown() {
     document.getElementById('priorityDropdown').classList.remove('open');
     pdTargetId = null;
+  }
+
+  function showCategoryDropdown(taskId, event) {
+    event.stopPropagation();
+    hideAllDropdowns();
+    cdTargetId = taskId;
+    const task = tasks.find(t => t.id === taskId);
+    const current = task ? (task.categoryOverride || getCategoryForTask(task.title, {}, task.id)) : null;
+    const dd = document.getElementById('categoryDropdown');
+    dd.innerHTML = categoryRules.map((cat, i) => {
+      const col = CAT_TALLY_COLORS[i % CAT_TALLY_COLORS.length];
+      const isActive = cat.id === current;
+      return `<button class="pd-btn" onclick="changeTaskCategory('${cat.id}')" style="-webkit-appearance:none;appearance:none;color:${col};border:1px solid ${col}${isActive ? '80' : '20'};background:${col}${isActive ? '25' : '12'};font-size:9px;letter-spacing:0.08em;text-transform:uppercase;font-weight:700;width:100%;padding:5px 8px;border-radius:4px;cursor:pointer;text-align:left">${esc(cat.name)}</button>`;
+    }).join('');
+    openDropdown(dd, event.target.getBoundingClientRect(), 150);
+  }
+
+  function changeTaskCategory(catId) {
+    if (!cdTargetId) return;
+    const task = tasks.find(t => t.id === cdTargetId);
+    if (task) { task.categoryOverride = catId; save(); }
+    hideCategoryDropdown();
+    render();
+  }
+
+  function hideCategoryDropdown() {
+    document.getElementById('categoryDropdown').classList.remove('open');
+    cdTargetId = null;
   }
 
   // Close dropdown on any outside click
@@ -2713,6 +2746,15 @@
       ? `<span class="priority-badge" onclick="showSchedDropdown(${task.id},event)" style="cursor:pointer;background:rgba(126,200,227,0.15);color:${SCHED_COL};border:1px solid rgba(126,200,227,0.3)">⏰ SCHEDULED</span>`
       : `<span class="priority-badge pc-${priority}" onclick="showPriorityDropdown(${task.id},event)" style="cursor:pointer">${P_LABELS[priority]}</span>`;
 
+    let catBadgeHtml = '';
+    if (!taskBreak && !taskSched && categoryRules.length) {
+      const catId  = task.categoryOverride || getCategoryForTask(task.title, {}, task.id);
+      const catIdx = categoryRules.findIndex(r => r.id === catId);
+      const catCol = CAT_TALLY_COLORS[catIdx >= 0 ? catIdx % CAT_TALLY_COLORS.length : 0];
+      const catName = catIdx >= 0 ? categoryRules[catIdx].name : catId;
+      catBadgeHtml = `<span class="priority-badge" onclick="showCategoryDropdown(${task.id},event)" style="cursor:pointer;background:${catCol}15;color:${catCol};border:1px solid ${catCol}30">${esc(catName)}</span>`;
+    }
+
     const escHtml      = escalated ? `<span class="escalation-badge">⚡ escalated</span>` : '';
     const carriedHtml  = task.carriedFrom ? `<span class="carried-badge">↩ Carried</span>` : '';
     const hasCalStart = !taskSched && !!task.calStartTime && opts.slotIndex === 0;
@@ -2738,7 +2780,7 @@
     return `<div class="task-card ${taskSched ? 'sched-card' : 'flex-card'}" data-id="${task.id}" ${dragAttrs}${moreAttrs} style="--card-bar:${col};border-color:${col}">
       <button class="delete-btn" onclick="deleteTaskById(${task.id})" title="Delete">✕</button>
       <div class="card-task-title" ondblclick="startTitleEdit(${task.id},this)" style="cursor:text">${esc(task.title)}</div>
-      <div class="task-meta" style="display:flex">${badgeHtml}${escHtml}${carriedHtml}${timeHtml}${durHtml}<button class="done-btn" onclick="markDoneById(${task.id})">✓ Done</button></div>
+      <div class="task-meta" style="display:flex">${badgeHtml}${catBadgeHtml}${escHtml}${carriedHtml}${timeHtml}${durHtml}<button class="done-btn" onclick="markDoneById(${task.id})">✓ Done</button></div>
       ${taskSched ? '<div class="sched-error-msg">Scheduled tasks can\'t be reordered by priority.</div>' : ''}
     </div>`;
   }
@@ -3536,9 +3578,6 @@
     doneTasks.unshift({ ...task, doneAt });
     closeBlockDetail();
     save(); render();
-    if (intervalTimerMode && intervalAutoBreak && !task.isBreak) {
-      _intervalTimerCheckBreak(task.duration || DEFAULT_DUR);
-    }
   }
   function unmarkDone(id) {
     const task = doneTasks.find(t => t.id === id);
@@ -3831,11 +3870,12 @@
   function loadIntervalTimerSettings() {
     try {
       const s = JSON.parse(localStorage.getItem('q_interval_timer') || '{}');
-      intervalTimerMode         = !!s.mode;
-      intervalTimerMins = s.intervalMins || 25;
+      intervalTimerMode    = !!s.mode;
+      intervalTimerMins    = s.intervalMins || 25;
       intervalAutoComplete = !!s.autoComplete;
       intervalAutoBreak    = !!s.autoBreak;
       intervalBreakMins    = s.breakMins || 5;
+      intervalAdaptive     = !!s.adaptive;
     } catch(e) {}
     const chk = document.getElementById('intervalTimerToggleChk');
     if (chk) chk.checked = intervalTimerMode;
@@ -3850,6 +3890,7 @@
         autoComplete: intervalAutoComplete,
         autoBreak: intervalAutoBreak,
         breakMins: intervalBreakMins,
+        adaptive: intervalAdaptive,
       }));
     } catch(e) {}
   }
@@ -3858,11 +3899,14 @@
     intervalTimerMode = on;
     if (!on) {
       stopIntervalTimer();
-      intervalNowTaskId  = null;
-      intervalCountingUp = false;
+      intervalNowTaskId      = null;
+      intervalCountingUp     = false;
       intervalCountUpStartMs = null;
+      removeIntervalAutoBreaks();
+      save(); render();
     } else {
-      syncIntervalTimer();
+      if (intervalAutoBreak) applyIntervalAutoBreaks();
+      else syncIntervalTimer();
     }
     saveIntervalTimerSettings();
     updateIntervalTimerPanel();
@@ -3896,8 +3940,13 @@
     intervalCountingUp      = false;
     intervalCountUpStartMs  = null;
     const taskDuration = task.duration || DEFAULT_DUR;
-    totalIntervals           = Math.ceil(taskDuration / intervalTimerMins) || 1;
-    currentIntervalDuration  = Math.min(intervalTimerMins, taskDuration);
+    if (intervalAdaptive) {
+      totalIntervals          = 1;
+      currentIntervalDuration = taskDuration;
+    } else {
+      totalIntervals           = Math.ceil(taskDuration / intervalTimerMins) || 1;
+      currentIntervalDuration  = Math.min(intervalTimerMins, taskDuration);
+    }
     intervalSecs             = currentIntervalDuration * 60;
     intervalTimerHandle = setInterval(intervalTimerTick, 1000);
     intervalIsPaused    = false;
@@ -3907,14 +3956,19 @@
   function startIntervalTimerForTask(task) {
     stopIntervalTimer();
     const taskDuration = task.duration || DEFAULT_DUR;
-    intervalNowTaskId                = task.id;
-    currentInterval          = 1;
-    totalIntervals           = Math.ceil(taskDuration / intervalTimerMins) || 1;
-    currentIntervalDuration  = Math.min(intervalTimerMins, taskDuration);
-    intervalSecs             = currentIntervalDuration * 60;
-    intervalCountingUp               = false;
-    intervalCountUpStartMs           = null;
-    intervalIsPaused                 = false;
+    intervalNowTaskId      = task.id;
+    currentInterval        = 1;
+    if (intervalAdaptive) {
+      totalIntervals          = 1;
+      currentIntervalDuration = taskDuration;
+    } else {
+      totalIntervals          = Math.ceil(taskDuration / intervalTimerMins) || 1;
+      currentIntervalDuration = Math.min(intervalTimerMins, taskDuration);
+    }
+    intervalSecs           = currentIntervalDuration * 60;
+    intervalCountingUp     = false;
+    intervalCountUpStartMs = null;
+    intervalIsPaused       = false;
     intervalTimerHandle = setInterval(intervalTimerTick, 1000);
     updateIntervalTimerPanel();
   }
@@ -4003,39 +4057,96 @@
     updateIntervalTimerPanel();
   }
 
-  function _intervalTimerCheckBreak(taskDuration) {
-    if (!intervalTimerMode || !intervalAutoBreak) return;
-    if (breakStartMs) return; // already on a break
-    if (taskDuration >= 45) {
-      shortTasksSinceBreak = 0;
-      insertIntervalAutoBreak();
-    } else {
-      shortTasksSinceBreak++;
-      if (shortTasksSinceBreak >= 2) {
-        shortTasksSinceBreak = 0;
-        insertIntervalAutoBreak();
-      }
-    }
+  function _nextIaId() { return Date.now() * 1000 + (++_iaIdSeed); }
+
+  function removeIntervalAutoBreaks() {
+    tasks = tasks.filter(t => !t._ia);
+    tasks.forEach(t => {
+      if (t._io !== undefined) { t.duration = t._io; delete t._io; }
+    });
+    const flex = tasks.filter(t => !isScheduled(t))
+      .sort((a, b) => (a.flexOrder ?? Infinity) - (b.flexOrder ?? Infinity)
+                   || a.priority - b.priority || a.addedAt - b.addedAt);
+    flex.forEach((t, i) => { t.flexOrder = i; });
   }
 
-  function insertIntervalAutoBreak() {
-    if (breakStartMs) return;
-    tasks.forEach(t => {
-      if (!isScheduled(t) && t.flexOrder !== undefined) t.flexOrder += 1;
-    });
-    const bId = Date.now();
-    tasks.push({
-      id: bId, title: 'BREAK', priority: 1,
-      addedAt: Date.now(), duration: intervalBreakMins, flexOrder: 0, isBreak: true,
-    });
-    breakTaskId  = bId;
-    breakStartMs = Date.now();
-    save();
-    render();
-    updateBreakTimer();
-    document.getElementById('breakOverlay').classList.add('active');
-    if (breakTimerInt) clearInterval(breakTimerInt);
-    breakTimerInt = setInterval(updateBreakTimer, 1000);
+  function applyIntervalAutoBreaks() {
+    removeIntervalAutoBreaks();
+    if (!intervalTimerMode || !intervalAutoBreak) return;
+    if (intervalAdaptive) _applyAdaptiveBreaks();
+    else _applyFixedBreaks();
+    save(); render();
+  }
+
+  function _applyFixedBreaks() {
+    const flex = tasks.filter(t => !isScheduled(t))
+      .sort((a, b) => (a.flexOrder ?? Infinity) - (b.flexOrder ?? Infinity)
+                   || a.priority - b.priority || a.addedAt - b.addedAt);
+    const newFlex = [];
+    for (const task of flex) {
+      const dur = task.duration || DEFAULT_DUR;
+      if (dur <= intervalTimerMins) { newFlex.push(task); continue; }
+      if (task._io === undefined) task._io = dur;
+      task.duration = intervalTimerMins;
+      newFlex.push(task);
+      let remaining = dur - intervalTimerMins;
+      while (remaining > 0) {
+        const segDur = Math.min(remaining, intervalTimerMins);
+        newFlex.push({ id: _nextIaId(), title: 'Break', priority: 1,
+          addedAt: Date.now(), duration: intervalBreakMins, isBreak: true, _ia: true });
+        newFlex.push({ id: _nextIaId(), title: task.title, priority: task.priority,
+          addedAt: task.addedAt, duration: segDur, _ia: true, _ip: task.id });
+        remaining -= segDur;
+      }
+    }
+    newFlex.forEach((t, i) => { t.flexOrder = i; });
+    tasks = tasks.filter(t => isScheduled(t)).concat(newFlex);
+  }
+
+  function _applyAdaptiveBreaks() {
+    const flex = tasks.filter(t => !isScheduled(t))
+      .sort((a, b) => (a.flexOrder ?? Infinity) - (b.flexOrder ?? Infinity)
+                   || a.priority - b.priority || a.addedAt - b.addedAt);
+    const newFlex = [];
+    let shortCount = 0;
+    for (const task of flex) {
+      const dur = task.duration || DEFAULT_DUR;
+      newFlex.push(task);
+      if (dur >= 31) {
+        shortCount = 0;
+        newFlex.push({ id: _nextIaId(), title: 'Break', priority: 1,
+          addedAt: Date.now(), duration: intervalBreakMins, isBreak: true, _ia: true });
+      } else {
+        shortCount++;
+        if (shortCount >= 2) {
+          shortCount = 0;
+          newFlex.push({ id: _nextIaId(), title: 'Break', priority: 1,
+            addedAt: Date.now(), duration: intervalBreakMins, isBreak: true, _ia: true });
+        }
+      }
+    }
+    newFlex.forEach((t, i) => { t.flexOrder = i; });
+    tasks = tasks.filter(t => isScheduled(t)).concat(newFlex);
+  }
+
+  function reapplyIntervalAutoBreaks() {
+    if (!intervalTimerMode || !intervalAutoBreak) return;
+    applyIntervalAutoBreaks();
+  }
+
+  function setIntervalMode(mode) {
+    intervalAdaptive = (mode === 'adaptive');
+    saveIntervalTimerSettings();
+    reapplyIntervalAutoBreaks();
+    if (intervalNowTaskId) {
+      const task = tasks.find(t => t.id === intervalNowTaskId);
+      if (task) {
+        const wasPaused = intervalIsPaused;
+        startIntervalTimerForTask(task);
+        if (wasPaused) pauseIntervalTimer();
+      }
+    }
+    updateIntervalTimerPanel();
   }
 
   function fmtPomoTime(secs) {
@@ -4111,7 +4222,22 @@
     const acChk  = intervalAutoComplete ? ' checked' : '';
     const abChk  = intervalAutoBreak    ? ' checked' : '';
     const iSel   = v => v === intervalTimerMins ? ' selected' : '';
-    const bSel   = v => v === intervalBreakMins    ? ' selected' : '';
+    const bSel   = v => v === intervalBreakMins ? ' selected' : '';
+    const mSel   = v => v === (intervalAdaptive ? 'adaptive' : 'fixed') ? ' selected' : '';
+
+    const intervalLenRow = !intervalAdaptive ? `
+        <div class="pomo-setting-group">
+          <div class="pomo-setting-label">Interval Length</div>
+          <select class="pomo-select" onchange="setIntervalTimerMins(parseInt(this.value))">
+            <option value="15"${iSel(15)}>15 min</option>
+            <option value="20"${iSel(20)}>20 min</option>
+            <option value="25"${iSel(25)}>25 min</option>
+            <option value="30"${iSel(30)}>30 min</option>
+            <option value="45"${iSel(45)}>45 min</option>
+            <option value="60"${iSel(60)}>60 min</option>
+            <option value="90"${iSel(90)}>90 min</option>
+          </select>
+        </div>` : '';
 
     const breakLenRow = intervalAutoBreak ? `
         <div class="pomo-setting-group">
@@ -4129,17 +4255,13 @@
       <div class="pomo-divider"></div>
       <div class="pomo-settings">
         <div class="pomo-setting-group">
-          <div class="pomo-setting-label">Interval Length</div>
-          <select class="pomo-select" onchange="setIntervalTimerMins(parseInt(this.value))">
-            <option value="15"${iSel(15)}>15 min</option>
-            <option value="20"${iSel(20)}>20 min</option>
-            <option value="25"${iSel(25)}>25 min</option>
-            <option value="30"${iSel(30)}>30 min</option>
-            <option value="45"${iSel(45)}>45 min</option>
-            <option value="60"${iSel(60)}>60 min</option>
-            <option value="90"${iSel(90)}>90 min</option>
+          <div class="pomo-setting-label">Timer Mode</div>
+          <select class="pomo-select" onchange="setIntervalMode(this.value)">
+            <option value="fixed"${mSel('fixed')}>Fixed Intervals</option>
+            <option value="adaptive"${mSel('adaptive')}>Adaptive</option>
           </select>
         </div>
+        ${intervalLenRow}
         <div class="pomo-setting-group">
           <div class="pomo-setting-row">
             <span class="pomo-setting-desc">Auto-complete tasks</span>
@@ -4169,10 +4291,14 @@
   function setIntervalTimerMins(v) {
     intervalTimerMins = v || 25;
     saveIntervalTimerSettings();
-    // Restart timer with new interval length if actively running
-    if (intervalNowTaskId && !intervalIsPaused && !intervalCountingUp) {
+    reapplyIntervalAutoBreaks();
+    if (intervalNowTaskId && !intervalCountingUp) {
       const task = tasks.find(t => t.id === intervalNowTaskId);
-      if (task) startIntervalTimerForTask(task);
+      if (task) {
+        const wasPaused = intervalIsPaused;
+        startIntervalTimerForTask(task);
+        if (wasPaused) pauseIntervalTimer();
+      }
     } else {
       updateIntervalTimerPanel();
     }
@@ -4187,12 +4313,19 @@
   function setIntervalAutoBreak(on) {
     intervalAutoBreak = on;
     saveIntervalTimerSettings();
+    if (on) {
+      applyIntervalAutoBreaks();
+    } else {
+      removeIntervalAutoBreaks();
+      save(); render();
+    }
     updateIntervalTimerPanel();
   }
 
   function setIntervalBreakMins(v) {
     intervalBreakMins = v || 5;
     saveIntervalTimerSettings();
+    reapplyIntervalAutoBreaks();
     updateIntervalTimerPanel();
   }
 
