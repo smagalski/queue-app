@@ -2479,7 +2479,7 @@
     hideAllDropdowns();
     cdTargetId = taskId;
     const task = tasks.find(t => t.id === taskId);
-    const current = task ? (task.categoryOverride || getCategoryForTask(task.title, {}, task.id)) : null;
+    const current = task ? getCategoryForTask(task.title, {}, task.id, task.categoryOverride) : null;
     const dd = document.getElementById('categoryDropdown');
     dd.innerHTML = categoryRules.map((cat, i) => {
       const col = CAT_TALLY_COLORS[i % CAT_TALLY_COLORS.length];
@@ -2748,7 +2748,7 @@
 
     let catBadgeHtml = '';
     if (!taskBreak && !taskSched && categoryRules.length) {
-      const catId  = task.categoryOverride || getCategoryForTask(task.title, {}, task.id);
+      const catId  = getCategoryForTask(task.title, {}, task.id, task.categoryOverride);
       const catIdx = categoryRules.findIndex(r => r.id === catId);
       const catCol = CAT_TALLY_COLORS[catIdx >= 0 ? catIdx % CAT_TALLY_COLORS.length : 0];
       const catName = catIdx >= 0 ? categoryRules[catIdx].name : catId;
@@ -4417,9 +4417,12 @@
   }
 
   // ── Category helpers ───────────────────────────────────────────────────
-  // Returns the category id for a task title, checking overrides first.
-  function getCategoryForTask(title, overrides, taskId) {
+  // Returns the category id for a task. Priority: sessionOverrides > taskOverride > keyword match.
+  // taskOverride = task.categoryOverride (set when user manually picks a category).
+  // Passing taskOverride=null means "no manual override — re-infer from title".
+  function getCategoryForTask(title, overrides, taskId, taskOverride) {
     if (overrides && taskId != null && overrides[taskId] != null) return overrides[taskId];
+    if (taskOverride != null) return taskOverride;
     if (!categoryRules.length) return 'other';
     const lower = String(title || '').toLowerCase();
     for (const cat of categoryRules) {
@@ -4452,7 +4455,7 @@
         mins = task.duration || 0;
       }
       if (mins <= 0) continue;
-      const catId = getCategoryForTask(task.title, {}, task.id);
+      const catId = getCategoryForTask(task.title, {}, task.id, task.categoryOverride);
       if (catMins[catId] !== undefined) catMins[catId] += mins;
       else catMins[categoryRules[categoryRules.length - 1].id] += mins;
     }
@@ -4469,7 +4472,7 @@
         elapsedMins = Math.max(0, nowMins - nowTask._stMins);
       }
       if (elapsedMins > 0) {
-        const catId = getCategoryForTask(nowTask.title, {}, nowTask.id);
+        const catId = getCategoryForTask(nowTask.title, {}, nowTask.id, nowTask.categoryOverride);
         if (catMins[catId] !== undefined) catMins[catId] += elapsedMins;
         else catMins[categoryRules[categoryRules.length - 1].id] += elapsedMins;
       }
@@ -4588,7 +4591,7 @@
       } else {
         mins = task.duration || 0;
       }
-      const catId = getCategoryForTask(task.title, _edmOverrides, task.id);
+      const catId = getCategoryForTask(task.title, _edmOverrides, task.id, task.categoryOverride);
       if (!grouped[catId]) grouped[catId] = [];
       grouped[catId].push({ task, mins });
     }
