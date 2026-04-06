@@ -70,7 +70,7 @@
   .clock-tz   { font-size: 10px; font-weight: 500; letter-spacing: 0.1em; color: var(--text-dim); }
   .clock-date {
     font-size: 12px; font-weight: 600; letter-spacing: 0.1em; color: #c0c0d0;
-    text-align: center; margin-top: 10px; text-transform: uppercase; line-height: 1.7; white-space: pre-line;
+    text-align: center; margin-top: 10px; text-transform: uppercase;
   }
 
   /* ── CALENDAR ─────────────────────────────────────────────────────────── */
@@ -805,8 +805,7 @@
   body.mobile-view .clock-ampm { font-size: 10px; }
   body.mobile-view .clock-tz   { font-size: 8px; }
   body.mobile-view .clock-date {
-    font-size: 10px; margin-top: 0; line-height: 1.4;
-    text-align: left; white-space: normal;
+    font-size: 10px; margin-top: 0; text-align: left;
   }
 
   /* Calendar becomes a tap-to-open drawer */
@@ -1116,6 +1115,21 @@
   /* (primary definition is .end-btns-row above; only add the flex:1/width:auto override here) */
   .end-btns-row .end-day-btn { flex: 1; margin-top: 0; width: auto; }
 
+  /* ── HORIZONTAL BREAK CONTROLS (right column, below End Day/Day Off) ─── */
+  .break-controls-row {
+    display: flex; align-items: flex-start; gap: 0;
+    margin-top: 10px; padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.07);
+  }
+  .bcr-section { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+  .bcr-section:first-child { padding-right: 10px; }
+  .bcr-section:last-child  { padding-left: 10px; border-left: 1px solid rgba(255,255,255,0.07); }
+  .bcr-hd { display: flex; justify-content: space-between; align-items: center; gap: 4px; }
+  .bcr-label {
+    font-size: 9px; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--text-dim); white-space: nowrap;
+  }
+
   /* ── DAY OFF history badge ────────────────────────────────────────────── */
   .hdc-day-off-badge {
     font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
@@ -1378,39 +1392,6 @@
         </select>
       </div>
     </div>
-    <div class="break-budget-panel" id="breakBudgetPanel">
-      <div class="bbp-header">
-        <span class="bbp-label">Break Budget</span>
-        <select class="bbp-select" id="breakBudgetSelect" onchange="setBreakBudget(this.value)">
-          <option value="15">15 min</option><option value="30">30 min</option>
-          <option value="45">45 min</option><option value="60" selected>1 hr</option>
-          <option value="90">1.5 hr</option><option value="120">2 hr</option>
-        </select>
-      </div>
-      <div class="bbp-bar-wrap">
-        <div class="bbp-bar-fill" id="breakBarFill"></div>
-      </div>
-      <div class="bbp-tally" id="breakTally">0 min used</div>
-    </div>
-    <div class="break-budget-panel" id="autoBreakPanel">
-      <div class="bbp-header">
-        <span class="bbp-label">Auto-Breaks</span>
-        <div style="display:flex;align-items:center;gap:6px">
-          <select class="bbp-select" id="autoBreakMinsSelect" onchange="setAutoBreakMins(this.value)">
-            <option value="5" selected>5 min</option>
-            <option value="10">10 min</option>
-            <option value="15">15 min</option>
-            <option value="20">20 min</option>
-            <option value="30">30 min</option>
-          </select>
-          <label class="ab-toggle" title="Auto-add a break after each task">
-            <input type="checkbox" id="autoBreakToggle" onchange="setAutoBreakAfterTask(this.checked)">
-            <span class="ab-track"></span>
-            <span class="ab-thumb"></span>
-          </label>
-        </div>
-      </div>
-    </div>
     <div class="cat-tally-panel" id="catTallyPanel">
       <div class="cat-tally-label">Today by Category</div>
       <div id="catTallyRows"></div>
@@ -1475,6 +1456,39 @@
     <div class="end-btns-row">
       <button class="end-day-btn" id="endDayBtn" onclick="openEndDayModal()">End Day</button>
       <button class="end-day-btn" id="dayOffBtn" onclick="enterDayOff()">Day Off</button>
+    </div>
+    <div class="break-controls-row" id="breakControlsRow">
+      <div class="bcr-section">
+        <div class="bcr-hd">
+          <span class="bcr-label">Break Budget</span>
+          <select class="bbp-select" id="breakBudgetSelect" onchange="setBreakBudget(this.value)">
+            <option value="15">15 min</option><option value="30">30 min</option>
+            <option value="45">45 min</option><option value="60" selected>1 hr</option>
+            <option value="90">1.5 hr</option><option value="120">2 hr</option>
+          </select>
+        </div>
+        <div class="bbp-bar-wrap"><div class="bbp-bar-fill" id="breakBarFill"></div></div>
+        <div class="bbp-tally" id="breakTally">0 min used</div>
+      </div>
+      <div class="bcr-section">
+        <div class="bcr-hd">
+          <span class="bcr-label">Auto-Breaks</span>
+          <div style="display:flex;align-items:center;gap:5px">
+            <select class="bbp-select" id="autoBreakMinsSelect" onchange="setAutoBreakMins(this.value)">
+              <option value="5" selected>5 min</option>
+              <option value="10">10 min</option>
+              <option value="15">15 min</option>
+              <option value="20">20 min</option>
+              <option value="30">30 min</option>
+            </select>
+            <label class="ab-toggle" title="Auto-add a break after each task">
+              <input type="checkbox" id="autoBreakToggle" onchange="setAutoBreakAfterTask(this.checked)">
+              <span class="ab-track"></span>
+              <span class="ab-thumb"></span>
+            </label>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="day-ended-msg" id="dayEndedMsg">Day Ended — See You Tomorrow</div>
     <button class="end-day-btn" id="resumeDayBtn" onclick="resumeDay()" style="display:none">Resume Day</button>
@@ -2342,7 +2356,7 @@
     document.getElementById('clockTime').textContent = `${h}:${pad2(m)}`;
     document.getElementById('clockAmpm').textContent = ap;
     document.getElementById('clockDate').textContent =
-      `${DAYS[now.getDay()]}\n${MONTHS[now.getMonth()]} ${now.getDate()}`;
+      `${DAYS[now.getDay()]}, ${MONTHS[now.getMonth()]} ${now.getDate()}`;
     renderCategoryTally();
   }
 
