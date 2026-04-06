@@ -5255,9 +5255,11 @@
       callback(resp) {
         if (resp.error) {
           console.error('GCal OAuth error:', resp.error);
-          // Only show an error in the modal if it's already open; user-cancelled flows close silently
-          if (resp.error !== 'access_denied' && resp.error !== 'popup_closed_by_user') {
-            setGcalListMessage('Sign-in failed. Please try again.');
+          if (resp.error === 'access_denied' || resp.error === 'popup_closed_by_user') {
+            // User cancelled — close the modal cleanly
+            closeGcalLightbox();
+          } else {
+            setGcalListMessage(`Sign-in failed: ${resp.error}. Please try again.`);
           }
           return;
         }
@@ -5273,12 +5275,21 @@
       alert('Google Calendar import is not configured.\n\nSet GCAL_CLIENT_ID in the source to your OAuth 2.0 Web Client ID.\nFind it at: Firebase Console → Auth → Sign-in providers → Google → Web SDK configuration.');
       return;
     }
+    // Show overlay immediately so the user knows something is happening
+    document.getElementById('gcalOverlay').classList.add('active');
+    setGcalListMessage('Connecting to Google…');
+    document.getElementById('gcalConfirmBtn').style.display = 'none';
+
     if (_gcalAccessToken && Date.now() < _gcalTokenExpiry) {
       fetchGcalEvents();
       return;
     }
+    if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
+      setGcalListMessage('Google sign-in library not loaded. Check your connection and try again.');
+      return;
+    }
     _gcalTokenClient = _buildGcalTokenClient(fetchGcalEvents);
-    _gcalTokenClient.requestAccessToken({ prompt: '' });
+    _gcalTokenClient.requestAccessToken({ prompt: 'consent' });
   }
 
   function setGcalListMessage(msg) {
@@ -5288,9 +5299,10 @@
 
   async function fetchGcalEvents() {
     const overlay = document.getElementById('gcalOverlay');
+    // Overlay is already open (opened by openGcalImport), just update message
     setGcalListMessage('Loading…');
     document.getElementById('gcalConfirmBtn').style.display = 'none';
-    overlay.classList.add('active');
+    overlay.classList.add('active'); // ensure it's open if called from token-refresh path
 
     // Build today's date range in PST/PDT with correct UTC offset.
     // Derive offset in whole minutes to handle half-hour zones correctly,
@@ -5322,9 +5334,9 @@
       if (res.status === 401) {
         _gcalAccessToken = null;
         _gcalTokenExpiry  = 0;
-        overlay.classList.remove('active');
+        setGcalListMessage('Re-authenticating with Google…');
         _gcalTokenClient = _buildGcalTokenClient(fetchGcalEvents);
-        _gcalTokenClient.requestAccessToken({ prompt: '' });
+        _gcalTokenClient.requestAccessToken({ prompt: 'consent' });
         return;
       }
       if (!res.ok) {
