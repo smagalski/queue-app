@@ -4692,6 +4692,116 @@
   //             (looks like: 299707953232-xxxx.apps.googleusercontent.com)
   const GCAL_CLIENT_ID = '299707953232-s8t4n9fl29hjld75uprtbu9dh4ege87c.apps.googleusercontent.com';
 
+  // GCAL_DESKTOP_CLIENT_ID / GCAL_DESKTOP_CLIENT_SECRET:
+  // Used for Tauri (macOS) desktop OAuth via system browser + local redirect server (PKCE).
+  // Create a "Desktop app" OAuth 2.0 client at: Google Cloud Console → APIs & Services → Credentials
+  // Then paste the client ID and client secret here.
+  const GCAL_DESKTOP_CLIENT_ID     = '299707953232-tjm0te6mqa601nuhkjcq79rbel60i42o.apps.googleusercontent.com';
+  const GCAL_DESKTOP_CLIENT_SECRET = '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';
+
+  // ── PKCE helpers ──────────────────────────────────────────────────────
+  function _base64urlEncode(buffer) {
+    return btoa(String.fromCharCode(...new Uint8Array(buffer)))
+      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+  async function _generatePkce() {
+    const verifierBytes  = crypto.getRandomValues(new Uint8Array(32));
+    const codeVerifier   = _base64urlEncode(verifierBytes);
+    const digest         = await crypto.subtle.digest('SHA-256', verifierBytes);
+    const codeChallenge  = _base64urlEncode(digest);
+    return { codeVerifier, codeChallenge };
+  }
+
+  // ── Tauri desktop OAuth (PKCE via system browser + local redirect server) ──
+  async function _gcalTauriOAuth() {
+    if (!GCAL_DESKTOP_CLIENT_ID || !GCAL_DESKTOP_CLIENT_SECRET) {
+      setGcalListMessage('Desktop OAuth is not configured yet. Set <code>GCAL_DESKTOP_CLIENT_ID</code> and <code>GCAL_DESKTOP_CLIENT_SECRET</code> in the source, then rebuild the app.');
+      return;
+    }
+
+    setGcalListMessage('Opening Google sign-in in your browser…');
+
+    try {
+      // 1. Start the local redirect server — returns the random port it's listening on
+      const port = await window.__TAURI__.core.invoke('start_oauth_server');
+      const redirectUri = `http://127.0.0.1:${port}/callback`;
+
+      // 2. Generate PKCE verifier / challenge
+      const { codeVerifier, codeChallenge } = await _generatePkce();
+
+      // 3. Register for the oauth-redirect event (fired by Rust after it receives the callback)
+      let _unlisten = null;
+      const authPromise = new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          if (_unlisten) _unlisten();
+          reject(new Error('Sign-in timed out. Please try again.'));
+        }, 180000); // 3 minutes
+
+        window.__TAURI__.event.listen('oauth-redirect', (evt) => {
+          clearTimeout(timeout);
+          if (_unlisten) _unlisten();
+          resolve(evt.payload);
+        }).then(fn => { _unlisten = fn; });
+      });
+
+      // 4. Build the Google authorization URL
+      const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+      authUrl.searchParams.set('client_id',             GCAL_DESKTOP_CLIENT_ID);
+      authUrl.searchParams.set('redirect_uri',          redirectUri);
+      authUrl.searchParams.set('response_type',         'code');
+      authUrl.searchParams.set('scope',                 'https://www.googleapis.com/auth/calendar.readonly');
+      authUrl.searchParams.set('code_challenge',        codeChallenge);
+      authUrl.searchParams.set('code_challenge_method', 'S256');
+      authUrl.searchParams.set('access_type',           'online');
+
+      // 5. Open the auth URL in the system browser
+      await window.__TAURI__.core.invoke('open_in_browser', { url: authUrl.toString() });
+
+      // 6. Wait for the redirect
+      const redirectUrl = await authPromise;
+      const params = new URL(redirectUrl).searchParams;
+      const code   = params.get('code');
+      const error  = params.get('error');
+
+      if (error) {
+        if (error === 'access_denied') { closeGcalLightbox(); }
+        else { setGcalListMessage(`Sign-in failed: ${error}. Please try again.`); }
+        return;
+      }
+      if (!code) {
+        setGcalListMessage('Sign-in failed: no authorization code received. Please try again.');
+        return;
+      }
+
+      // 7. Exchange the authorization code for an access token
+      setGcalListMessage('Completing sign-in…');
+      const tokenResp = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          code,
+          client_id:     GCAL_DESKTOP_CLIENT_ID,
+          client_secret: GCAL_DESKTOP_CLIENT_SECRET,
+          redirect_uri:  redirectUri,
+          grant_type:    'authorization_code',
+          code_verifier: codeVerifier,
+        }).toString(),
+      });
+      const tokenData = await tokenResp.json();
+      if (tokenData.error) {
+        setGcalListMessage(`Sign-in failed: ${tokenData.error_description || tokenData.error}. Please try again.`);
+        return;
+      }
+
+      _gcalAccessToken = tokenData.access_token;
+      _gcalTokenExpiry = Date.now() + (tokenData.expires_in - 60) * 1000;
+      fetchGcalEvents();
+
+    } catch (err) {
+      setGcalListMessage(`Sign-in error: ${err.message || String(err)}. Please try again.`);
+    }
+  }
+
   let _gcalTokenClient  = null;
   let _gcalAccessToken  = null;
   let _gcalTokenExpiry  = 0;
@@ -4745,10 +4855,9 @@
     document.getElementById('gcalOverlay').classList.add('active');
     document.getElementById('gcalConfirmBtn').style.display = 'none';
 
-    // Tauri's WKWebView blocks OAuth popups at the system level — no JS workaround exists.
-    // Direct the user to the web app where the full OAuth flow works.
+    // Tauri desktop: use system browser + local redirect server (PKCE) instead of a popup.
     if (window.__TAURI__) {
-      setGcalListMessage('Google Calendar import uses a sign-in popup that the desktop app can\'t open. Please use the web app (queue-app-13065.web.app) to import your events — they\'ll sync here automatically.');
+      _gcalTauriOAuth();
       return;
     }
 
