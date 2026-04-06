@@ -1136,10 +1136,10 @@
     color: var(--text-dim); background: rgba(255,255,255,0.06); border-radius: 20px; padding: 4px 10px;
   }
 
-  /* ── CATEGORY TALLY PANEL (left panel, below break budget) ───────────── */
+  /* ── CATEGORY TALLY PANEL (right panel, below break controls) ────────── */
   .cat-tally-panel {
     flex-shrink: 0; border-top: 1px solid var(--border);
-    padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 5px;
+    padding: 10px 0 4px; display: flex; flex-direction: column; gap: 5px;
   }
   .cat-tally-label {
     font-size: 8px; font-weight: 700; letter-spacing: 0.14em;
@@ -1392,10 +1392,6 @@
         </select>
       </div>
     </div>
-    <div class="cat-tally-panel" id="catTallyPanel">
-      <div class="cat-tally-label">Today by Category</div>
-      <div id="catTallyRows"></div>
-    </div>
   </div>
 
 <!-- Mobile calendar drawer -->
@@ -1489,6 +1485,10 @@
           </div>
         </div>
       </div>
+    </div>
+    <div class="cat-tally-panel" id="catTallyPanel">
+      <div class="cat-tally-label">Today by Category</div>
+      <div id="catTallyRows"></div>
     </div>
     <div class="day-ended-msg" id="dayEndedMsg">Day Ended — See You Tomorrow</div>
     <button class="end-day-btn" id="resumeDayBtn" onclick="resumeDay()" style="display:none">Resume Day</button>
