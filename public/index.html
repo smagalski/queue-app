@@ -2479,7 +2479,7 @@
     event.stopPropagation();
     hideAllDropdowns();
     cdTargetId = taskId;
-    const task = tasks.find(t => t.id === taskId);
+    const task = tasks.find(t => t.id === taskId) || doneTasks.find(t => t.id === taskId);
     const current = task ? getCategoryForTask(task.title, {}, task.id, task.categoryOverride) : null;
     const dd = document.getElementById('categoryDropdown');
     dd.innerHTML = categoryRules.map((cat, i) => {
@@ -2492,7 +2492,7 @@
 
   function changeTaskCategory(catId) {
     if (!cdTargetId) return;
-    const task = tasks.find(t => t.id === cdTargetId);
+    const task = tasks.find(t => t.id === cdTargetId) || doneTasks.find(t => t.id === cdTargetId);
     if (task) { task.categoryOverride = catId; save(); }
     hideCategoryDropdown();
     render();
@@ -2750,7 +2750,7 @@
       : `<span class="priority-badge pc-${priority}" onclick="showPriorityDropdown(${task.id},event)" style="cursor:pointer">${P_LABELS[priority]}</span>`;
 
     let catBadgeHtml = '';
-    if (!taskBreak && !taskSched && categoryRules.length) {
+    if (!taskBreak && categoryRules.length) {
       const catId  = getCategoryForTask(task.title, {}, task.id, task.categoryOverride);
       const catIdx = categoryRules.findIndex(r => r.id === catId);
       const catCol = CAT_TALLY_COLORS[catIdx >= 0 ? catIdx % CAT_TALLY_COLORS.length : 0];
@@ -2830,7 +2830,7 @@
         : `<span class="priority-badge pc-${priority}">${P_LABELS[priority]}</span>`;
       const durHtml = `<span class="duration-display">${fmtDuration(task.duration || DEFAULT_DUR)}</span>`;
       const doneCatBadge = (() => {
-        if (task.isBreak || isScheduled(task) || !categoryRules.length) return '';
+        if (task.isBreak || !categoryRules.length) return '';
         const catId  = getCategoryForTask(task.title, {}, task.id, task.categoryOverride);
         const catIdx = categoryRules.findIndex(r => r.id === catId);
         const catName = catIdx >= 0 ? categoryRules[catIdx].name : catId;
