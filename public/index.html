@@ -4839,7 +4839,9 @@
   async function _generatePkce() {
     const verifierBytes  = crypto.getRandomValues(new Uint8Array(32));
     const codeVerifier   = _base64urlEncode(verifierBytes);
-    const digest         = await crypto.subtle.digest('SHA-256', verifierBytes);
+    // Per RFC 7636: code_challenge = BASE64URL(SHA256(ASCII(code_verifier)))
+    // Must hash the verifier *string*, not the raw random bytes.
+    const digest         = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(codeVerifier));
     const codeChallenge  = _base64urlEncode(digest);
     return { codeVerifier, codeChallenge };
   }
