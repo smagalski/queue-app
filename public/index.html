@@ -1019,6 +1019,11 @@
   .break-heading {
     font-size: 11px; font-weight: 800; letter-spacing: 0.35em; text-transform: uppercase; color: var(--text-dim);
   }
+  .break-type-badge {
+    font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    padding: 3px 9px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.12);
+    color: var(--text-dim);
+  }
   .break-budget-info {
     font-size: 11px; color: var(--text-dim); letter-spacing: 0.06em;
     display: flex; align-items: center; gap: 10px;
@@ -1524,6 +1529,7 @@
 <!-- BREAK OVERLAY -->
 <div class="break-overlay" id="breakOverlay">
   <div class="break-heading">Taking a Break</div>
+  <div class="break-type-badge" id="breakTypeBadge">Manual</div>
   <div class="break-timer" id="breakTimerDisplay">0:00</div>
   <div class="break-budget-info">
     <div class="break-budget-info-bar-wrap">
@@ -1769,6 +1775,7 @@
   let breakTaskId        = null;  // id of the active "Taking a Break" task
   let autoBreakAfterTask = false; // setting: auto-insert a break after each task is completed
   let autoBreakMins      = 5;     // duration (minutes) of auto-inserted breaks
+  let breakIsAuto        = false; // whether the current break was triggered automatically
 
   // ── Firebase config ────────────────────────────────────────────────────
   // 1. Go to https://console.firebase.google.com and create a project
@@ -2097,11 +2104,15 @@
       render();
 
       // ── Sync break overlay from tasks (works on refresh + cross-window) ──
-      const breakTask = tasks.find(t => t.isBreak);
+      // Exclude _ab auto-break cards — only real (manually-started) break tasks count here
+      const breakTask = tasks.find(t => t.isBreak && !t._ab);
       if (breakTask && !breakStartMs) {
         // Break is active (on refresh or started in another window)
         breakStartMs = data.breakStartMs || breakTask.calStartTime || breakTask.addedAt;
         breakTaskId  = breakTask.id;
+        breakIsAuto  = false; // can't tell from persisted data; default to manual
+        const badge = document.getElementById('breakTypeBadge');
+        if (badge) badge.textContent = 'Manual';
         document.getElementById('breakOverlay').classList.add('active');
         if (!breakTimerInt) {
           updateBreakTimer();
@@ -3684,11 +3695,14 @@
     tasks.push(breakTask, resumeTask);
     breakTaskId  = bId;
     breakStartMs = Date.now();
+    breakIsAuto  = false;
 
     save();
     render();
 
     // ── Show lightbox ─────────────────────────────────────────────────────
+    const badge = document.getElementById('breakTypeBadge');
+    if (badge) badge.textContent = breakIsAuto ? 'Automatic' : 'Manual';
     updateBreakTimer();
     document.getElementById('breakOverlay').classList.add('active');
     breakTimerInt = setInterval(updateBreakTimer, 1000);
@@ -3741,8 +3755,9 @@
     breakDay      = todayPstDateStr();
     saveBreakState();
 
-    // Mark the "Taking a Break" task done (records timeline entry)
-    if (breakTaskId) markDoneById(breakTaskId);
+    // Mark the break task done only if it's a real persisted task (not an _ab phantom)
+    const realBreakTask = breakTaskId ? tasks.find(t => t.id === breakTaskId && !t._ab) : null;
+    if (realBreakTask) markDoneById(breakTaskId);
 
     // Clear break state
     if (breakTimerInt) { clearInterval(breakTimerInt); breakTimerInt = null; }
@@ -3751,7 +3766,7 @@
 
     document.getElementById('breakOverlay').classList.remove('active');
     updateBreakUI();
-    // render() already called by markDoneById
+    if (!realBreakTask) { save(); render(); } // render() called by markDoneById if it ran
   }
 
   function computeBreakUsedMins() {
