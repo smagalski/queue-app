@@ -361,6 +361,23 @@
   .pd-btn-4 { color: var(--p4); }
 
   .p-dropdown.sched-dropdown { min-width: 210px; }
+  .p-btn.sel-sched { border-color: var(--sched); color: var(--sched); background: rgba(126,200,227,0.1); }
+
+  /* ── DROPDOWN HELPERS ─────────────────────────────────────────────────── */
+  .dd-body       { padding: 4px 6px 6px; display: flex; flex-direction: column; gap: 6px; }
+  .dd-label      { font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); padding: 2px 0 0; }
+  .dd-save-btn   { -webkit-appearance: none; appearance: none; width: 100%; padding: 5px 0; border-radius: 4px; border: none; background: #fff; color: #0b0a0f; font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; }
+  .dd-save-btn.sched { background: var(--sched); }
+  .dd-sec-btn    { -webkit-appearance: none; appearance: none; width: 100%; padding: 4px 0; border-radius: 4px; border: 1px solid var(--border); background: none; color: var(--text-dim); font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; }
+  .dd-anchor-btn { flex: 1; font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 0; border-radius: 4px; border: 1px solid var(--border); background: none; color: var(--text-dim); cursor: pointer; }
+  .dd-anchor-btn.active { border-color: var(--sched); background: rgba(126,200,227,0.15); color: var(--sched); }
+  .cat-dd-btn    { -webkit-appearance: none; appearance: none; color: #fff; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700; width: 100%; padding: 5px 8px; border-radius: 4px; cursor: pointer; text-align: left; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); }
+  .cat-dd-btn.active { border-color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.15); }
+  .badge-break   { background: rgba(152,99,243,0.15); color: #9863f3; border: 1px solid rgba(152,99,243,0.3); }
+  .badge-sched   { background: rgba(126,200,227,0.15); color: var(--sched); border: 1px solid rgba(126,200,227,0.3); }
+  .badge-cat     { background: rgba(255,255,255,0.07); color: #fff; border: 1px solid rgba(255,255,255,0.2); cursor: pointer; }
+  .cal-bounds-section { flex-shrink: 0; border-top: 1px solid var(--border); padding: 10px 12px; display: flex; flex-direction: column; gap: 7px; }
+  .history-no-data    { text-align: center; color: var(--text-dim); font-size: 11px; padding: 10px 0; letter-spacing: 0.06em; font-style: italic; }
 
   /* ── SLOT LABELS ───────────────────────────────────────────────────────── */
   .slot-label { font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-dim); transition: color 0.3s; }
@@ -1408,7 +1425,7 @@
       <div class="cal-drawer-label">Timeline</div>
 <div class="cal-container" id="calContainer"></div>
     </div>
-    <div style="flex-shrink:0;border-top:1px solid var(--border);padding:10px 12px;display:flex;flex-direction:column;gap:7px;">
+    <div class="cal-bounds-section">
       <div class="bbp-header">
         <span class="bbp-label">Day Start</span>
         <select class="bbp-select" id="calStartSelect" onchange="setCalBounds()">
@@ -1482,11 +1499,11 @@
 
     <!-- ADD TASK — three buttons: Flex + Scheduled + Break -->
     <div class="add-btns-row">
-      <button class="add-toggle-btn" id="addToggleBtn" onclick="toggleAddForm()">
+      <button class="add-toggle-btn" id="addToggleBtn" onclick="openAddForm()">
         <span class="add-toggle-icon">+</span>
         Flex Task
       </button>
-      <button class="add-sched-toggle-btn" id="addSchedToggleBtn" onclick="toggleSchedForm()">
+      <button class="add-sched-toggle-btn" id="addSchedToggleBtn" onclick="openSchedForm()">
         <span class="add-toggle-icon">+</span>
         Schedule
       </button>
@@ -1551,7 +1568,7 @@
       <div>
         <label class="form-label">Anchor</label>
         <div style="display:flex;gap:6px;margin-bottom:8px;">
-          <button class="p-btn sel-sched active-anchor" id="anchorStartBtn" onclick="setAnchor('start');checkSchedAdd()" style="flex:1;border-color:var(--sched);color:var(--sched);background:rgba(126,200,227,0.1)">Start time</button>
+          <button class="p-btn sel-sched" id="anchorStartBtn" onclick="setAnchor('start');checkSchedAdd()" style="flex:1">Start time</button>
           <button class="p-btn" id="anchorEndBtn" onclick="setAnchor('end');checkSchedAdd()" style="flex:1">End time</button>
         </div>
         <input class="time-input" id="schedTimeInput" type="time" oninput="checkSchedAdd()" onchange="checkSchedAdd()"/>
@@ -1753,32 +1770,32 @@
 
 <!-- SCHEDULE EDIT DROPDOWN (shared, positioned by JS) -->
 <div class="p-dropdown sched-dropdown" id="schedDropdown" onclick="event.stopPropagation()">
-  <div style="padding:4px 6px 6px;display:flex;flex-direction:column;gap:6px;min-width:200px;">
+  <div class="dd-body">
     <div style="display:flex;gap:5px;">
-      <button class="pd-sched-anchor" id="sdAnchorStart" onclick="sdSetAnchor('start')" style="flex:1;font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:4px 0;border-radius:4px;border:1px solid var(--sched);background:rgba(126,200,227,0.15);color:var(--sched);cursor:pointer;">Start</button>
-      <button class="pd-sched-anchor" id="sdAnchorEnd"   onclick="sdSetAnchor('end')"   style="flex:1;font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:4px 0;border-radius:4px;border:1px solid var(--border);background:none;color:var(--text-dim);cursor:pointer;">End</button>
+      <button class="dd-anchor-btn active" id="sdAnchorStart" onclick="sdSetAnchor('start')">Start</button>
+      <button class="dd-anchor-btn"        id="sdAnchorEnd"   onclick="sdSetAnchor('end')"  >End</button>
     </div>
     <input class="time-input" id="sdTimeInput" type="time" style="font-size:11px;padding:5px 8px;" oninput="sdCheckSave()" onchange="sdCheckSave()"/>
     <select class="duration-select" id="sdDurInput" style="font-size:11px;padding:5px 8px;"></select>
-    <button id="sdSaveBtn" onclick="commitSchedEdit()" style="width:100%;padding:5px 0;border-radius:4px;border:none;background:var(--sched);color:#0b0a0f;font-family:'Inter',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;">Save</button>
-    <button onclick="convertToFlex()" style="width:100%;padding:4px 0;border-radius:4px;border:1px solid var(--border);background:none;color:var(--text-dim);font-family:'Inter',sans-serif;font-size:9px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;">Remove time → Flex</button>
+    <button id="sdSaveBtn" class="dd-save-btn sched" onclick="commitSchedEdit()">Save</button>
+    <button class="dd-sec-btn" onclick="convertToFlex()">Remove time → Flex</button>
   </div>
 </div>
 
 <!-- START TIME EDIT DROPDOWN (flex NOW task) -->
 <div class="p-dropdown" id="startTimeDropdown" onclick="event.stopPropagation()" style="min-width:160px;">
-  <div style="padding:4px 6px 6px;display:flex;flex-direction:column;gap:6px;">
-    <div style="font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-dim);padding:2px 0 0">Started at</div>
+  <div class="dd-body">
+    <div class="dd-label">Started at</div>
     <input class="time-input" id="stTimeInput" type="time" style="font-size:11px;padding:5px 8px;"/>
-    <button onclick="commitStartTimeEdit()" style="width:100%;padding:5px 0;border-radius:4px;border:none;background:#fff;color:#0b0a0f;font-family:'Inter',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;">Save</button>
+    <button class="dd-save-btn" onclick="commitStartTimeEdit()">Save</button>
   </div>
 </div>
 
 <!-- DURATION EDIT DROPDOWN (shared, positioned by JS) -->
 <div class="p-dropdown" id="durDropdown" onclick="event.stopPropagation()" style="min-width:160px;">
-  <div style="padding:4px 6px 6px;display:flex;flex-direction:column;gap:6px;">
+  <div class="dd-body">
     <select class="duration-select" id="ddDurInput" style="font-size:11px;padding:5px 8px;"></select>
-    <button onclick="commitDurEdit()" style="width:100%;padding:5px 0;border-radius:4px;border:none;background:#fff;color:#0b0a0f;font-family:'Inter',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;">Save</button>
+    <button class="dd-save-btn" onclick="commitDurEdit()">Save</button>
   </div>
 </div>
 
@@ -2207,8 +2224,6 @@
       if (!categoryRules.length) {
         categoryRules = JSON.parse(JSON.stringify(DEFAULT_CATEGORY_RULES));
         setTimeout(() => save(), 0);
-      } else {
-        _migrateCategoryRules();
       }
       purgeDone();
       try {
@@ -2502,7 +2517,7 @@
     dd.innerHTML = categoryRules.map((cat, i) => {
       const col = CAT_TALLY_COLORS[i % CAT_TALLY_COLORS.length];
       const isActive = cat.id === current;
-      return `<button class="pd-btn" onclick="changeTaskCategory('${cat.id}')" style="-webkit-appearance:none;appearance:none;color:#fff;border:1px solid rgba(255,255,255,${isActive ? '0.5' : '0.12'});background:rgba(255,255,255,${isActive ? '0.15' : '0.05'});font-size:9px;letter-spacing:0.08em;text-transform:uppercase;font-weight:700;width:100%;padding:5px 8px;border-radius:4px;cursor:pointer;text-align:left">${esc(cat.name)}</button>`;
+      return `<button class="cat-dd-btn${isActive ? ' active' : ''}" onclick="changeTaskCategory('${cat.id}')">${esc(cat.name)}</button>`;
     }).join('');
     openDropdown(dd, event.target.getBoundingClientRect(), 150);
   }
@@ -2536,7 +2551,6 @@
     const timeStr = task.startTime
       ? task.startTime.match(/T(\d{2}:\d{2})/)?.[1] ?? '09:00'
       : '09:00';
-    sdAnchor = 'start';
     sdSetAnchor('start');
     document.getElementById('sdTimeInput').value = timeStr;
     document.getElementById('sdDurInput').value  = String(task.duration || DEFAULT_DUR);
@@ -2610,12 +2624,8 @@
 
   function sdSetAnchor(which) {
     sdAnchor = which;
-    const startBtn = document.getElementById('sdAnchorStart');
-    const endBtn   = document.getElementById('sdAnchorEnd');
-    const on  = 'border:1px solid var(--sched);background:rgba(126,200,227,0.15);color:var(--sched);';
-    const off = 'border:1px solid var(--border);background:none;color:var(--text-dim);';
-    startBtn.style.cssText = `flex:1;font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:4px 0;border-radius:4px;cursor:pointer;${which==='start'?on:off}`;
-    endBtn.style.cssText   = `flex:1;font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:4px 0;border-radius:4px;cursor:pointer;${which==='end'?on:off}`;
+    document.getElementById('sdAnchorStart').classList.toggle('active', which === 'start');
+    document.getElementById('sdAnchorEnd').classList.toggle('active',   which === 'end');
   }
 
   function sdCheckSave() {
@@ -2763,9 +2773,9 @@
       : taskTimeClass(task);
 
     const badgeHtml = taskBreak
-      ? `<span class="priority-badge" style="background:rgba(152,99,243,0.15);color:#9863f3;border:1px solid rgba(152,99,243,0.3)">Break</span>`
+      ? `<span class="priority-badge badge-break">Break</span>`
       : taskSched
-      ? `<span class="priority-badge" onclick="showSchedDropdown(${task.id},event)" style="cursor:pointer;background:rgba(126,200,227,0.15);color:${SCHED_COL};border:1px solid rgba(126,200,227,0.3)">⏰ SCHEDULED</span>`
+      ? `<span class="priority-badge badge-sched" onclick="showSchedDropdown(${task.id},event)">⏰ SCHEDULED</span>`
       : `<span class="priority-badge pc-${priority}" onclick="showPriorityDropdown(${task.id},event)" style="cursor:pointer">${P_LABELS[priority]}</span>`;
 
     let catBadgeHtml = '';
@@ -2774,7 +2784,7 @@
       const catIdx = categoryRules.findIndex(r => r.id === catId);
       const catCol = CAT_TALLY_COLORS[catIdx >= 0 ? catIdx % CAT_TALLY_COLORS.length : 0];
       const catName = catIdx >= 0 ? categoryRules[catIdx].name : catId;
-      catBadgeHtml = `<span class="priority-badge" onclick="showCategoryDropdown(${task.id},event)" style="cursor:pointer;background:rgba(255,255,255,0.07);color:#fff;border:1px solid rgba(255,255,255,0.2)">${esc(catName)}</span>`;
+      catBadgeHtml = `<span class="priority-badge badge-cat" onclick="showCategoryDropdown(${task.id},event)">${esc(catName)}</span>`;
     }
 
     const escHtml      = escalated ? `<span class="escalation-badge">⚡ escalated</span>` : '';
@@ -2843,9 +2853,9 @@
       const priority = task.priority || 3;
       const col = task.isBreak ? '#9863f3' : isScheduled(task) ? SCHED_COL : (P_COLORS[priority] || '#fff');
       const badgeHtml = task.isBreak
-        ? `<span class="priority-badge" style="background:rgba(152,99,243,0.15);color:#9863f3;border:1px solid rgba(152,99,243,0.3)">Break</span>`
+        ? `<span class="priority-badge badge-break">Break</span>`
         : isScheduled(task)
-        ? `<span class="priority-badge" style="background:rgba(126,200,227,0.15);color:${SCHED_COL};border:1px solid rgba(126,200,227,0.3)">⏰ Scheduled</span>`
+        ? `<span class="priority-badge badge-sched">⏰ Scheduled</span>`
         : `<span class="priority-badge pc-${priority}">${P_LABELS[priority]}</span>`;
       const durHtml = `<span class="duration-display">${fmtDuration(task.duration || DEFAULT_DUR)}</span>`;
       const doneCatBadge = (() => {
@@ -2853,7 +2863,7 @@
         const catId  = getCategoryForTask(task.title, {}, task.id, task.categoryOverride);
         const catIdx = categoryRules.findIndex(r => r.id === catId);
         const catName = catIdx >= 0 ? categoryRules[catIdx].name : catId;
-        return `<span class="priority-badge" onclick="showCategoryDropdown(${task.id},event)" style="cursor:pointer;background:rgba(255,255,255,0.07);color:#fff;border:1px solid rgba(255,255,255,0.2)">${esc(catName)}</span>`;
+        return `<span class="priority-badge badge-cat" onclick="showCategoryDropdown(${task.id},event)">${esc(catName)}</span>`;
       })();
       card.innerHTML = `
         <div class="task-card ${isScheduled(task) ? 'sched-card' : 'flex-card'}" style="--card-bar:${col};border-color:${col};cursor:default">
@@ -3200,7 +3210,6 @@
   }
 
   // ── Add form (lightbox) ────────────────────────────────────────────────
-  function toggleAddForm() { openAddForm(); }  // keep old name for any callers
   function openAddForm() {
     closeSchedForm();
     addOpen = true;
@@ -3255,15 +3264,10 @@
   // ── Scheduled task form ────────────────────────────────────────────────
   function setAnchor(which) {
     schedAnchor = which;
-    const startBtn = document.getElementById('anchorStartBtn');
-    const endBtn   = document.getElementById('anchorEndBtn');
-    const active   = 'border-color:var(--sched);color:var(--sched);background:rgba(126,200,227,0.1)';
-    const inactive = '';
-    startBtn.style.cssText = which === 'start' ? active : inactive;
-    endBtn.style.cssText   = which === 'end'   ? active : inactive;
+    document.getElementById('anchorStartBtn').classList.toggle('sel-sched', which === 'start');
+    document.getElementById('anchorEndBtn').classList.toggle('sel-sched',   which === 'end');
   }
 
-  function toggleSchedForm() { openSchedForm(); }  // keep old name for any callers
   function openSchedForm() {
     closeAddForm();
     schedOpen = true;
@@ -3673,7 +3677,7 @@
 
   function startDoneTitleEdit(taskId, titleEl) {
     _doTitleEdit(doneTasks.find(t => t.id === taskId), titleEl,
-      () => { save(); _renderBlockDetail(); renderCalendar(); renderCategoryTally(); }, null);
+      () => { _renderBlockDetail(); renderCalendar(); renderCategoryTally(); }, null);
   }
 
   function startCalTitleEdit(blockTask, isDone, spanEl) {
@@ -3900,7 +3904,7 @@
       intervalAutoComplete = !!s.autoComplete;
       intervalAutoBreak    = !!s.autoBreak;
       intervalBreakMins    = s.breakMins || 5;
-      intervalAdaptive     = !!s.adaptive;
+      intervalAdaptive     = s.adaptive !== false; // default true (adaptive) when not yet saved
     } catch(e) {}
     const chk = document.getElementById('intervalTimerToggleChk');
     if (chk) chk.checked = intervalTimerMode;
@@ -4170,13 +4174,20 @@
   function setIntervalMode(mode) {
     intervalAdaptive = (mode === 'adaptive');
     saveIntervalTimerSettings();
+    // Snapshot tracking state before reapplyIntervalAutoBreaks(), which may call
+    // render() → syncIntervalTimer() and mutate intervalNowTaskId / intervalTimerHandle.
+    const wasTracking = !!(intervalNowTaskId || intervalTimerHandle);
+    const wasPaused   = intervalIsPaused;
     reapplyIntervalAutoBreaks();
-    if (intervalNowTaskId) {
-      const task = tasks.find(t => t.id === intervalNowTaskId);
-      if (task) {
-        const wasPaused = intervalIsPaused;
-        startIntervalTimerForTask(task);
+    // Restart the timer for the actual top flex task under the new mode.
+    if (wasTracking) {
+      const nowTask = getAllSorted().find(t => !t.isBreak && !isScheduled(t));
+      if (nowTask) {
+        startIntervalTimerForTask(nowTask);
         if (wasPaused) pauseIntervalTimer();
+      } else {
+        stopIntervalTimer();
+        intervalNowTaskId = null;
       }
     }
     updateIntervalTimerPanel();
@@ -4417,31 +4428,6 @@
     const incompleteTasks = [...tasks];
 
     return { todayDone, timePerTask, priorityBreakdown, stressScore, incompleteTasks };
-  }
-
-  // ── Category migration ─────────────────────────────────────────────────
-  // Runs once after loading from Firestore to apply ordering/keyword fixes.
-  function _migrateCategoryRules() {
-    let changed = false;
-
-    // Ensure new Chores keywords exist
-    const chores = categoryRules.find(c => c.id === 'chores');
-    if (chores) {
-      for (const kw of ['house','yardwork','yard','lawn']) {
-        if (!chores.keywords.includes(kw)) { chores.keywords.push(kw); changed = true; }
-      }
-    }
-
-    // Ensure Chores & Errands is ordered before Work
-    const workIdx   = categoryRules.findIndex(c => c.id === 'work');
-    const choresIdx = categoryRules.findIndex(c => c.id === 'chores');
-    if (workIdx !== -1 && choresIdx !== -1 && workIdx < choresIdx) {
-      const choresCat = categoryRules.splice(choresIdx, 1)[0];
-      categoryRules.splice(workIdx, 0, choresCat);
-      changed = true;
-    }
-
-    if (changed) setTimeout(() => save(), 0);
   }
 
   // ── Category helpers ───────────────────────────────────────────────────
@@ -4924,7 +4910,7 @@
       taskHtml += `</div></div>`;
     }
     if (!taskHtml) {
-      taskHtml = '<div style="text-align:center;color:var(--text-dim);font-size:11px;padding:10px 0;letter-spacing:0.06em;font-style:italic">No recorded data</div>';
+      taskHtml = '<div class="history-no-data">No recorded data</div>';
     }
 
     const pb = day.priorityBreakdown || {};
