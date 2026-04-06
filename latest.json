@@ -1,0 +1,11 @@
+{
+  "version": "0.1.9",
+  "notes": "Google Calendar import now works natively in the desktop app via system browser OAuth (PKCE). Fixed phantom break overlay when adding tasks to a single-item queue. Fixed break overlay being un-dismissible. Added Manual/Automatic badge to the break screen.",
+  "pub_date": "2026-04-06T20:15:19Z",
+  "platforms": {
+    "darwin-x86_64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUZnpsRGtodXF6dVBYUWhIQTBoVVRxL0dnMnkxQytjTUxkYzc2cjJLVGFQTk1ORHN4OWd2ZjBCZ2ZrSWVsOEVXVkpGeTZESllvdzJ3SzZPaXNsbHFBOEE2emkybGxwT3d3PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc1NTA2NTA5CWZpbGU6UXVldWVfMC4xLjlfeDY0LmRtZwp0QUQ0ZHVRKytLMW96RmRjSHNvUnc2OHJlek5MSVE0M0plcXdWSW9XZlcvRUJjcWREOVY5UHU5a3JKam8zYXd5WkZBNTR4aGcwQkhEMnFjbENwQ2xBZz09Cg==",
+      "url": "https://github.com/smagalski/Queue-App/releases/download/v0.1.9/Queue_0.1.9_x64.dmg"
+    }
+  }
+}
