@@ -4743,8 +4743,16 @@
       return;
     }
     document.getElementById('gcalOverlay').classList.add('active');
-    setGcalListMessage('Connecting to Google…');
     document.getElementById('gcalConfirmBtn').style.display = 'none';
+
+    // Tauri's WKWebView blocks OAuth popups at the system level — no JS workaround exists.
+    // Direct the user to the web app where the full OAuth flow works.
+    if (window.__TAURI__) {
+      setGcalListMessage('Google Calendar import uses a sign-in popup that the desktop app can\'t open. Please use the web app (queue-app-13065.web.app) to import your events — they\'ll sync here automatically.');
+      return;
+    }
+
+    setGcalListMessage('Connecting to Google…');
 
     if (_gcalAccessToken && Date.now() < _gcalTokenExpiry) {
       fetchGcalEvents();
