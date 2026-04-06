@@ -136,7 +136,7 @@
   }
   .task-panel::-webkit-scrollbar { width: 4px; }
   .task-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-  .task-panel > * { width: 100%; max-width: 480px; }
+  .task-panel > * { width: 100%; max-width: 480px; flex-shrink: 0; }
 
   .sec-hdr { font-weight: 700; font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: #fff; transition: color 0.3s; }
 
@@ -230,7 +230,7 @@
   .done-arrow { display: inline-block; font-size: 8px; transition: transform 0.2s; }
   .done-arrow.open { transform: rotate(90deg); }
   .done-list { display: flex; flex-direction: column; gap: 4px; overflow: hidden; max-height: 0; transition: max-height 0.25s ease; }
-  .done-list.open { max-height: 600px; margin-top: 6px; }
+  .done-list.open { max-height: 9999px; margin-top: 6px; transition: max-height 0.5s ease; }
   .done-item {
     background: var(--surface2); border: 1px solid var(--border); border-radius: 6px;
     padding: 7px 12px; display: flex; align-items: center; gap: 8px; opacity: 0.55;
