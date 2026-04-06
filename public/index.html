@@ -774,61 +774,57 @@
   }
   @keyframes ptr-spin { to { transform: rotate(360deg); } }
   body.mobile-view .main-layout {
-    flex-direction: column;
+    flex-direction: row;        /* two-column: left panel + task panel side by side */
     overflow: visible;
     height: auto;
+    align-items: flex-start;   /* columns grow independently */
   }
 
-  /* Mobile left panel becomes a compact header bar */
+  /* Left panel: narrow sticky sidebar (like desktop but narrower) */
   body.mobile-view .left-panel {
-    width: 100%;
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-    flex-direction: row;
-    overflow: visible;
-    flex-shrink: 0;
-    min-height: 0;
-  }
-
-  /* Clock becomes compact inline */
-  body.mobile-view .clock-section {
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-start;
-    padding: 10px 14px;
-    border-bottom: none;
+    width: 130px;
     border-right: 1px solid var(--border);
-    gap: 8px;
+    border-bottom: none;
+    flex-direction: column;
+    overflow: hidden;
     flex-shrink: 0;
-  }
-  body.mobile-view .clock-time { font-size: 26px; }
-  body.mobile-view .clock-ampm-row { flex-direction: column; gap: 0; margin-top: 0; align-items: flex-start; }
-  body.mobile-view .clock-ampm { font-size: 10px; }
-  body.mobile-view .clock-tz   { font-size: 8px; }
-  body.mobile-view .clock-date {
-    font-size: 10px; margin-top: 0; text-align: left;
+    position: sticky;
+    top: 0;
+    height: 100svh;            /* stick to viewport while right column scrolls */
   }
 
-  /* Calendar becomes a tap-to-open drawer */
+  /* Clock: compact vertical stack */
+  body.mobile-view .clock-section {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 8px 8px;
+    border-bottom: 1px solid var(--border);
+    border-right: none;
+    gap: 2px;
+    flex-shrink: 0;
+  }
+  body.mobile-view .clock-time { font-size: 22px; }
+  body.mobile-view .clock-ampm { font-size: 9px; }
+  body.mobile-view .clock-tz   { font-size: 7px; }
+  body.mobile-view .clock-date {
+    font-size: 9px; margin-top: 3px; text-align: center;
+  }
+
+  /* Calendar: show inline in the sticky left column */
   body.mobile-view .calendar-section {
     flex: 1;
-    overflow: visible;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    padding: 0 14px;
-    cursor: pointer;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: block;
+    padding: 0;
+    cursor: default;
   }
   body.mobile-view .calendar-section .cal-container {
-    display: none;
+    display: block;            /* show the timeline inline (not hidden in drawer) */
   }
   .cal-drawer-label { display: none; }
-  body.mobile-view .cal-drawer-label {
-    font-size: 9px; font-weight: 600; letter-spacing: 0.1em;
-    text-transform: uppercase; color: var(--text-dim);
-    display: flex; align-items: center; gap: 5px; user-select: none;
-  }
-  body.mobile-view .calendar-section.cal-open .cal-drawer-label { color: #fff; }
+  body.mobile-view .cal-drawer-label { display: none; }
   .cal-drawer-overlay {
     display: none;
     position: fixed; inset: 0; z-index: 490;
@@ -850,44 +846,45 @@
     font-size: 9px; font-weight: 600; letter-spacing: 0.1em;
     text-transform: uppercase; padding: 5px 11px; cursor: pointer;
   }
+  /* Drawer still opens on tap for a full-width view of the timeline */
   body.mobile-view.cal-drawer-open .cal-drawer-overlay { display: block; }
   body.mobile-view.cal-drawer-open .cal-drawer-panel { display: block; }
   body.mobile-view.cal-drawer-open .cal-drawer-close-btn { display: block; }
-  body.mobile-view.cal-drawer-open .cal-drawer-label { color: #fff; }
-
-  /* Move cal-container into drawer panel */
   body.mobile-view.cal-drawer-open .cal-drawer-panel .cal-container { display: block; }
 
-  /* Task panel full width */
+  /* Task panel: right column, naturally tall so body scrolls */
   body.mobile-view .task-panel {
-    padding: 12px 14px 100px;
+    padding: 10px 10px 100px;
     overflow-y: visible;
     height: auto;
   }
   body.mobile-view .task-panel > * { max-width: 100%; }
 
-  /* Touch-friendly cards */
-  body.mobile-view .task-card { padding: 18px 16px; }
-  body.mobile-view .card-task-title { font-size: 20px; }
-  body.mobile-view .done-btn { padding: 7px 14px; font-size: 10px; }
-  body.mobile-view .delete-btn { padding: 6px 8px; font-size: 14px; top: 10px; right: 10px; }
-  body.mobile-view .priority-badge { padding: 4px 10px; font-size: 10px; }
+  /* Touch-friendly cards — sized for the narrower task column */
+  body.mobile-view .task-card { padding: 14px 12px; }
+  body.mobile-view .card-task-title { font-size: 17px; }
+  body.mobile-view .done-btn { padding: 7px 12px; font-size: 10px; }
+  body.mobile-view .delete-btn { padding: 6px 8px; font-size: 14px; top: 8px; right: 8px; }
+  body.mobile-view .priority-badge { padding: 4px 8px; font-size: 10px; }
 
-  /* Bigger add buttons */
+  /* Add buttons fit the narrower column */
   body.mobile-view .add-toggle-btn,
   body.mobile-view .add-sched-toggle-btn,
-  body.mobile-view .break-toggle-btn { padding: 13px 14px; font-size: 12px; }
+  body.mobile-view .break-toggle-btn { padding: 10px 10px; font-size: 11px; }
   body.mobile-view .break-budget-panel { display: none; }
   body.mobile-view .add-btn,
-  body.mobile-view .add-sched-btn { height: 42px; font-size: 11px; }
+  body.mobile-view .add-sched-btn { height: 40px; font-size: 11px; }
 
   /* 16px prevents iOS auto-zoom on input focus */
   body.mobile-view .task-input,
   body.mobile-view .time-input,
-  body.mobile-view .duration-select { font-size: 16px; padding: 10px 12px; }
+  body.mobile-view .duration-select { font-size: 16px; padding: 10px 10px; }
 
   /* More section touch target */
   body.mobile-view .more-header { padding: 10px 2px; }
+
+  /* Compact day-bounds in narrow left column */
+  body.mobile-view .cal-bounds-section { padding: 8px 8px; }
 
   /* ── AUTH SCREEN ──────────────────────────────────────────────────────── */
   #authScreen {
