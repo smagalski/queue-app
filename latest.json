@@ -1,11 +1,11 @@
 {
-  "version": "0.1.9",
-  "notes": "Google Calendar import now works natively in the desktop app via system browser OAuth (PKCE). Auto-break prompt when break card reaches the top slot. Automatic breaks count down; manual breaks count up. Fixed phantom break overlay and un-dismissible break. Added Manual/Automatic badge to break screen.",
-  "pub_date": "2026-04-06T20:26:17Z",
+  "version": "0.1.10",
+  "notes": "Fixed calendar timeline overlaps. Break tasks excluded from task count. Auto-break prompt and countdown timer. Google Calendar import works in the Mac app via system browser OAuth.",
+  "pub_date": "2026-04-06T20:53:24Z",
   "platforms": {
     "darwin-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUZnpsRGtodXF6dUxOR1VML0RwVGtNV3J1VEVrLytpUnZtSE1BWU1jYWM4RDQ2bWpHUXl2RC9sWUJwVStlRURuVGNJWG8vd0FMc3NrQVVYYzN2SElRVTVkQ3pwTkNEdUFFPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc1NTA3MTY2CWZpbGU6UXVldWVfMC4xLjlfeDY0LmRtZwpSRXUxTHp4QmF3dit5MTMyZ0NTOFM4MmJIcUJUcnZYNDg4Qm80TGNpUkJTbnlkd2hUZkQ4YnJhaVpobUVXN3RCUU1JRkMwazdPY0txYWttS1NWcmFCdz09Cg==",
-      "url": "https://github.com/smagalski/Queue-App/releases/download/v0.1.9/Queue_0.1.9_x64.dmg"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUZnpsRGtodXF6dUl1NDlSRCsvUUU2NEdzNlZBNDhkY2FZejdicExFOGxCTHBrT3VpaXp6RTQ3R20xc2M2MTNybTB2VWJhOUZ0SnNrWVdPVk9oRHNiQlJZYnpRZFh6VHc0PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc1NTA4NjY3CWZpbGU6UXVldWVfMC4xLjEwX3g2NC5kbWcKZ21JaktZNTRPVGlraXJTYUhyd2RuMzV0cDdsZ0s1dzFNUkQ2R3dpQmZ3VWFJMVd3VVN2SkUrTk5HR2lneDUxYlFGZGxVZ1o0MllaZGpiUnV4RDQwQWc9PQo=",
+      "url": "https://github.com/smagalski/Queue-App/releases/download/v0.1.10/Queue_0.1.10_x64.dmg"
     }
   }
 }
