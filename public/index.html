@@ -2897,8 +2897,9 @@
 
     renderCalendar();
 
+    const realTaskCount = tasks.filter(t => !t.isBreak).length;
     document.getElementById('queueCount').textContent =
-      tasks.length === 0 ? 'empty' : `${tasks.length} task${tasks.length===1?'':'s'}`;
+      realTaskCount === 0 ? 'empty' : `${realTaskCount} task${realTaskCount===1?'':'s'}`;
 
     // Populate slots 0-2
     const slotLabelIds = ['nowLabel','upnextLabel','deckLabel'];
