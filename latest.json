@@ -1,11 +1,11 @@
 {
-  "version": "0.1.11",
-  "notes": "Fixed Google Calendar OAuth PKCE code verifier bug. Fixed window.__TAURI__ not exposed in WKWebView. Fixed calendar timeline overlaps. Break tasks excluded from task count.",
-  "pub_date": "2026-04-06T21:00:42Z",
+  "version": "0.1.12",
+  "notes": "Fix auto-break prompt after completing a task. Anchor Breaks section to bottom. More and Completed sections now expand fully.",
+  "pub_date": "2026-04-06T23:55:00Z",
   "platforms": {
     "darwin-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUZnpsRGtodXF6dUdJRk4xOC9WWE5ZRnJQMEI3RVlrelViL2c3TTdBUkNza0NvVEJMamkzTDBZNDEvWjExVTkzSGE3N2dmdmVJUWlSSmJGTms4bDg0WDFzSzErRUE4M2dnPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc1NTA5MjQyCWZpbGU6UXVldWVfMC4xLjExX3g2NC5kbWcKeEZPL2NKSlNVTmlrbWtxSk9VWDFXNHhXQ1k3bmc1c1Jkekl4WVAyN293cXhPWFlOaGVRVnhtL3RZQmEzckM3UEJ4QituTlhGUnVuMC9LUXY1TEM2QkE9PQo=",
-      "url": "https://github.com/smagalski/Queue-App/releases/download/v0.1.11/Queue_0.1.11_x64.dmg"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUZnpsRGtodXF6dUI1OFEwdkk1UDFVbUZQR0ZNcDVJcHV5MzFGb0Z4dlpSZG1zcHlUNHhZekZHYVpJTHlmODQ3b2M4aUxWMndwZS94RCtJQzNHcHVaMFEvd2F1VytDTEF3PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc1NTE2MTUzCWZpbGU6UXVldWVfMC4xLjEyX3g2NC5kbWcKUVR4QWwyNWQyc0RqZWh0dDFWMXpKN3FGdlNVcW5YaEcrc09XUXAweHhhQmVaZk5DR3ltZFU5TmFTcE04emk2Y05ERHB0NS9sc3ZkdmZKWFZGQzZVQmc9PQo=",
+      "url": "https://github.com/smagalski/Queue-App/releases/download/v0.1.12/Queue_0.1.12_x64.dmg"
     }
   }
 }
