@@ -1,12 +1,13 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Queue",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "identifier": "com.smagalski.queue",
   "build": {
     "frontendDist": "../../public"
   },
   "app": {
+    "withGlobalTauri": true,
     "windows": [
       {
         "title": "Queue",
