@@ -3016,7 +3016,9 @@
     }
 
     // ── FLEX TASKS: fill gaps in priority order ────────────────────────
-    const flexTasks = getSorted();
+    // Exclude _ab auto-break placeholders — they're ephemeral queue markers, not real time blocks.
+    // Completed breaks show up via doneTasks; upcoming _ab cards don't clutter the timeline.
+    const flexTasks = getSorted().filter(t => !t._ab);
     let cursor = findGap(nowMins, 1);
     for (const task of flexTasks) {
       const dur   = task.duration || DEFAULT_DUR;
