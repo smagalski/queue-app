@@ -1338,33 +1338,35 @@
     <div class="break-budget-panel" id="breakBudgetPanel">
       <div class="bbp-header">
         <span class="bbp-label">Break Budget</span>
-        <div style="display:flex;align-items:center;gap:6px">
-          <label class="ab-toggle" title="Auto-add a break after each task">
-            <input type="checkbox" id="autoBreakToggle" onchange="setAutoBreakAfterTask(this.checked)">
-            <span class="ab-track"></span>
-            <span class="ab-thumb"></span>
-          </label>
-          <select class="bbp-select" id="breakBudgetSelect" onchange="setBreakBudget(this.value)">
-            <option value="15">15 min</option><option value="30">30 min</option>
-            <option value="45">45 min</option><option value="60" selected>1 hr</option>
-            <option value="90">1.5 hr</option><option value="120">2 hr</option>
-          </select>
-        </div>
-      </div>
-      <div class="bbp-header" id="abDurRow" style="display:none">
-        <span class="bbp-label">Auto-break</span>
-        <select class="bbp-select" id="autoBreakMinsSelect" onchange="setAutoBreakMins(this.value)">
-          <option value="5" selected>5 min</option>
-          <option value="10">10 min</option>
-          <option value="15">15 min</option>
-          <option value="20">20 min</option>
-          <option value="30">30 min</option>
+        <select class="bbp-select" id="breakBudgetSelect" onchange="setBreakBudget(this.value)">
+          <option value="15">15 min</option><option value="30">30 min</option>
+          <option value="45">45 min</option><option value="60" selected>1 hr</option>
+          <option value="90">1.5 hr</option><option value="120">2 hr</option>
         </select>
       </div>
       <div class="bbp-bar-wrap">
         <div class="bbp-bar-fill" id="breakBarFill"></div>
       </div>
       <div class="bbp-tally" id="breakTally">0 min used</div>
+    </div>
+    <div class="break-budget-panel" id="autoBreakPanel">
+      <div class="bbp-header">
+        <span class="bbp-label">Auto-Breaks</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <select class="bbp-select" id="autoBreakMinsSelect" onchange="setAutoBreakMins(this.value)">
+            <option value="5" selected>5 min</option>
+            <option value="10">10 min</option>
+            <option value="15">15 min</option>
+            <option value="20">20 min</option>
+            <option value="30">30 min</option>
+          </select>
+          <label class="ab-toggle" title="Auto-add a break after each task">
+            <input type="checkbox" id="autoBreakToggle" onchange="setAutoBreakAfterTask(this.checked)">
+            <span class="ab-track"></span>
+            <span class="ab-thumb"></span>
+          </label>
+        </div>
+      </div>
     </div>
     <div class="cat-tally-panel" id="catTallyPanel">
       <div class="cat-tally-label">Today by Category</div>
@@ -3565,8 +3567,6 @@
       if (durSel) { const opt = [...durSel.options].find(o => parseInt(o.value) === autoBreakMins); if (opt) durSel.value = String(autoBreakMins); }
       const toggle = document.getElementById('autoBreakToggle');
       if (toggle) toggle.checked = autoBreakAfterTask;
-      const durRow = document.getElementById('abDurRow');
-      if (durRow) durRow.style.display = autoBreakAfterTask ? '' : 'none';
     } catch(e) {}
     updateBreakUI();
   }
@@ -3614,8 +3614,6 @@
 
   function setAutoBreakAfterTask(on) {
     autoBreakAfterTask = on;
-    const durRow = document.getElementById('abDurRow');
-    if (durRow) durRow.style.display = on ? '' : 'none';
     saveBreakState();
     save(); render();
   }
