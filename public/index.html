@@ -65,7 +65,8 @@
     font-size: 52px; font-weight: 800; line-height: 1;
     letter-spacing: -0.02em; color: #fff; font-variant-numeric: tabular-nums;
   }
-  .clock-ampm-row { display: flex; align-items: baseline; justify-content: center; gap: 5px; margin-top: 7px; }
+  .clock-time-row   { display: flex; align-items: baseline; justify-content: center; gap: 7px; }
+  .clock-ampm-inline { display: flex; align-items: baseline; gap: 4px; padding-bottom: 4px; }
   .clock-ampm { font-size: 13px; font-weight: 600; letter-spacing: 0.18em; color: var(--text-mid); text-transform: uppercase; }
   .clock-tz   { font-size: 10px; font-weight: 500; letter-spacing: 0.1em; color: var(--text-dim); }
   .clock-date {
@@ -1136,10 +1137,10 @@
     color: var(--text-dim); background: rgba(255,255,255,0.06); border-radius: 20px; padding: 4px 10px;
   }
 
-  /* ── CATEGORY TALLY PANEL (right panel, below break controls) ────────── */
+  /* ── CATEGORY TALLY PANEL (left panel, below day start/end) ──────────── */
   .cat-tally-panel {
     flex-shrink: 0; border-top: 1px solid var(--border);
-    padding: 10px 0 4px; display: flex; flex-direction: column; gap: 5px;
+    padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 5px;
   }
   .cat-tally-label {
     font-size: 8px; font-weight: 700; letter-spacing: 0.14em;
@@ -1357,10 +1358,12 @@
   <!-- LEFT PANEL -->
   <div class="left-panel">
     <div class="clock-section">
-      <div class="clock-time" id="clockTime">--:--</div>
-      <div class="clock-ampm-row">
-        <span class="clock-ampm" id="clockAmpm">--</span>
-        <span class="clock-tz">(PST)</span>
+      <div class="clock-time-row">
+        <div class="clock-time" id="clockTime">--:--</div>
+        <div class="clock-ampm-inline">
+          <span class="clock-ampm" id="clockAmpm">--</span>
+          <span class="clock-tz">(PST)</span>
+        </div>
       </div>
       <div class="clock-date" id="clockDate">---</div>
     </div>
@@ -1391,6 +1394,10 @@
           <option value="1380">11 PM</option>
         </select>
       </div>
+    </div>
+    <div class="cat-tally-panel" id="catTallyPanel">
+      <div class="cat-tally-label">Today by Category</div>
+      <div id="catTallyRows"></div>
     </div>
   </div>
 
@@ -1485,10 +1492,6 @@
           </div>
         </div>
       </div>
-    </div>
-    <div class="cat-tally-panel" id="catTallyPanel">
-      <div class="cat-tally-label">Today by Category</div>
-      <div id="catTallyRows"></div>
     </div>
     <div class="day-ended-msg" id="dayEndedMsg">Day Ended — See You Tomorrow</div>
     <button class="end-day-btn" id="resumeDayBtn" onclick="resumeDay()" style="display:none">Resume Day</button>
