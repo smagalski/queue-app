@@ -1052,136 +1052,22 @@
   .end-break-btn.over { background: var(--p1); color: #fff; }
 
   /* ── INTERVAL TIMER PANEL ────────────────────────────────────────────────────── */
-  .interval-timer-panel {
-    width: 240px; flex-shrink: 0; border-left: 1px solid var(--border);
-    display: flex; flex-direction: column; overflow: hidden;
-  }
-  .pomo-panel-top {
-    padding: 16px 16px 14px; flex-shrink: 0; border-bottom: 1px solid var(--border);
-  }
-  .pomo-toggle-row { display: flex; align-items: center; justify-content: space-between; }
-  .pomo-heading {
-    font-size: 10px; font-weight: 700; letter-spacing: 0.18em;
-    text-transform: uppercase; color: var(--text-dim);
-  }
-  .pomo-switch {
+  /* ── AUTO-BREAK TOGGLE ───────────────────────────────────────────────── */
+  .ab-toggle {
     position: relative; display: inline-flex; align-items: center;
     width: 36px; height: 20px; cursor: pointer; flex-shrink: 0;
   }
-  .pomo-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
-  .pomo-track {
+  .ab-toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .ab-track {
     position: absolute; inset: 0; border-radius: 10px;
     background: var(--border); transition: background 0.2s;
   }
-  .pomo-switch input:checked ~ .pomo-track { background: #9863f3; }
-  .pomo-thumb {
+  .ab-toggle input:checked ~ .ab-track { background: #9863f3; }
+  .ab-thumb {
     position: absolute; height: 14px; width: 14px; left: 3px; bottom: 3px;
     background: #fff; border-radius: 50%; transition: transform 0.2s; z-index: 1;
   }
-  .pomo-switch input:checked ~ .pomo-thumb { transform: translateX(16px); }
-
-  .pomo-body { flex: 1; overflow-y: auto; overflow-x: hidden; }
-  .pomo-body::-webkit-scrollbar { width: 3px; }
-  .pomo-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-  .pomo-explainer {
-    padding: 24px 16px; color: var(--text-dim); font-size: 10px;
-    line-height: 1.7; text-align: center; letter-spacing: 0.02em;
-  }
-  .pomo-timer-section {
-    padding: 16px; display: flex; flex-direction: column; gap: 10px; align-items: center;
-  }
-  .pomo-task-label {
-    font-size: 10px; font-weight: 600; color: var(--text-mid); text-align: center;
-    letter-spacing: 0.04em; width: 100%; overflow: hidden;
-    text-overflow: ellipsis; white-space: nowrap;
-  }
-  .pomo-countdown {
-    font-size: 52px; font-weight: 800; letter-spacing: -0.02em;
-    color: #fff; font-variant-numeric: tabular-nums; line-height: 1; text-align: center;
-  }
-  .pomo-countdown.over { color: var(--p1); }
-  .pomo-countdown.break-active { color: var(--break); }
-  .pomo-interval-row {
-    font-size: 9px; color: var(--text-dim); letter-spacing: 0.1em;
-    text-transform: uppercase; text-align: center;
-  }
-  .pomo-progress-wrap {
-    width: 100%; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden;
-  }
-  .pomo-progress-fill {
-    height: 100%; background: #9863f3; border-radius: 2px; transition: width 1s linear;
-  }
-  .pomo-progress-fill.over { background: var(--p1); }
-  .pomo-controls { display: flex; gap: 6px; width: 100%; }
-  .pomo-btn {
-    -webkit-appearance: none; appearance: none;
-    flex: 1; height: 28px; border-radius: 5px; border: 1px solid var(--border);
-    background: none; color: var(--text-mid); font-family: 'Inter', sans-serif;
-    font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
-    cursor: pointer; transition: all 0.12s; white-space: nowrap;
-  }
-  .pomo-btn:hover { border-color: rgba(255,255,255,0.3); color: #fff; }
-  .pomo-btn.pomo-primary {
-    background: rgba(152,99,243,0.15); border-color: rgba(152,99,243,0.4); color: #9863f3;
-  }
-  .pomo-btn.pomo-primary:hover {
-    background: rgba(152,99,243,0.25); border-color: rgba(152,99,243,0.6);
-  }
-  .pomo-no-task {
-    padding: 20px 16px; color: var(--text-dim); font-size: 10px;
-    text-align: center; line-height: 1.6;
-  }
-  .pomo-divider { height: 1px; background: var(--border); margin: 0 16px; }
-  .pomo-settings { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
-  .pomo-setting-group { display: flex; flex-direction: column; gap: 5px; }
-  .pomo-setting-label {
-    font-size: 8px; font-weight: 700; letter-spacing: 0.14em;
-    text-transform: uppercase; color: var(--text-dim);
-  }
-  .pomo-setting-row {
-    display: flex; align-items: center; justify-content: space-between; gap: 8px;
-  }
-  .pomo-setting-desc { font-size: 10px; color: var(--text-mid); flex: 1; }
-  .pomo-select {
-    -webkit-appearance: none; appearance: none;
-    background: var(--bg); border: 1px solid var(--border); border-radius: 5px;
-    color: var(--text-mid); font-family: 'Inter', sans-serif; font-size: 10px;
-    padding: 4px 7px; outline: none; width: 100%; cursor: pointer;
-  }
-  .pomo-select:focus { border-color: rgba(255,255,255,0.25); }
-  .pomo-select option { background: #1a1724; }
-
-  /* Mobile: hide interval timer panel */
-  body.mobile-view .interval-timer-panel { display: none; }
-
-  /* ── INTERVAL INTERRUPT PROMPT ─────────────────────────────────────────── */
-  .pomo-interrupt-overlay {
-    display: none; position: fixed; inset: 0; z-index: 9100;
-    background: rgba(0,0,0,0.7); align-items: center; justify-content: center;
-  }
-  .pomo-interrupt-overlay.active { display: flex; }
-  .pomo-interrupt-modal {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-    padding: 24px; width: 360px; max-width: 94vw;
-    display: flex; flex-direction: column; gap: 14px;
-  }
-  .pomo-interrupt-title { font-size: 14px; font-weight: 700; color: #fff; }
-  .pomo-interrupt-sub { font-size: 12px; color: var(--text-mid); line-height: 1.5; }
-  .pomo-interrupt-actions { display: flex; gap: 8px; }
-  .pomo-interrupt-btn {
-    flex: 1; padding: 9px 0; border-radius: 7px; border: 1px solid var(--border);
-    background: none; color: var(--text-mid); font-family: 'Inter', sans-serif;
-    font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
-    cursor: pointer; transition: all 0.15s;
-  }
-  .pomo-interrupt-btn:hover {
-    background: rgba(255,255,255,0.07); color: #fff; border-color: rgba(255,255,255,0.3);
-  }
-  .pomo-interrupt-btn.confirm {
-    border-color: rgba(126,200,227,0.4); color: var(--sched);
-  }
-  .pomo-interrupt-btn.confirm:hover { background: rgba(126,200,227,0.1); }
+  .ab-toggle input:checked ~ .ab-thumb { transform: translateX(16px); }
 
   /* ── END-DAY / DAY-OFF BUTTON ROW ────────────────────────────────────── */
   /* (primary definition is .end-btns-row above; only add the flex:1/width:auto override here) */
@@ -1449,6 +1335,37 @@
         </select>
       </div>
     </div>
+    <div class="break-budget-panel" id="breakBudgetPanel">
+      <div class="bbp-header">
+        <span class="bbp-label">Break Budget</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <label class="ab-toggle" title="Auto-add a break after each task">
+            <input type="checkbox" id="autoBreakToggle" onchange="setAutoBreakAfterTask(this.checked)">
+            <span class="ab-track"></span>
+            <span class="ab-thumb"></span>
+          </label>
+          <select class="bbp-select" id="breakBudgetSelect" onchange="setBreakBudget(this.value)">
+            <option value="15">15 min</option><option value="30">30 min</option>
+            <option value="45">45 min</option><option value="60" selected>1 hr</option>
+            <option value="90">1.5 hr</option><option value="120">2 hr</option>
+          </select>
+        </div>
+      </div>
+      <div class="bbp-header" id="abDurRow" style="display:none">
+        <span class="bbp-label">Auto-break</span>
+        <select class="bbp-select" id="autoBreakMinsSelect" onchange="setAutoBreakMins(this.value)">
+          <option value="5" selected>5 min</option>
+          <option value="10">10 min</option>
+          <option value="15">15 min</option>
+          <option value="20">20 min</option>
+          <option value="30">30 min</option>
+        </select>
+      </div>
+      <div class="bbp-bar-wrap">
+        <div class="bbp-bar-fill" id="breakBarFill"></div>
+      </div>
+      <div class="bbp-tally" id="breakTally">0 min used</div>
+    </div>
     <div class="cat-tally-panel" id="catTallyPanel">
       <div class="cat-tally-label">Today by Category</div>
       <div id="catTallyRows"></div>
@@ -1600,47 +1517,6 @@
   </div>
 </div>
 
-  <!-- INTERVAL TIMER PANEL (always present) -->
-  <div class="interval-timer-panel" id="intervalTimerPanel">
-    <div class="pomo-panel-top">
-      <div class="pomo-toggle-row">
-        <span class="pomo-heading">Task Interval Timer</span>
-        <label class="pomo-switch">
-          <input type="checkbox" id="intervalTimerToggleChk" onchange="toggleIntervalTimerMode(this.checked)">
-          <span class="pomo-track"></span>
-          <span class="pomo-thumb"></span>
-        </label>
-      </div>
-    </div>
-    <div class="pomo-body" id="intervalTimerBody"></div>
-    <div class="break-budget-panel" id="breakBudgetPanel">
-      <div class="bbp-header">
-        <span class="bbp-label">Break Budget</span>
-        <select class="bbp-select" id="breakBudgetSelect" onchange="setBreakBudget(this.value)">
-          <option value="15">15 min</option><option value="30">30 min</option>
-          <option value="45">45 min</option><option value="60" selected>1 hr</option>
-          <option value="90">1.5 hr</option><option value="120">2 hr</option>
-        </select>
-      </div>
-      <div class="bbp-bar-wrap">
-        <div class="bbp-bar-fill" id="breakBarFill"></div>
-      </div>
-      <div class="bbp-tally" id="breakTally">0 min used</div>
-    </div>
-  </div>
-
-</div>
-
-<!-- INTERVAL TIMER SCHEDULED INTERRUPT -->
-<div class="pomo-interrupt-overlay" id="intervalInterruptOverlay">
-  <div class="pomo-interrupt-modal">
-    <div class="pomo-interrupt-title">Scheduled Task Starting</div>
-    <div class="pomo-interrupt-sub" id="intervalInterruptSub"></div>
-    <div class="pomo-interrupt-actions">
-      <button class="pomo-interrupt-btn confirm" onclick="closeIntervalInterrupt(true)">Begin Task</button>
-      <button class="pomo-interrupt-btn" onclick="closeIntervalInterrupt(false)">Not Now</button>
-    </div>
-  </div>
 </div>
 
 <!-- BREAK OVERLAY -->
@@ -1883,31 +1759,14 @@
   let _detailDp    = null;
 
   // Break feature state
-  let breakBudgetMins = 60;   // daily budget chosen by user (minutes)
-  let breakUsedMins   = 0;    // cumulative minutes used today
-  let breakDay        = null; // PST date string this tally belongs to
-  let breakStartMs    = null; // Date.now() when current break began; null if not on break
-  let breakTimerInt   = null; // setInterval handle for the live break timer
-  let breakTaskId     = null; // id of the active "Taking a Break" task
-
-  // ── Interval Timer state ─────────────────────────────────────────────────────
-  let intervalTimerMode              = false;  // mode on/off
-  let intervalTimerMins      = 25;     // setting: interval length (minutes)
-  let intervalAutoComplete      = false;  // setting: auto-complete tasks at timer end
-  let intervalAutoBreak         = false;  // setting: auto-insert breaks
-  let intervalBreakMins         = 5;      // setting: break length (minutes)
-  let intervalNowTaskId         = null;   // ID of the task currently being timed
-  let currentInterval   = 1;      // which interval we're on (1-based)
-  let totalIntervals    = 1;      // total intervals for current task
-  let currentIntervalDuration = 25; // minutes for the current interval
-  let intervalSecs      = null;   // remaining seconds in current interval
-  let intervalTimerHandle       = null;   // setInterval handle
-  let intervalIsPaused          = false;  // timer is paused
-  let intervalAdaptive          = true;   // adaptive mode (timer = task duration)
-  let intervalCountingUp        = false;  // counting up after last interval (auto-complete off)
-  let intervalCountUpStartMs    = null;   // when count-up began
-  let _intervalSchedPromptShown = false;  // prevent duplicate scheduled interrupt prompt
-  let _iaIdSeed = 0; // counter for unique auto-break IDs
+  let breakBudgetMins    = 60;    // daily budget chosen by user (minutes)
+  let breakUsedMins      = 0;     // cumulative minutes used today
+  let breakDay           = null;  // PST date string this tally belongs to
+  let breakStartMs       = null;  // Date.now() when current break began; null if not on break
+  let breakTimerInt      = null;  // setInterval handle for the live break timer
+  let breakTaskId        = null;  // id of the active "Taking a Break" task
+  let autoBreakAfterTask = false; // setting: auto-insert a break after each task is completed
+  let autoBreakMins      = 5;     // duration (minutes) of auto-inserted breaks
 
   // ── Firebase config ────────────────────────────────────────────────────
   // 1. Go to https://console.firebase.google.com and create a project
@@ -2182,14 +2041,15 @@
   // ── Persistence ────────────────────────────────────────────────────────
   function save() {
     purgeDone();
+    const saveTasks = tasks.filter(t => !t._ab);
     try {
-      localStorage.setItem('q_tasks', JSON.stringify(tasks));
+      localStorage.setItem('q_tasks', JSON.stringify(saveTasks));
       localStorage.setItem('q_done',  JSON.stringify(doneTasks));
     } catch(e) {}
     updateTodayHistory();
     if (_stateDoc) {
       setSyncStatus('syncing');
-      _stateDoc.set({ tasks, doneTasks, recurringTasks, categoryRules, breakStartMs: breakStartMs || null, breakTaskId: breakTaskId || null })
+      _stateDoc.set({ tasks: saveTasks, doneTasks, recurringTasks, categoryRules, breakStartMs: breakStartMs || null, breakTaskId: breakTaskId || null })
         .then(() => setSyncStatus('synced'))
         .catch(err => {
           console.error('[Queue] Save failed:', err);
@@ -2931,16 +2791,17 @@
   // ── Render ─────────────────────────────────────────────────────────────
   function render() {
     purgeDone();
+    applyAutoBreaks();
     const flexSorted = getSorted();
     const all        = getAllSorted(flexSorted);
 
-    // Stamp calStartTime only when the top FLEX task changes
+    // Stamp calStartTime only when the top FLEX task changes (skip _ab break tasks)
     const topFlexId = flexSorted[0] ? flexSorted[0].id : null;
     if (topFlexId !== currentNowId) {
       // Clear calStartTime on the task that just lost the top spot
       if (currentNowId) {
         const prev = tasks.find(t => t.id === currentNowId);
-        if (prev && !isScheduled(prev)) {
+        if (prev && !isScheduled(prev) && !prev._ab) {
           delete prev.calStartTime;
           save();
         }
@@ -2948,7 +2809,7 @@
       currentNowId = topFlexId;
       if (topFlexId) {
         const taskObj = tasks.find(t => t.id === topFlexId);
-        if (taskObj && !isScheduled(taskObj) && !taskObj.calStartTime) {
+        if (taskObj && !isScheduled(taskObj) && !taskObj._ab && !taskObj.calStartTime) {
           taskObj.calStartTime = Date.now();
           save();
         }
@@ -2994,7 +2855,6 @@
 
     updateBreakUI();
     _refreshBlockDetail();
-    syncIntervalTimer();
     renderCategoryTally();
   }
 
@@ -3692,16 +3552,21 @@
     try {
       const s = JSON.parse(localStorage.getItem('q_break') || '{}');
       const today = todayPstDateStr();
-      breakBudgetMins = s.budget ?? 60;
+      breakBudgetMins    = s.budget ?? 60;
+      autoBreakAfterTask = !!s.autoBreak;
+      autoBreakMins      = s.autoBreakMins ?? 5;
       // Reset tally if stored day differs from today
-      breakUsedMins   = s.day === today ? (s.used ?? 0) : 0;
-      breakDay        = today;
-      // Sync budget select to loaded value
+      breakUsedMins = s.day === today ? (s.used ?? 0) : 0;
+      breakDay      = today;
+      // Sync selects/toggles to loaded values
       const sel = document.getElementById('breakBudgetSelect');
-      if (sel) {
-        const opt = [...sel.options].find(o => parseInt(o.value) === breakBudgetMins);
-        if (opt) sel.value = String(breakBudgetMins);
-      }
+      if (sel) { const opt = [...sel.options].find(o => parseInt(o.value) === breakBudgetMins); if (opt) sel.value = String(breakBudgetMins); }
+      const durSel = document.getElementById('autoBreakMinsSelect');
+      if (durSel) { const opt = [...durSel.options].find(o => parseInt(o.value) === autoBreakMins); if (opt) durSel.value = String(autoBreakMins); }
+      const toggle = document.getElementById('autoBreakToggle');
+      if (toggle) toggle.checked = autoBreakAfterTask;
+      const durRow = document.getElementById('abDurRow');
+      if (durRow) durRow.style.display = autoBreakAfterTask ? '' : 'none';
     } catch(e) {}
     updateBreakUI();
   }
@@ -3709,11 +3574,56 @@
   function saveBreakState() {
     try {
       localStorage.setItem('q_break', JSON.stringify({
-        budget: breakBudgetMins,
-        used:   breakUsedMins,
-        day:    breakDay || todayPstDateStr(),
+        budget:        breakBudgetMins,
+        used:          breakUsedMins,
+        day:           breakDay || todayPstDateStr(),
+        autoBreak:     autoBreakAfterTask,
+        autoBreakMins: autoBreakMins,
       }));
     } catch(e) {}
+  }
+
+  function removeAutoBreaks() {
+    tasks = tasks.filter(t => !t._ab);
+    const flex = tasks.filter(t => !isScheduled(t))
+      .sort((a, b) => (a.flexOrder ?? Infinity) - (b.flexOrder ?? Infinity)
+                   || a.priority - b.priority || a.addedAt - b.addedAt);
+    flex.forEach((t, i) => { t.flexOrder = i; });
+  }
+
+  function applyAutoBreaks() {
+    removeAutoBreaks();
+    if (!autoBreakAfterTask) return;
+    const flex = tasks.filter(t => !isScheduled(t))
+      .sort((a, b) => (a.flexOrder ?? Infinity) - (b.flexOrder ?? Infinity)
+                   || a.priority - b.priority || a.addedAt - b.addedAt);
+    const newFlex = [];
+    let bIdx = 0;
+    for (let i = 0; i < flex.length; i++) {
+      newFlex.push(flex[i]);
+      // Insert a break after each non-break task, except after the last task
+      if (!flex[i].isBreak && i < flex.length - 1 && !flex[i + 1].isBreak) {
+        // Stable ID derived from the preceding task so currentNowId doesn't flap on re-render
+        newFlex.push({ id: -(++bIdx), title: 'Break', priority: 1,
+          addedAt: Date.now(), duration: autoBreakMins, isBreak: true, _ab: true });
+      }
+    }
+    newFlex.forEach((t, i) => { t.flexOrder = i; });
+    tasks = tasks.filter(t => isScheduled(t)).concat(newFlex);
+  }
+
+  function setAutoBreakAfterTask(on) {
+    autoBreakAfterTask = on;
+    const durRow = document.getElementById('abDurRow');
+    if (durRow) durRow.style.display = on ? '' : 'none';
+    saveBreakState();
+    save(); render();
+  }
+
+  function setAutoBreakMins(v) {
+    autoBreakMins = parseInt(v) || 5;
+    saveBreakState();
+    save(); render();
   }
 
   function setBreakBudget(v) {
@@ -3892,485 +3802,6 @@
       btn.disabled = !hasNow || !!breakStartMs;
       btn.classList.toggle('over', over);
     }
-  }
-
-  // ── Interval Timer ───────────────────────────────────────────────────────────
-
-  function loadIntervalTimerSettings() {
-    try {
-      const s = JSON.parse(localStorage.getItem('q_interval_timer') || '{}');
-      intervalTimerMode    = !!s.mode;
-      intervalTimerMins    = s.intervalMins || 25;
-      intervalAutoComplete = !!s.autoComplete;
-      intervalAutoBreak    = !!s.autoBreak;
-      intervalBreakMins    = s.breakMins || 5;
-      intervalAdaptive     = s.adaptive !== false; // default true (adaptive) when not yet saved
-    } catch(e) {}
-    const chk = document.getElementById('intervalTimerToggleChk');
-    if (chk) chk.checked = intervalTimerMode;
-    updateIntervalTimerPanel();
-  }
-
-  function saveIntervalTimerSettings() {
-    try {
-      localStorage.setItem('q_interval_timer', JSON.stringify({
-        mode: intervalTimerMode,
-        intervalMins: intervalTimerMins,
-        autoComplete: intervalAutoComplete,
-        autoBreak: intervalAutoBreak,
-        breakMins: intervalBreakMins,
-        adaptive: intervalAdaptive,
-      }));
-    } catch(e) {}
-  }
-
-  function toggleIntervalTimerMode(on) {
-    intervalTimerMode = on;
-    if (!on) {
-      stopIntervalTimer();
-      intervalNowTaskId      = null;
-      intervalCountingUp     = false;
-      intervalCountUpStartMs = null;
-      removeIntervalAutoBreaks();
-      save(); render();
-    } else {
-      if (intervalAutoBreak) applyIntervalAutoBreaks();
-      else syncIntervalTimer();
-    }
-    saveIntervalTimerSettings();
-    updateIntervalTimerPanel();
-  }
-
-  function stopIntervalTimer() {
-    if (intervalTimerHandle) { clearInterval(intervalTimerHandle); intervalTimerHandle = null; }
-    intervalIsPaused = false;
-  }
-
-  function pauseIntervalTimer() {
-    if (!intervalTimerHandle) return;
-    clearInterval(intervalTimerHandle);
-    intervalTimerHandle = null;
-    intervalIsPaused = true;
-    updateIntervalTimerPanel();
-  }
-
-  function resumeIntervalTimer() {
-    if (!intervalIsPaused || intervalCountingUp) return;
-    intervalTimerHandle = setInterval(intervalTimerTick, 1000);
-    intervalIsPaused = false;
-    updateIntervalTimerPanel();
-  }
-
-  function resetIntervalTimer() {
-    stopIntervalTimer();
-    const task = tasks.find(t => t.id === intervalNowTaskId);
-    if (!task) return;
-    currentInterval = 1;
-    intervalCountingUp      = false;
-    intervalCountUpStartMs  = null;
-    const taskDuration = task.duration || DEFAULT_DUR;
-    if (intervalAdaptive) {
-      totalIntervals          = 1;
-      currentIntervalDuration = taskDuration;
-    } else {
-      totalIntervals           = Math.ceil(taskDuration / intervalTimerMins) || 1;
-      currentIntervalDuration  = Math.min(intervalTimerMins, taskDuration);
-    }
-    intervalSecs             = currentIntervalDuration * 60;
-    intervalTimerHandle = setInterval(intervalTimerTick, 1000);
-    intervalIsPaused    = false;
-    updateIntervalTimerPanel();
-  }
-
-  function startIntervalTimerForTask(task) {
-    stopIntervalTimer();
-    const taskDuration = task.duration || DEFAULT_DUR;
-    intervalNowTaskId      = task.id;
-    currentInterval        = 1;
-    if (intervalAdaptive) {
-      totalIntervals = 1;
-      if (task.calStartTime) {
-        const elapsedSecs = Math.floor((Date.now() - task.calStartTime) / 1000);
-        const totalSecs   = taskDuration * 60;
-        intervalSecs      = Math.max(0, totalSecs - elapsedSecs);
-      } else {
-        intervalSecs = taskDuration * 60;
-      }
-      currentIntervalDuration = Math.ceil(intervalSecs / 60);
-    } else {
-      totalIntervals          = Math.ceil(taskDuration / intervalTimerMins) || 1;
-      currentIntervalDuration = Math.min(intervalTimerMins, taskDuration);
-      intervalSecs            = currentIntervalDuration * 60;
-    }
-    intervalCountingUp     = false;
-    intervalCountUpStartMs = null;
-    intervalIsPaused       = false;
-    intervalTimerHandle = setInterval(intervalTimerTick, 1000);
-    updateIntervalTimerPanel();
-  }
-
-  function intervalTimerTick() {
-    if (intervalCountingUp) { updateIntervalTimerPanel(); return; }
-    if (intervalSecs === null) return;
-    intervalSecs = Math.max(0, intervalSecs - 1);
-    if (intervalSecs <= 0) {
-      if (currentInterval < totalIntervals) {
-        // Not the last interval — advance to next
-        currentInterval++;
-        const task = tasks.find(t => t.id === intervalNowTaskId);
-        if (task) {
-          const taskDuration  = task.duration || DEFAULT_DUR;
-          const completedMins = (currentInterval - 1) * intervalTimerMins;
-          const remainingMins = taskDuration - completedMins;
-          currentIntervalDuration = Math.min(intervalTimerMins, remainingMins);
-          intervalSecs            = currentIntervalDuration * 60;
-        } else {
-          stopIntervalTimer();
-        }
-      } else {
-        // Last interval ended
-        if (intervalAutoComplete) {
-          const taskId       = intervalNowTaskId;
-          intervalNowTaskId  = null;
-          stopIntervalTimer();
-          markDoneById(taskId); // markDoneById handles the auto-break check
-        } else {
-          intervalCountingUp    = true;
-          intervalCountUpStartMs = Date.now();
-        }
-      }
-    }
-    updateIntervalTimerPanel();
-  }
-
-  function syncIntervalTimer() {
-    if (!intervalTimerMode) return;
-    const all     = getAllSorted();
-    const nowTask = all[0] || null;
-
-    if (!nowTask) {
-      if (intervalNowTaskId) { stopIntervalTimer(); intervalNowTaskId = null; }
-      updateIntervalTimerPanel();
-      return;
-    }
-
-    if (nowTask.isBreak) {
-      if (intervalNowTaskId) { stopIntervalTimer(); intervalNowTaskId = null; }
-      updateIntervalTimerPanel();
-      return;
-    }
-
-    if (isScheduled(nowTask)) {
-      // A scheduled task just took the NOW slot
-      if (intervalNowTaskId && !_intervalSchedPromptShown) {
-        _intervalSchedPromptShown = true;
-        stopIntervalTimer();
-        showIntervalInterruptPrompt(nowTask);
-      }
-      updateIntervalTimerPanel();
-      return;
-    }
-
-    // Flex task at NOW
-    _intervalSchedPromptShown = false;
-    if (nowTask.id !== intervalNowTaskId) {
-      startIntervalTimerForTask(nowTask);
-    } else {
-      // In adaptive mode, resync from calStartTime on every render so that
-      // duration edits and app reloads always show accurate remaining time.
-      if (intervalAdaptive && nowTask.calStartTime && !intervalCountingUp && !intervalIsPaused) {
-        const taskDuration = nowTask.duration || DEFAULT_DUR;
-        const elapsedSecs  = Math.floor((Date.now() - nowTask.calStartTime) / 1000);
-        intervalSecs       = Math.max(0, taskDuration * 60 - elapsedSecs);
-        currentIntervalDuration = Math.ceil(intervalSecs / 60);
-      }
-      updateIntervalTimerPanel();
-    }
-  }
-
-  function showIntervalInterruptPrompt(schedTask) {
-    const sub = document.getElementById('intervalInterruptSub');
-    if (sub) sub.textContent =
-      `"${schedTask.title}" is scheduled to start now. Do you want to begin it?`;
-    document.getElementById('intervalInterruptOverlay').classList.add('active');
-  }
-
-  function closeIntervalInterrupt(begin) {
-    document.getElementById('intervalInterruptOverlay').classList.remove('active');
-    if (!begin) _intervalSchedPromptShown = true; // don't prompt again for same task
-    updateIntervalTimerPanel();
-  }
-
-  function _nextIaId() { return Date.now() * 1000 + (++_iaIdSeed); }
-
-  function removeIntervalAutoBreaks() {
-    tasks = tasks.filter(t => !t._ia);
-    tasks.forEach(t => {
-      if (t._io !== undefined) { t.duration = t._io; delete t._io; }
-    });
-    const flex = tasks.filter(t => !isScheduled(t))
-      .sort((a, b) => (a.flexOrder ?? Infinity) - (b.flexOrder ?? Infinity)
-                   || a.priority - b.priority || a.addedAt - b.addedAt);
-    flex.forEach((t, i) => { t.flexOrder = i; });
-  }
-
-  function applyIntervalAutoBreaks() {
-    removeIntervalAutoBreaks();
-    if (!intervalTimerMode || !intervalAutoBreak) return;
-    if (intervalAdaptive) _applyAdaptiveBreaks();
-    else _applyFixedBreaks();
-    save(); render();
-  }
-
-  function _applyFixedBreaks() {
-    const flex = tasks.filter(t => !isScheduled(t))
-      .sort((a, b) => (a.flexOrder ?? Infinity) - (b.flexOrder ?? Infinity)
-                   || a.priority - b.priority || a.addedAt - b.addedAt);
-    const newFlex = [];
-    for (const task of flex) {
-      const dur = task.duration || DEFAULT_DUR;
-      if (dur <= intervalTimerMins) { newFlex.push(task); continue; }
-      if (task._io === undefined) task._io = dur;
-      task.duration = intervalTimerMins;
-      newFlex.push(task);
-      let remaining = dur - intervalTimerMins;
-      while (remaining > 0) {
-        const segDur = Math.min(remaining, intervalTimerMins);
-        newFlex.push({ id: _nextIaId(), title: 'Break', priority: 1,
-          addedAt: Date.now(), duration: intervalBreakMins, isBreak: true, _ia: true });
-        newFlex.push({ id: _nextIaId(), title: task.title, priority: task.priority,
-          addedAt: task.addedAt, duration: segDur, _ia: true, _ip: task.id });
-        remaining -= segDur;
-      }
-    }
-    newFlex.forEach((t, i) => { t.flexOrder = i; });
-    tasks = tasks.filter(t => isScheduled(t)).concat(newFlex);
-  }
-
-  function _applyAdaptiveBreaks() {
-    const flex = tasks.filter(t => !isScheduled(t))
-      .sort((a, b) => (a.flexOrder ?? Infinity) - (b.flexOrder ?? Infinity)
-                   || a.priority - b.priority || a.addedAt - b.addedAt);
-    const newFlex = [];
-    for (let i = 0; i < flex.length; i++) {
-      const task = flex[i];
-      newFlex.push(task);
-      // Insert a break after each non-break task, but not after the last task
-      // (pattern: Task → Break → Task → Break → Task, never Break-first or trailing Break)
-      if (!task.isBreak && i < flex.length - 1) {
-        newFlex.push({ id: _nextIaId(), title: 'Break', priority: 1,
-          addedAt: Date.now(), duration: intervalBreakMins, isBreak: true, _ia: true });
-      }
-    }
-    newFlex.forEach((t, i) => { t.flexOrder = i; });
-    tasks = tasks.filter(t => isScheduled(t)).concat(newFlex);
-  }
-
-  function reapplyIntervalAutoBreaks() {
-    if (!intervalTimerMode || !intervalAutoBreak) return;
-    applyIntervalAutoBreaks();
-  }
-
-  function setIntervalMode(mode) {
-    intervalAdaptive = (mode === 'adaptive');
-    saveIntervalTimerSettings();
-    // Snapshot tracking state before reapplyIntervalAutoBreaks(), which may call
-    // render() → syncIntervalTimer() and mutate intervalNowTaskId / intervalTimerHandle.
-    const wasTracking = !!(intervalNowTaskId || intervalTimerHandle);
-    const wasPaused   = intervalIsPaused;
-    reapplyIntervalAutoBreaks();
-    // Restart the timer for the actual top flex task under the new mode.
-    if (wasTracking) {
-      const nowTask = getAllSorted().find(t => !t.isBreak && !isScheduled(t));
-      if (nowTask) {
-        startIntervalTimerForTask(nowTask);
-        if (wasPaused) pauseIntervalTimer();
-      } else {
-        stopIntervalTimer();
-        intervalNowTaskId = null;
-      }
-    }
-    updateIntervalTimerPanel();
-  }
-
-  function fmtPomoTime(secs) {
-    secs = Math.max(0, secs || 0);
-    return `${Math.floor(secs / 60)}:${pad2(secs % 60)}`;
-  }
-
-  function updateIntervalTimerPanel() {
-    const body = document.getElementById('intervalTimerBody');
-    if (!body) return;
-
-    if (!intervalTimerMode) {
-      body.innerHTML = `<div class="pomo-explainer">Turn on Interval Timer mode to start timing your tasks.</div>`;
-      return;
-    }
-
-    const all     = getAllSorted();
-    const nowTask = all[0] || null;
-    const onBreak = nowTask && nowTask.isBreak;
-    const onSched = nowTask && isScheduled(nowTask);
-
-    let timerHtml = '';
-
-    if (onBreak) {
-      timerHtml = `
-        <div class="pomo-timer-section">
-          <div class="pomo-task-label">On Break</div>
-          <div class="pomo-countdown break-active">–:––</div>
-          <div class="pomo-interval-row">break in progress</div>
-          <div class="pomo-progress-wrap"><div class="pomo-progress-fill" style="width:100%"></div></div>
-        </div>`;
-    } else if (!nowTask || onSched) {
-      const label = !nowTask ? 'No tasks in queue' : `Scheduled: ${nowTask.title}`;
-      timerHtml = `<div class="pomo-no-task">${esc(label)}</div>`;
-    } else {
-      let displaySecs, isOver, progressPct;
-      if (intervalCountingUp && intervalCountUpStartMs) {
-        displaySecs = Math.floor((Date.now() - intervalCountUpStartMs) / 1000);
-        isOver      = true;
-        progressPct = 100;
-      } else {
-        displaySecs = intervalSecs || 0;
-        isOver      = false;
-        const totalSecs = currentIntervalDuration * 60;
-        progressPct = totalSecs > 0
-          ? Math.round(((totalSecs - displaySecs) / totalSecs) * 100) : 0;
-      }
-      const timeStr     = intervalCountingUp ? `+${fmtPomoTime(displaySecs)}` : fmtPomoTime(displaySecs);
-      const timerCls    = isOver ? ' over' : '';
-      const fillCls     = isOver ? ' over' : '';
-      const intervalLbl = totalIntervals > 1
-        ? `Interval ${currentInterval} of ${totalIntervals}`
-        : 'Single interval';
-      const isPaused      = intervalIsPaused && !intervalCountingUp;
-      const pauseLabel    = isPaused ? 'Resume' : 'Pause';
-      const pauseHandler  = isPaused ? 'resumeIntervalTimer()' : 'pauseIntervalTimer()';
-
-      timerHtml = `
-        <div class="pomo-timer-section">
-          <div class="pomo-task-label">${esc(nowTask.title)}</div>
-          <div class="pomo-countdown${timerCls}">${timeStr}</div>
-          <div class="pomo-interval-row">${intervalLbl}</div>
-          <div class="pomo-progress-wrap">
-            <div class="pomo-progress-fill${fillCls}" style="width:${progressPct}%"></div>
-          </div>
-          <div class="pomo-controls">
-            <button class="pomo-btn pomo-primary" onclick="${pauseHandler}">${pauseLabel}</button>
-            <button class="pomo-btn" onclick="resetIntervalTimer()">Reset</button>
-          </div>
-        </div>`;
-    }
-
-    const acChk  = intervalAutoComplete ? ' checked' : '';
-    const abChk  = intervalAutoBreak    ? ' checked' : '';
-    const iSel   = v => v === intervalTimerMins ? ' selected' : '';
-    const bSel   = v => v === intervalBreakMins ? ' selected' : '';
-    const mSel   = v => v === (intervalAdaptive ? 'adaptive' : 'fixed') ? ' selected' : '';
-
-    const intervalLenRow = `
-        <div class="pomo-setting-group"${intervalAdaptive ? ' style="opacity:0.35;pointer-events:none"' : ''}>
-          <div class="pomo-setting-label">Interval Length</div>
-          <select class="pomo-select" onchange="setIntervalTimerMins(parseInt(this.value))"${intervalAdaptive ? ' disabled' : ''}>
-            <option value="15"${iSel(15)}>15 min</option>
-            <option value="20"${iSel(20)}>20 min</option>
-            <option value="25"${iSel(25)}>25 min</option>
-            <option value="30"${iSel(30)}>30 min</option>
-            <option value="45"${iSel(45)}>45 min</option>
-            <option value="60"${iSel(60)}>60 min</option>
-            <option value="90"${iSel(90)}>90 min</option>
-          </select>
-        </div>`;
-
-    const breakLenRow = intervalAutoBreak ? `
-        <div class="pomo-setting-group">
-          <div class="pomo-setting-label">Break Length</div>
-          <select class="pomo-select" onchange="setIntervalBreakMins(parseInt(this.value))">
-            <option value="5"${bSel(5)}>5 min</option>
-            <option value="10"${bSel(10)}>10 min</option>
-            <option value="15"${bSel(15)}>15 min</option>
-            <option value="20"${bSel(20)}>20 min</option>
-            <option value="30"${bSel(30)}>30 min</option>
-          </select>
-        </div>` : '';
-
-    const settingsHtml = `
-      <div class="pomo-divider"></div>
-      <div class="pomo-settings">
-        <div class="pomo-setting-group">
-          <div class="pomo-setting-label">Timer Mode</div>
-          <select class="pomo-select" onchange="setIntervalMode(this.value)">
-            <option value="fixed"${mSel('fixed')}>Fixed Intervals</option>
-            <option value="adaptive"${mSel('adaptive')}>Adaptive</option>
-          </select>
-        </div>
-        ${intervalLenRow}
-        <div class="pomo-setting-group">
-          <div class="pomo-setting-row">
-            <span class="pomo-setting-desc">Auto-complete tasks</span>
-            <label class="pomo-switch" style="flex-shrink:0">
-              <input type="checkbox" onchange="setIntervalAutoComplete(this.checked)"${acChk}>
-              <span class="pomo-track"></span>
-              <span class="pomo-thumb"></span>
-            </label>
-          </div>
-        </div>
-        <div class="pomo-setting-group">
-          <div class="pomo-setting-row">
-            <span class="pomo-setting-desc">Automatic breaks</span>
-            <label class="pomo-switch" style="flex-shrink:0">
-              <input type="checkbox" onchange="setIntervalAutoBreak(this.checked)"${abChk}>
-              <span class="pomo-track"></span>
-              <span class="pomo-thumb"></span>
-            </label>
-          </div>
-        </div>
-        ${breakLenRow}
-      </div>`;
-
-    body.innerHTML = timerHtml + settingsHtml;
-  }
-
-  function setIntervalTimerMins(v) {
-    intervalTimerMins = v || 25;
-    saveIntervalTimerSettings();
-    reapplyIntervalAutoBreaks();
-    if (intervalNowTaskId && !intervalCountingUp) {
-      const task = tasks.find(t => t.id === intervalNowTaskId);
-      if (task) {
-        const wasPaused = intervalIsPaused;
-        startIntervalTimerForTask(task);
-        if (wasPaused) pauseIntervalTimer();
-      }
-    } else {
-      updateIntervalTimerPanel();
-    }
-  }
-
-  function setIntervalAutoComplete(on) {
-    intervalAutoComplete = on;
-    saveIntervalTimerSettings();
-    updateIntervalTimerPanel();
-  }
-
-  function setIntervalAutoBreak(on) {
-    intervalAutoBreak = on;
-    saveIntervalTimerSettings();
-    if (on) {
-      applyIntervalAutoBreaks();
-    } else {
-      removeIntervalAutoBreaks();
-      save(); render();
-    }
-    updateIntervalTimerPanel();
-  }
-
-  function setIntervalBreakMins(v) {
-    intervalBreakMins = v || 5;
-    saveIntervalTimerSettings();
-    reapplyIntervalAutoBreaks();
-    updateIntervalTimerPanel();
   }
 
   // ── End Day ────────────────────────────────────────────────────────────
@@ -5449,7 +4880,6 @@
   // load() is called by the auth state observer once signed in
   if (!_auth) { load(); } // local-only fallback
   loadBreakState();
-  loadIntervalTimerSettings();
   loadCalBounds();
   checkDayEndedReset();
   checkDayOffState();
