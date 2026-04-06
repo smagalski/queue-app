@@ -956,10 +956,10 @@
   body.day-ended .add-btns-row,
   body.day-ended .add-form-wrap,
   body.day-ended .add-sched-form-wrap { opacity: 0.35; pointer-events: none; }
-  /* ── BREAK BUDGET PANEL (left panel, bottom) ─────────────────────────── */
+  /* ── BREAK BUDGET PANEL (inside interval timer panel) ────────────────── */
   .break-budget-panel {
     flex-shrink: 0; border-top: 1px solid var(--border);
-    padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 7px;
+    padding: 10px 16px 14px; display: flex; flex-direction: column; gap: 7px;
   }
   .bbp-header { display: flex; align-items: center; justify-content: space-between; }
   .bbp-label {
@@ -1403,23 +1403,9 @@
       <div class="cal-drawer-label">Timeline</div>
 <div class="cal-container" id="calContainer"></div>
     </div>
-    <div class="break-budget-panel" id="breakBudgetPanel">
-      <div class="bbp-header">
-        <span class="bbp-label">Break Budget</span>
-        <select class="bbp-select" id="breakBudgetSelect" onchange="setBreakBudget(this.value)">
-          <option value="15">15 min</option><option value="30">30 min</option>
-          <option value="45">45 min</option><option value="60" selected>1 hr</option>
-          <option value="90">1.5 hr</option><option value="120">2 hr</option>
-        </select>
-      </div>
-      <div class="bbp-bar-wrap">
-        <div class="bbp-bar-fill" id="breakBarFill"></div>
-      </div>
-      <div class="bbp-tally" id="breakTally">0 min used</div>
-      <div class="bbp-divider"></div>
-      <div class="bbp-header">
-        <span class="bbp-label">Day Start</span>
-        <select class="bbp-select" id="calStartSelect" onchange="setCalBounds()">
+    <div class="bbp-header" style="padding:10px 12px 0">
+      <span class="bbp-label">Day Start</span>
+      <select class="bbp-select" id="calStartSelect" onchange="setCalBounds()">
           <option value="240">4 AM</option>
           <option value="300">5 AM</option>
           <option value="360">6 AM</option>
@@ -1428,7 +1414,7 @@
           <option value="540">9 AM</option>
         </select>
       </div>
-      <div class="bbp-header">
+      <div class="bbp-header" style="padding:4px 12px 10px">
         <span class="bbp-label">Day End</span>
         <select class="bbp-select" id="calEndSelect" onchange="setCalBounds()">
           <option value="1080">6 PM</option>
@@ -1592,6 +1578,20 @@
       </div>
     </div>
     <div class="pomo-body" id="intervalTimerBody"></div>
+    <div class="break-budget-panel" id="breakBudgetPanel">
+      <div class="bbp-header">
+        <span class="bbp-label">Break Budget</span>
+        <select class="bbp-select" id="breakBudgetSelect" onchange="setBreakBudget(this.value)">
+          <option value="15">15 min</option><option value="30">30 min</option>
+          <option value="45">45 min</option><option value="60" selected>1 hr</option>
+          <option value="90">1.5 hr</option><option value="120">2 hr</option>
+        </select>
+      </div>
+      <div class="bbp-bar-wrap">
+        <div class="bbp-bar-fill" id="breakBarFill"></div>
+      </div>
+      <div class="bbp-tally" id="breakTally">0 min used</div>
+    </div>
   </div>
 
 </div>
@@ -2484,7 +2484,7 @@
     dd.innerHTML = categoryRules.map((cat, i) => {
       const col = CAT_TALLY_COLORS[i % CAT_TALLY_COLORS.length];
       const isActive = cat.id === current;
-      return `<button class="pd-btn" onclick="changeTaskCategory('${cat.id}')" style="-webkit-appearance:none;appearance:none;color:${col};border:1px solid ${col}${isActive ? '80' : '20'};background:${col}${isActive ? '25' : '12'};font-size:9px;letter-spacing:0.08em;text-transform:uppercase;font-weight:700;width:100%;padding:5px 8px;border-radius:4px;cursor:pointer;text-align:left">${esc(cat.name)}</button>`;
+      return `<button class="pd-btn" onclick="changeTaskCategory('${cat.id}')" style="-webkit-appearance:none;appearance:none;color:#fff;border:1px solid rgba(255,255,255,${isActive ? '0.5' : '0.12'});background:rgba(255,255,255,${isActive ? '0.15' : '0.05'});font-size:9px;letter-spacing:0.08em;text-transform:uppercase;font-weight:700;width:100%;padding:5px 8px;border-radius:4px;cursor:pointer;text-align:left">${esc(cat.name)}</button>`;
     }).join('');
     openDropdown(dd, event.target.getBoundingClientRect(), 150);
   }
@@ -2754,7 +2754,7 @@
       const catIdx = categoryRules.findIndex(r => r.id === catId);
       const catCol = CAT_TALLY_COLORS[catIdx >= 0 ? catIdx % CAT_TALLY_COLORS.length : 0];
       const catName = catIdx >= 0 ? categoryRules[catIdx].name : catId;
-      catBadgeHtml = `<span class="priority-badge" onclick="showCategoryDropdown(${task.id},event)" style="cursor:pointer;background:${catCol}15;color:${catCol};border:1px solid ${catCol}30">${esc(catName)}</span>`;
+      catBadgeHtml = `<span class="priority-badge" onclick="showCategoryDropdown(${task.id},event)" style="cursor:pointer;background:rgba(255,255,255,0.07);color:#fff;border:1px solid rgba(255,255,255,0.2)">${esc(catName)}</span>`;
     }
 
     const escHtml      = escalated ? `<span class="escalation-badge">⚡ escalated</span>` : '';
@@ -2828,10 +2828,17 @@
         ? `<span class="priority-badge" style="background:rgba(126,200,227,0.15);color:${SCHED_COL};border:1px solid rgba(126,200,227,0.3)">⏰ Scheduled</span>`
         : `<span class="priority-badge pc-${priority}">${P_LABELS[priority]}</span>`;
       const durHtml = `<span class="duration-display">${fmtDuration(task.duration || DEFAULT_DUR)}</span>`;
+      const doneCatBadge = (() => {
+        if (task.isBreak || isScheduled(task) || !categoryRules.length) return '';
+        const catId  = getCategoryForTask(task.title, {}, task.id, task.categoryOverride);
+        const catIdx = categoryRules.findIndex(r => r.id === catId);
+        const catName = catIdx >= 0 ? categoryRules[catIdx].name : catId;
+        return `<span class="priority-badge" onclick="showCategoryDropdown(${task.id},event)" style="cursor:pointer;background:rgba(255,255,255,0.07);color:#fff;border:1px solid rgba(255,255,255,0.2)">${esc(catName)}</span>`;
+      })();
       card.innerHTML = `
         <div class="task-card ${isScheduled(task) ? 'sched-card' : 'flex-card'}" style="--card-bar:${col};border-color:${col};cursor:default">
           <div class="card-task-title" ondblclick="startDoneTitleEdit(${task.id},this)" style="cursor:text">${esc(task.title)}</div>
-          <div class="task-meta" style="display:flex">${badgeHtml}${durHtml}
+          <div class="task-meta" style="display:flex">${badgeHtml}${doneCatBadge}${durHtml}
             <span class="task-age" style="color:var(--done-color)">✓ Done</span>
           </div>
           <div class="block-detail-time-edit">
@@ -4484,8 +4491,8 @@
     el.innerHTML = entries.map(({ cat, mins, color }) => {
       const pct = maxMins > 0 ? Math.round((mins / maxMins) * 100) : 0;
       return `<div class="cat-tally-row">
-        <span class="cat-tally-name" style="color:${color}">${esc(cat.name.toUpperCase())}</span>
-        <div class="cat-tally-bar-wrap"><div class="cat-tally-bar" style="width:${pct}%;background:${color}"></div></div>
+        <span class="cat-tally-name" style="color:#fff">${esc(cat.name.toUpperCase())}</span>
+        <div class="cat-tally-bar-wrap"><div class="cat-tally-bar" style="width:${pct}%;background:rgba(255,255,255,0.5)"></div></div>
         <span class="cat-tally-time">${fmtTaskMins(mins)}</span>
       </div>`;
     }).join('');
