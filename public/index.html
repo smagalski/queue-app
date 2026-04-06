@@ -4682,15 +4682,21 @@
   let _gcalTokenExpiry  = 0;
   let _gcalPendingEvents = null;
 
+  let _gcalAuthTimeout = null;
+
+  function _gcalClearAuthTimeout() {
+    if (_gcalAuthTimeout) { clearTimeout(_gcalAuthTimeout); _gcalAuthTimeout = null; }
+  }
+
   function _buildGcalTokenClient(onSuccess) {
     return google.accounts.oauth2.initTokenClient({
       client_id: GCAL_CLIENT_ID,
       scope: 'https://www.googleapis.com/auth/calendar.readonly',
       callback(resp) {
+        _gcalClearAuthTimeout();
         if (resp.error) {
           console.error('GCal OAuth error:', resp.error);
           if (resp.error === 'access_denied' || resp.error === 'popup_closed_by_user') {
-            // User cancelled — close the modal cleanly
             closeGcalLightbox();
           } else {
             setGcalListMessage(`Sign-in failed: ${resp.error}. Please try again.`);
@@ -4701,15 +4707,26 @@
         _gcalTokenExpiry = Date.now() + (resp.expires_in - 60) * 1000;
         onSuccess();
       },
+      error_callback(err) {
+        _gcalClearAuthTimeout();
+        console.error('GCal token client error:', err);
+        const type = err && err.type;
+        if (type === 'popup_failed_to_open') {
+          setGcalListMessage('Sign-in popup was blocked. Please allow popups for this site and try again.');
+        } else if (type === 'popup_closed') {
+          closeGcalLightbox();
+        } else {
+          setGcalListMessage(`Sign-in failed (${type || 'unknown error'}). Make sure this app's URL is an authorized origin in Google Cloud Console, then try again.`);
+        }
+      },
     });
   }
 
   function openGcalImport() {
     if (!GCAL_CLIENT_ID) {
-      alert('Google Calendar import is not configured.\n\nSet GCAL_CLIENT_ID in the source to your OAuth 2.0 Web Client ID.\nFind it at: Firebase Console → Auth → Sign-in providers → Google → Web SDK configuration.');
+      alert('Google Calendar import is not configured.\n\nSet GCAL_CLIENT_ID in the source to your OAuth 2.0 Web Client ID.');
       return;
     }
-    // Show overlay immediately so the user knows something is happening
     document.getElementById('gcalOverlay').classList.add('active');
     setGcalListMessage('Connecting to Google…');
     document.getElementById('gcalConfirmBtn').style.display = 'none';
@@ -4719,11 +4736,17 @@
       return;
     }
     if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
-      setGcalListMessage('Google sign-in library not loaded. Check your connection and try again.');
+      setGcalListMessage('Google sign-in library not loaded. Check your internet connection and try again.');
       return;
     }
     _gcalTokenClient = _buildGcalTokenClient(fetchGcalEvents);
-    _gcalTokenClient.requestAccessToken({ prompt: 'consent' });
+    _gcalTokenClient.requestAccessToken({ prompt: '' });
+
+    // Fallback: if neither callback fires in 20s, the popup was likely silently blocked
+    _gcalAuthTimeout = setTimeout(() => {
+      _gcalAuthTimeout = null;
+      setGcalListMessage('Sign-in timed out. The popup may have been blocked — allow popups for this site and try again.');
+    }, 20000);
   }
 
   function setGcalListMessage(msg) {
@@ -4870,6 +4893,7 @@
   }
 
   function closeGcalLightbox() {
+    _gcalClearAuthTimeout();
     document.getElementById('gcalOverlay').classList.remove('active');
     _gcalPendingEvents = null;
   }
