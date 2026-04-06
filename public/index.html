@@ -252,25 +252,37 @@
     cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px; transition: all 0.2s;
   }
   .add-toggle-btn:hover { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.25); }
-  .add-toggle-btn.open { border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom-color: transparent; }
-  .add-toggle-icon { font-size: 15px; line-height: 1; transition: transform 0.2s; font-weight: 300; }
-  .add-toggle-btn.open .add-toggle-icon { transform: rotate(45deg); }
-  .add-toggle-btn.pcolor-1 { border-color: rgba(255,107,138,0.5); color: var(--p1); background: rgba(255,107,138,0.07); }
-  .add-toggle-btn.pcolor-2 { border-color: rgba(255,170,96,0.5);  color: var(--p2); background: rgba(255,170,96,0.07); }
-  .add-toggle-btn.pcolor-3 { border-color: rgba(240,208,96,0.5);  color: var(--p3); background: rgba(240,208,96,0.07); }
-  .add-toggle-btn.pcolor-4 { border-color: rgba(127,212,168,0.5); color: var(--p4); background: rgba(127,212,168,0.07); }
+  .add-toggle-icon { font-size: 15px; line-height: 1; font-weight: 300; }
 
-  .add-form-wrap { overflow: hidden; max-height: 0; transition: max-height 0.3s ease; }
-  .add-form-wrap.open { max-height: 560px; }
-  .add-form {
-    background: var(--surface); border: 1px solid rgba(255,255,255,0.12); border-top: none;
-    border-radius: 0 0 8px 8px; padding: 14px; display: flex; flex-direction: column; gap: 12px;
+  /* ── ADD TASK LIGHTBOX ────────────────────────────────────────────────── */
+  .add-form-overlay {
+    display: none; position: fixed; inset: 0; z-index: 9100;
+    background: rgba(0,0,0,0.65); align-items: center; justify-content: center;
+  }
+  .add-form-overlay.active { display: flex; }
+  .add-form-modal {
+    background: var(--surface); border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 14px; padding: 24px; width: 380px; max-width: calc(100vw - 32px);
+    display: flex; flex-direction: column; gap: 14px; position: relative;
     transition: border-color 0.25s;
   }
-  .add-form.pcolor-1 { border-color: rgba(255,107,138,0.4); }
-  .add-form.pcolor-2 { border-color: rgba(255,170,96,0.4); }
-  .add-form.pcolor-3 { border-color: rgba(240,208,96,0.4); }
-  .add-form.pcolor-4 { border-color: rgba(127,212,168,0.4); }
+  .add-form-modal.pcolor-1 { border-color: rgba(255,107,138,0.5); }
+  .add-form-modal.pcolor-2 { border-color: rgba(255,170,96,0.5); }
+  .add-form-modal.pcolor-3 { border-color: rgba(240,208,96,0.5); }
+  .add-form-modal.pcolor-4 { border-color: rgba(127,212,168,0.5); }
+  .add-form-modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .add-form-modal-title {
+    font-size: 15px; font-weight: 700; color: #fff; letter-spacing: 0.02em;
+  }
+  .add-form-modal-close {
+    background: none; border: none; color: var(--text-dim); cursor: pointer;
+    font-size: 16px; padding: 2px 6px; border-radius: 4px; line-height: 1;
+    transition: color 0.15s;
+  }
+  .add-form-modal-close:hover { color: #fff; }
+  .add-form { display: flex; flex-direction: column; gap: 12px; }
 
   .form-label {
     display: block; font-size: 8px; font-weight: 600; letter-spacing: 0.16em;
@@ -394,14 +406,7 @@
     cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px; transition: all 0.2s;
   }
   .add-sched-toggle-btn:hover { background: rgba(126,200,227,0.13); border-color: rgba(126,200,227,0.5); }
-  .add-sched-toggle-btn.open { border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom-color: transparent; }
-  .add-sched-toggle-btn.open .add-toggle-icon { transform: rotate(45deg); }
-  .add-sched-form-wrap { overflow: hidden; max-height: 0; transition: max-height 0.3s ease; }
-  .add-sched-form-wrap.open { max-height: 620px; }
-  .add-sched-form {
-    background: var(--surface); border: 1px solid rgba(126,200,227,0.3); border-top: none;
-    border-radius: 0 0 8px 8px; padding: 14px; display: flex; flex-direction: column; gap: 12px;
-  }
+  .add-sched-form { display: flex; flex-direction: column; gap: 12px; }
   .add-sched-btn {
     width: 100%; height: 34px; background: var(--sched); border: none; border-radius: 5px;
     color: #0b0a0f; font-family: 'Inter',sans-serif; font-weight: 700; font-size: 10px;
@@ -1495,76 +1500,88 @@
     <div class="day-ended-msg" id="dayEndedMsg">Day Ended — See You Tomorrow</div>
     <button class="end-day-btn" id="resumeDayBtn" onclick="resumeDay()" style="display:none">Resume Day</button>
 
-    <!-- FLEX TASK FORM -->
-    <div class="add-form-wrap" id="addFormWrap">
-      <div class="add-form" id="addFormInner">
-        <div>
-          <label class="form-label">Task Name</label>
-          <input class="task-input" id="taskInput" placeholder="What needs doing?" maxlength="120"
-                 onkeydown="if(event.key==='Enter') addTask()"/>
-        </div>
-        <div>
-          <label class="form-label">Priority</label>
-          <div class="priority-group">
-            <button class="p-btn" id="pb1" onclick="selectP(1)">Urgent</button>
-            <button class="p-btn" id="pb2" onclick="selectP(2)">High</button>
-            <button class="p-btn" id="pb3" onclick="selectP(3)">Medium</button>
-            <button class="p-btn" id="pb4" onclick="selectP(4)">Low</button>
-          </div>
-        </div>
-        <div>
-          <label class="form-label">Duration</label>
-          <select class="duration-select" id="durationInput"></select>
-        </div>
-        <button class="add-btn" id="addBtn" onclick="addTask()" disabled>Add Flex Task</button>
-      </div>
-    </div>
-
-    <!-- SCHEDULED TASK FORM -->
-    <div class="add-sched-form-wrap" id="addSchedFormWrap">
-      <div class="add-sched-form" id="addSchedFormInner">
-        <div>
-          <label class="form-label">Task Name</label>
-          <input class="task-input" id="schedTitleInput" placeholder="Meeting, appointment..." maxlength="120"
-                 oninput="checkSchedAdd()" onkeydown="if(event.key==='Enter') addScheduledTask()"/>
-        </div>
-        <!-- Start vs End toggle -->
-        <div>
-          <label class="form-label">Anchor</label>
-          <div style="display:flex;gap:6px;margin-bottom:8px;">
-            <button class="p-btn sel-sched active-anchor" id="anchorStartBtn" onclick="setAnchor('start');checkSchedAdd()" style="flex:1;border-color:var(--sched);color:var(--sched);background:rgba(126,200,227,0.1)">Start time</button>
-            <button class="p-btn" id="anchorEndBtn" onclick="setAnchor('end');checkSchedAdd()" style="flex:1">End time</button>
-          </div>
-          <input class="time-input" id="schedTimeInput" type="time" oninput="checkSchedAdd()" onchange="checkSchedAdd()"/>
-        </div>
-        <div>
-          <label class="form-label">Duration</label>
-          <select class="duration-select" id="schedDurInput" oninput="checkSchedAdd()"></select>
-        </div>
-        <div>
-          <label class="form-label">Recurring</label>
-          <div class="recur-toggle-row">
-            <label class="check-label">
-              <input type="checkbox" id="schedRecurringCheck" onchange="toggleRecurringDays()"/>
-              Repeat weekly
-            </label>
-          </div>
-          <div class="recur-day-picker" id="schedDayPicker">
-            <button class="recur-day-btn" data-day="0" onclick="toggleRecurringDay(0)">Sun</button>
-            <button class="recur-day-btn" data-day="1" onclick="toggleRecurringDay(1)">Mon</button>
-            <button class="recur-day-btn" data-day="2" onclick="toggleRecurringDay(2)">Tue</button>
-            <button class="recur-day-btn" data-day="3" onclick="toggleRecurringDay(3)">Wed</button>
-            <button class="recur-day-btn" data-day="4" onclick="toggleRecurringDay(4)">Thu</button>
-            <button class="recur-day-btn" data-day="5" onclick="toggleRecurringDay(5)">Fri</button>
-            <button class="recur-day-btn" data-day="6" onclick="toggleRecurringDay(6)">Sat</button>
-          </div>
-        </div>
-        <button class="add-sched-btn" id="schedAddBtn" onclick="addScheduledTask()" disabled>Schedule It</button>
-      </div>
-    </div>
 
 
   </div>
+
+<!-- FLEX TASK LIGHTBOX -->
+<div class="add-form-overlay" id="addFormOverlay" onclick="if(event.target===this)closeAddForm()">
+  <div class="add-form-modal" id="addFormInner">
+    <div class="add-form-modal-header">
+      <span class="add-form-modal-title">Add Flex Task</span>
+      <button class="add-form-modal-close" onclick="closeAddForm()">✕</button>
+    </div>
+    <div class="add-form">
+      <div>
+        <label class="form-label">Task Name</label>
+        <input class="task-input" id="taskInput" placeholder="What needs doing?" maxlength="120"
+               oninput="checkAdd()" onkeydown="if(event.key==='Enter') addTask(); if(event.key==='Escape') closeAddForm()"/>
+      </div>
+      <div>
+        <label class="form-label">Priority</label>
+        <div class="priority-group">
+          <button class="p-btn" id="pb1" onclick="selectP(1)">Urgent</button>
+          <button class="p-btn" id="pb2" onclick="selectP(2)">High</button>
+          <button class="p-btn" id="pb3" onclick="selectP(3)">Medium</button>
+          <button class="p-btn" id="pb4" onclick="selectP(4)">Low</button>
+        </div>
+      </div>
+      <div>
+        <label class="form-label">Duration</label>
+        <select class="duration-select" id="durationInput"></select>
+      </div>
+      <button class="add-btn" id="addBtn" onclick="addTask()" disabled>Add Flex Task</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCHEDULED TASK LIGHTBOX -->
+<div class="add-form-overlay" id="addSchedFormOverlay" onclick="if(event.target===this)closeSchedForm()">
+  <div class="add-form-modal" style="border-color:rgba(126,200,227,0.3)">
+    <div class="add-form-modal-header">
+      <span class="add-form-modal-title">Schedule a Task</span>
+      <button class="add-form-modal-close" onclick="closeSchedForm()">✕</button>
+    </div>
+    <div class="add-sched-form" id="addSchedFormInner">
+      <div>
+        <label class="form-label">Task Name</label>
+        <input class="task-input" id="schedTitleInput" placeholder="Meeting, appointment..." maxlength="120"
+               oninput="checkSchedAdd()" onkeydown="if(event.key==='Enter') addScheduledTask(); if(event.key==='Escape') closeSchedForm()"/>
+      </div>
+      <div>
+        <label class="form-label">Anchor</label>
+        <div style="display:flex;gap:6px;margin-bottom:8px;">
+          <button class="p-btn sel-sched active-anchor" id="anchorStartBtn" onclick="setAnchor('start');checkSchedAdd()" style="flex:1;border-color:var(--sched);color:var(--sched);background:rgba(126,200,227,0.1)">Start time</button>
+          <button class="p-btn" id="anchorEndBtn" onclick="setAnchor('end');checkSchedAdd()" style="flex:1">End time</button>
+        </div>
+        <input class="time-input" id="schedTimeInput" type="time" oninput="checkSchedAdd()" onchange="checkSchedAdd()"/>
+      </div>
+      <div>
+        <label class="form-label">Duration</label>
+        <select class="duration-select" id="schedDurInput" oninput="checkSchedAdd()"></select>
+      </div>
+      <div>
+        <label class="form-label">Recurring</label>
+        <div class="recur-toggle-row">
+          <label class="check-label">
+            <input type="checkbox" id="schedRecurringCheck" onchange="toggleRecurringDays()"/>
+            Repeat weekly
+          </label>
+        </div>
+        <div class="recur-day-picker" id="schedDayPicker">
+          <button class="recur-day-btn" data-day="0" onclick="toggleRecurringDay(0)">Sun</button>
+          <button class="recur-day-btn" data-day="1" onclick="toggleRecurringDay(1)">Mon</button>
+          <button class="recur-day-btn" data-day="2" onclick="toggleRecurringDay(2)">Tue</button>
+          <button class="recur-day-btn" data-day="3" onclick="toggleRecurringDay(3)">Wed</button>
+          <button class="recur-day-btn" data-day="4" onclick="toggleRecurringDay(4)">Thu</button>
+          <button class="recur-day-btn" data-day="5" onclick="toggleRecurringDay(5)">Fri</button>
+          <button class="recur-day-btn" data-day="6" onclick="toggleRecurringDay(6)">Sat</button>
+        </div>
+      </div>
+      <button class="add-sched-btn" id="schedAddBtn" onclick="addScheduledTask()" disabled>Schedule It</button>
+    </div>
+  </div>
+</div>
 
   <!-- INTERVAL TIMER PANEL (always present) -->
   <div class="interval-timer-panel" id="intervalTimerPanel">
@@ -3062,7 +3079,9 @@
           start = findGap(Math.max(CAL_START, nowMins - dur), dur);
           end   = start + dur;
         } else {
-          start = findGap(calStart, dur);
+          // Use actual calStartTime position — don't let findGap shift the block,
+          // which would cause a mismatch vs the "started X" label on the NOW card.
+          start = calStart;
           end   = start + dur;
         }
       } else {
@@ -3180,39 +3199,34 @@
     if (line) line.style.top = minsToY(nowMins) + 'px';
   }
 
-  // ── Add form ───────────────────────────────────────────────────────────
-  function toggleAddForm() {
-    // Close sched form if open
-    if (schedOpen) {
-      schedOpen = false;
-      document.getElementById('addSchedFormWrap').classList.remove('open');
-      document.getElementById('addSchedToggleBtn').classList.remove('open');
-    }
-    addOpen = !addOpen;
-    document.getElementById('addFormWrap').classList.toggle('open', addOpen);
-    document.getElementById('addToggleBtn').classList.toggle('open', addOpen);
-    if (addOpen) {
-      if (!selPriority) selectP(3); // pre-select Medium
-      setTimeout(() => document.getElementById('taskInput').focus(), 240);
-    }
+  // ── Add form (lightbox) ────────────────────────────────────────────────
+  function toggleAddForm() { openAddForm(); }  // keep old name for any callers
+  function openAddForm() {
+    closeSchedForm();
+    addOpen = true;
+    if (!selPriority) selectP(3); // pre-select Medium
+    document.getElementById('addFormOverlay').classList.add('active');
+    setTimeout(() => document.getElementById('taskInput').focus(), 80);
+  }
+  function closeAddForm() {
+    addOpen = false;
+    document.getElementById('addFormOverlay').classList.remove('active');
   }
   function selectP(n) {
     selPriority = n;
     for (let i = 1; i <= 4; i++)
       document.getElementById(`pb${i}`).className = 'p-btn' + (i===n ? ` sel-${n}` : '');
-    const btn  = document.getElementById('addToggleBtn');
-    const form = document.getElementById('addFormInner');
-    const add  = document.getElementById('addBtn');
-    const cls  = ['pcolor-1','pcolor-2','pcolor-3','pcolor-4'];
-    cls.forEach(c => { btn.classList.remove(c); form.classList.remove(c); add.classList.remove(c); });
-    if (n) { btn.classList.add(`pcolor-${n}`); form.classList.add(`pcolor-${n}`); add.classList.add(`pcolor-${n}`); }
+    const modal = document.getElementById('addFormInner');
+    const add   = document.getElementById('addBtn');
+    const cls   = ['pcolor-1','pcolor-2','pcolor-3','pcolor-4'];
+    cls.forEach(c => { modal.classList.remove(c); add.classList.remove(c); });
+    if (n) { modal.classList.add(`pcolor-${n}`); add.classList.add(`pcolor-${n}`); }
     checkAdd();
   }
   function checkAdd() {
     document.getElementById('addBtn').disabled =
       !(document.getElementById('taskInput').value.trim() && selPriority);
   }
-  document.getElementById('taskInput').addEventListener('input', checkAdd);
 
   function addTask() {
     const title = document.getElementById('taskInput').value.trim();
@@ -3224,20 +3238,17 @@
       addedAt:  Date.now(), flexOrder,
       duration: parseInt(durInp.value) || DEFAULT_DUR,
     });
-    // Reset
+    // Reset form
     document.getElementById('taskInput').value = '';
     durInp.value = '60';
     selPriority = null;
     for (let i = 1; i <= 4; i++) document.getElementById(`pb${i}`).className = 'p-btn';
     ['pcolor-1','pcolor-2','pcolor-3','pcolor-4'].forEach(c => {
-      document.getElementById('addToggleBtn').classList.remove(c);
       document.getElementById('addFormInner').classList.remove(c);
       document.getElementById('addBtn').classList.remove(c);
     });
     checkAdd();
-    save(); addOpen = false;
-    document.getElementById('addFormWrap').classList.remove('open');
-    document.getElementById('addToggleBtn').classList.remove('open');
+    save(); closeAddForm();
     render();
   }
 
@@ -3252,22 +3263,19 @@
     endBtn.style.cssText   = which === 'end'   ? active : inactive;
   }
 
-  function toggleSchedForm() {
-    if (addOpen) {
-      addOpen = false;
-      document.getElementById('addFormWrap').classList.remove('open');
-      document.getElementById('addToggleBtn').classList.remove('open');
-    }
-    schedOpen = !schedOpen;
-    document.getElementById('addSchedFormWrap').classList.toggle('open', schedOpen);
-    document.getElementById('addSchedToggleBtn').classList.toggle('open', schedOpen);
-    if (schedOpen) {
-      // Pre-fill with 9:00am so the field is never blank
-      const ti = document.getElementById('schedTimeInput');
-      if (!ti.value) ti.value = '09:00';
-      checkSchedAdd();
-      setTimeout(() => document.getElementById('schedTitleInput').focus(), 240);
-    }
+  function toggleSchedForm() { openSchedForm(); }  // keep old name for any callers
+  function openSchedForm() {
+    closeAddForm();
+    schedOpen = true;
+    const ti = document.getElementById('schedTimeInput');
+    if (!ti.value) ti.value = '09:00';
+    checkSchedAdd();
+    document.getElementById('addSchedFormOverlay').classList.add('active');
+    setTimeout(() => document.getElementById('schedTitleInput').focus(), 80);
+  }
+  function closeSchedForm() {
+    schedOpen = false;
+    document.getElementById('addSchedFormOverlay').classList.remove('active');
   }
 
   function checkSchedAdd() {
@@ -3353,9 +3361,7 @@
     document.querySelectorAll('.recur-day-btn').forEach(b => b.classList.remove('active'));
     setAnchor('start');
     checkSchedAdd();
-    schedOpen = false;
-    document.getElementById('addSchedFormWrap').classList.remove('open');
-    document.getElementById('addSchedToggleBtn').classList.remove('open');
+    closeSchedForm();
     render();
   }
 
@@ -3978,15 +3984,20 @@
     intervalNowTaskId      = task.id;
     currentInterval        = 1;
     if (intervalAdaptive) {
-      totalIntervals          = 1;
-      const elapsed = task.calStartTime
-        ? Math.floor((Date.now() - task.calStartTime) / 60000) : 0;
-      currentIntervalDuration = Math.max(1, taskDuration - elapsed);
+      totalIntervals = 1;
+      if (task.calStartTime) {
+        const elapsedSecs = Math.floor((Date.now() - task.calStartTime) / 1000);
+        const totalSecs   = taskDuration * 60;
+        intervalSecs      = Math.max(0, totalSecs - elapsedSecs);
+      } else {
+        intervalSecs = taskDuration * 60;
+      }
+      currentIntervalDuration = Math.ceil(intervalSecs / 60);
     } else {
       totalIntervals          = Math.ceil(taskDuration / intervalTimerMins) || 1;
       currentIntervalDuration = Math.min(intervalTimerMins, taskDuration);
+      intervalSecs            = currentIntervalDuration * 60;
     }
-    intervalSecs           = currentIntervalDuration * 60;
     intervalCountingUp     = false;
     intervalCountUpStartMs = null;
     intervalIsPaused       = false;
@@ -4061,6 +4072,14 @@
     if (nowTask.id !== intervalNowTaskId) {
       startIntervalTimerForTask(nowTask);
     } else {
+      // In adaptive mode, resync from calStartTime on every render so that
+      // duration edits and app reloads always show accurate remaining time.
+      if (intervalAdaptive && nowTask.calStartTime && !intervalCountingUp && !intervalIsPaused) {
+        const taskDuration = nowTask.duration || DEFAULT_DUR;
+        const elapsedSecs  = Math.floor((Date.now() - nowTask.calStartTime) / 1000);
+        intervalSecs       = Math.max(0, taskDuration * 60 - elapsedSecs);
+        currentIntervalDuration = Math.ceil(intervalSecs / 60);
+      }
       updateIntervalTimerPanel();
     }
   }
