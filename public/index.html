@@ -330,7 +330,7 @@
 
   /* ── PRIORITY DROPDOWN ───────────────────────────────────────────────── */
   .p-dropdown {
-    position: fixed; z-index: 2000;
+    position: fixed; z-index: 9950;
     background: var(--surface2); border: 1px solid var(--border);
     border-radius: 8px; padding: 5px; box-shadow: 0 8px 28px rgba(0,0,0,0.6);
     display: none; flex-direction: column; gap: 3px; min-width: 90px;
@@ -2492,10 +2492,12 @@
 
   function changeTaskCategory(catId) {
     if (!cdTargetId) return;
+    const inDone = !!doneTasks.find(t => t.id === cdTargetId);
     const task = tasks.find(t => t.id === cdTargetId) || doneTasks.find(t => t.id === cdTargetId);
     if (task) { task.categoryOverride = catId; save(); }
     hideCategoryDropdown();
-    render();
+    if (inDone) { _renderBlockDetail(); renderCalendar(); renderCategoryTally(); }
+    else render();
   }
 
   function hideCategoryDropdown() {
