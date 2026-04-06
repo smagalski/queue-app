@@ -4066,24 +4066,6 @@
       else catMins[categoryRules[categoryRules.length - 1].id] += mins;
     }
 
-    // Add elapsed time on the current active task (NOW slot)
-    const allSorted = getAllSorted();
-    const nowTask = allSorted[0];
-    if (nowTask && !nowTask.isBreak) {
-      let elapsedMins = 0;
-      if (nowTask.calStartTime) {
-        elapsedMins = Math.floor((Date.now() - nowTask.calStartTime) / 60000);
-      } else if (isScheduled(nowTask) && nowTask._stMins != null) {
-        const nowMins = getPST().getHours() * 60 + getPST().getMinutes();
-        elapsedMins = Math.max(0, nowMins - nowTask._stMins);
-      }
-      if (elapsedMins > 0) {
-        const catId = getCategoryForTask(nowTask.title, {}, nowTask.id, nowTask.categoryOverride);
-        if (catMins[catId] !== undefined) catMins[catId] += elapsedMins;
-        else catMins[categoryRules[categoryRules.length - 1].id] += elapsedMins;
-      }
-    }
-
     const entries = categoryRules
       .map((cat, i) => ({ cat, mins: catMins[cat.id] || 0, color: CAT_TALLY_COLORS[i % CAT_TALLY_COLORS.length] }))
       .filter(e => e.mins > 0);
