@@ -1008,6 +1008,44 @@
     transition: color 0.2s;
   }
   .bbp-tally.over { color: var(--p1); }
+  /* ── AUTO-BREAK PROMPT ─────────────────────────────────────────────────── */
+  .auto-break-prompt {
+    position: fixed; inset: 0; z-index: 9100;
+    display: none; align-items: center; justify-content: center;
+    background: rgba(11,10,15,0.75); backdrop-filter: blur(4px);
+  }
+  .auto-break-prompt.active { display: flex; }
+  .abp-card {
+    background: #1a1825; border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px; padding: 32px 36px; max-width: 320px; width: 90%;
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  }
+  .abp-icon { font-size: 36px; line-height: 1; }
+  .abp-title {
+    font-size: 15px; font-weight: 700; color: #e0daf8; letter-spacing: 0.01em;
+  }
+  .abp-body {
+    font-size: 12px; color: var(--text-dim); text-align: center; line-height: 1.6;
+  }
+  .abp-btns {
+    display: flex; gap: 10px; margin-top: 8px; width: 100%;
+  }
+  .abp-btn-start {
+    flex: 1; padding: 10px; border-radius: 9px; border: none;
+    background: #7c5cbf; color: #fff; font-size: 12px; font-weight: 700;
+    cursor: pointer; letter-spacing: 0.03em;
+    transition: background 0.15s;
+  }
+  .abp-btn-start:hover { background: #8d6dd0; }
+  .abp-btn-skip {
+    flex: 1; padding: 10px; border-radius: 9px;
+    background: transparent; color: var(--text-dim);
+    border: 1px solid rgba(255,255,255,0.12); font-size: 12px; font-weight: 600;
+    cursor: pointer; letter-spacing: 0.03em; transition: background 0.15s;
+  }
+  .abp-btn-skip:hover { background: rgba(255,255,255,0.06); }
+
   /* ── BREAK OVERLAY ────────────────────────────────────────────────────── */
   .break-overlay {
     position: fixed; inset: 0; z-index: 9000;
@@ -1526,6 +1564,19 @@
 
 </div>
 
+<!-- AUTO-BREAK PROMPT -->
+<div class="auto-break-prompt" id="autoBreakPrompt">
+  <div class="abp-card">
+    <div class="abp-icon">☕</div>
+    <div class="abp-title">Break time!</div>
+    <div class="abp-body">Take your <strong id="abpDuration">5</strong>-minute automatic break?</div>
+    <div class="abp-btns">
+      <button class="abp-btn-start" onclick="startAutoBreak()">Start Break</button>
+      <button class="abp-btn-skip" onclick="skipAutoBreak()">Skip</button>
+    </div>
+  </div>
+</div>
+
 <!-- BREAK OVERLAY -->
 <div class="break-overlay" id="breakOverlay">
   <div class="break-heading">Taking a Break</div>
@@ -1776,6 +1827,8 @@
   let autoBreakAfterTask = false; // setting: auto-insert a break after each task is completed
   let autoBreakMins      = 5;     // duration (minutes) of auto-inserted breaks
   let breakIsAuto        = false; // whether the current break was triggered automatically
+  let _autoBreakPrompting = false; // auto-break prompt is currently visible
+  const _suppressAutoBreakBefore = new Set(); // task IDs before which auto-break prompt was skipped/taken
 
   // ── Firebase config ────────────────────────────────────────────────────
   // 1. Go to https://console.firebase.google.com and create a project
@@ -2829,6 +2882,19 @@
       }
     }
 
+    // Show auto-break prompt when an _ab card reaches slot 0
+    const topFlex = flexSorted[0];
+    if (topFlex && topFlex._ab && topFlex.isBreak && !breakStartMs && !_autoBreakPrompting) {
+      _autoBreakPrompting = true;
+      const abpDur = document.getElementById('abpDuration');
+      if (abpDur) abpDur.textContent = autoBreakMins;
+      document.getElementById('autoBreakPrompt').classList.add('active');
+    } else if (_autoBreakPrompting && (!topFlex || !topFlex._ab)) {
+      // Break was removed (e.g. auto-break toggled off) — dismiss the prompt
+      _autoBreakPrompting = false;
+      document.getElementById('autoBreakPrompt').classList.remove('active');
+    }
+
     renderCalendar();
 
     document.getElementById('queueCount').textContent =
@@ -3611,13 +3677,13 @@
     const newFlex = [];
     let bIdx = 0;
     for (let i = 0; i < flex.length; i++) {
-      newFlex.push(flex[i]);
-      // Insert a break after each non-break task, except after the last task
-      if (!flex[i].isBreak && i < flex.length - 1 && !flex[i + 1].isBreak) {
-        // Stable ID derived from the preceding task so currentNowId doesn't flap on re-render
+      // Insert a break BEFORE this task (except before the very first, and before/after existing breaks)
+      // This way, when the previous task completes, the break rises to slot 0 and triggers the prompt.
+      if (i > 0 && !flex[i].isBreak && !flex[i - 1].isBreak && !_suppressAutoBreakBefore.has(flex[i].id)) {
         newFlex.push({ id: -(++bIdx), title: 'Break', priority: 1,
           addedAt: Date.now(), duration: autoBreakMins, isBreak: true, _ab: true });
       }
+      newFlex.push(flex[i]);
     }
     newFlex.forEach((t, i) => { t.flexOrder = i; });
     tasks = tasks.filter(t => isScheduled(t)).concat(newFlex);
@@ -3625,6 +3691,14 @@
 
   function setAutoBreakAfterTask(on) {
     autoBreakAfterTask = on;
+    if (!on) {
+      // Reset skips so breaks re-prompt from scratch if re-enabled
+      _suppressAutoBreakBefore.clear();
+      if (_autoBreakPrompting) {
+        _autoBreakPrompting = false;
+        document.getElementById('autoBreakPrompt').classList.remove('active');
+      }
+    }
     saveBreakState();
     save(); render();
   }
@@ -3708,42 +3782,97 @@
     breakTimerInt = setInterval(updateBreakTimer, 1000);
   }
 
+  function _suppressCurrentAutoBreak() {
+    // Record the task immediately after the _ab break so we don't re-prompt for this slot
+    const flex = tasks.filter(t => !isScheduled(t))
+      .sort((a, b) => (a.flexOrder ?? Infinity) - (b.flexOrder ?? Infinity)
+                   || a.priority - b.priority || a.addedAt - b.addedAt);
+    const breakIdx = flex.findIndex(t => t._ab && t.isBreak);
+    if (breakIdx >= 0 && flex[breakIdx + 1]) {
+      _suppressAutoBreakBefore.add(flex[breakIdx + 1].id);
+    }
+  }
+
+  function startAutoBreak() {
+    _autoBreakPrompting = false;
+    document.getElementById('autoBreakPrompt').classList.remove('active');
+    _suppressCurrentAutoBreak();
+
+    breakIsAuto  = true;
+    breakStartMs = Date.now();
+    breakTaskId  = null; // _ab tasks are ephemeral — no real task to mark done
+
+    const badge = document.getElementById('breakTypeBadge');
+    if (badge) badge.textContent = 'Automatic';
+    save();
+    render();
+    updateBreakTimer();
+    document.getElementById('breakOverlay').classList.add('active');
+    if (!breakTimerInt) breakTimerInt = setInterval(updateBreakTimer, 1000);
+  }
+
+  function skipAutoBreak() {
+    _autoBreakPrompting = false;
+    document.getElementById('autoBreakPrompt').classList.remove('active');
+    _suppressCurrentAutoBreak();
+    render();
+  }
+
   function updateBreakTimer() {
     if (!breakStartMs) return;
     const elapsedSec  = Math.floor((Date.now() - breakStartMs) / 1000);
     const elapsedMins = Math.floor(elapsedSec / 60);
-    const s           = elapsedSec % 60;
-    const h           = Math.floor(elapsedSec / 3600);
-    const displayTime = h > 0
-      ? `${h}:${pad2(elapsedMins % 60)}:${pad2(s)}`
-      : `${elapsedMins}:${pad2(s)}`;
-
-    const totalUsed = breakUsedMins + elapsedMins;
-    const over      = totalUsed >= breakBudgetMins;
-    const remaining = Math.max(breakBudgetMins - totalUsed, 0);
 
     const timerEl  = document.getElementById('breakTimerDisplay');
     const statusEl = document.getElementById('breakStatus');
     const endBtn   = document.getElementById('endBreakBtn');
-
-    const budgetLabel = fmtBudgetMins(breakBudgetMins);
-    const pct = Math.min((totalUsed / breakBudgetMins) * 100, 100);
-
-    if (timerEl)  { timerEl.textContent = displayTime; timerEl.classList.toggle('over', over); }
-    if (statusEl) {
-      statusEl.textContent = over
-        ? `${totalUsed - breakBudgetMins} min over your ${budgetLabel} daily budget`
-        : `${remaining} min of ${budgetLabel} daily budget remaining`;
-      statusEl.classList.toggle('over', over);
-    }
-    if (endBtn) endBtn.classList.toggle('over', over);
-
     const overlay  = document.getElementById('breakOverlay');
     const infoBar  = document.getElementById('breakInfoBar');
     const infoText = document.getElementById('breakInfoText');
-    if (overlay)  overlay.classList.toggle('over', over);
-    if (infoBar)  { infoBar.style.width = pct + '%'; infoBar.classList.toggle('over', over); }
-    if (infoText) { infoText.textContent = `${totalUsed} min used of ${budgetLabel}`; infoText.classList.toggle('over', over); }
+
+    if (breakIsAuto) {
+      // ── Countdown mode for automatic breaks ─────────────────────────────
+      const totalSec  = autoBreakMins * 60;
+      const remainSec = Math.max(totalSec - elapsedSec, 0);
+      const rm = Math.floor(remainSec / 60);
+      const rs = remainSec % 60;
+      const pct = Math.max(0, (remainSec / totalSec) * 100);
+
+      if (timerEl)  { timerEl.textContent = `${rm}:${pad2(rs)}`; timerEl.classList.remove('over'); }
+      if (statusEl) { statusEl.textContent = `${rm}:${pad2(rs)} remaining`; statusEl.classList.remove('over'); }
+      if (endBtn)   endBtn.classList.remove('over');
+      if (overlay)  overlay.classList.remove('over');
+      if (infoBar)  { infoBar.style.width = pct + '%'; infoBar.classList.remove('over'); }
+      if (infoText) { infoText.textContent = `${autoBreakMins - Math.floor(elapsedSec / 60)} min remaining`; infoText.classList.remove('over'); }
+
+      // Auto-end when countdown hits zero
+      if (remainSec === 0) { endBreak(); return; }
+    } else {
+      // ── Count-up mode for manual breaks ─────────────────────────────────
+      const s = elapsedSec % 60;
+      const h = Math.floor(elapsedSec / 3600);
+      const displayTime = h > 0
+        ? `${h}:${pad2(elapsedMins % 60)}:${pad2(s)}`
+        : `${elapsedMins}:${pad2(s)}`;
+
+      const totalUsed   = breakUsedMins + elapsedMins;
+      const over        = totalUsed >= breakBudgetMins;
+      const remaining   = Math.max(breakBudgetMins - totalUsed, 0);
+      const budgetLabel = fmtBudgetMins(breakBudgetMins);
+      const pct         = Math.min((totalUsed / breakBudgetMins) * 100, 100);
+
+      if (timerEl)  { timerEl.textContent = displayTime; timerEl.classList.toggle('over', over); }
+      if (statusEl) {
+        statusEl.textContent = over
+          ? `${totalUsed - breakBudgetMins} min over your ${budgetLabel} daily budget`
+          : `${remaining} min of ${budgetLabel} daily budget remaining`;
+        statusEl.classList.toggle('over', over);
+      }
+      if (endBtn)   endBtn.classList.toggle('over', over);
+      if (overlay)  overlay.classList.toggle('over', over);
+      if (infoBar)  { infoBar.style.width = pct + '%'; infoBar.classList.toggle('over', over); }
+      if (infoText) { infoText.textContent = `${totalUsed} min used of ${budgetLabel}`; infoText.classList.toggle('over', over); }
+    }
   }
 
   function endBreak() {
