@@ -2968,6 +2968,7 @@
     updateBreakUI();
     _refreshBlockDetail();
     syncIntervalTimer();
+    renderCategoryTally();
   }
 
   // ── Calendar ───────────────────────────────────────────────────────────
@@ -3666,12 +3667,13 @@
 
   function startDoneTitleEdit(taskId, titleEl) {
     _doTitleEdit(doneTasks.find(t => t.id === taskId), titleEl,
-      () => { save(); _renderBlockDetail(); renderCalendar(); }, null);
+      () => { save(); _renderBlockDetail(); renderCalendar(); renderCategoryTally(); }, null);
   }
 
   function startCalTitleEdit(blockTask, isDone, spanEl) {
     const arr = isDone ? doneTasks : tasks;
-    _doTitleEdit(arr.find(t => t.id === blockTask.id), spanEl, renderCalendar,
+    _doTitleEdit(arr.find(t => t.id === blockTask.id), spanEl,
+      () => { renderCalendar(); renderCategoryTally(); },
       'background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,0.5);outline:none;color:inherit;font:inherit;width:100%;padding:0');
   }
 
