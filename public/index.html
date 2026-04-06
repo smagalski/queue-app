@@ -1868,7 +1868,7 @@
   let intervalSecs      = null;   // remaining seconds in current interval
   let intervalTimerHandle       = null;   // setInterval handle
   let intervalIsPaused          = false;  // timer is paused
-  let intervalAdaptive          = false;  // adaptive mode (timer = task duration)
+  let intervalAdaptive          = true;   // adaptive mode (timer = task duration)
   let intervalCountingUp        = false;  // counting up after last interval (auto-complete off)
   let intervalCountUpStartMs    = null;   // when count-up began
   let _intervalSchedPromptShown = false;  // prevent duplicate scheduled interrupt prompt
