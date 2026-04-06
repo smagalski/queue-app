@@ -1,10 +1,10 @@
 {
   "version": "0.1.11",
-  "notes": "Fixed Google Calendar OAuth in the Mac app (window.__TAURI__ was not exposed). Fixed calendar timeline overlaps. Break tasks excluded from task count.",
-  "pub_date": "2026-04-06T20:58:15Z",
+  "notes": "Fixed Google Calendar OAuth PKCE code verifier bug. Fixed window.__TAURI__ not exposed in WKWebView. Fixed calendar timeline overlaps. Break tasks excluded from task count.",
+  "pub_date": "2026-04-06T21:00:42Z",
   "platforms": {
     "darwin-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUZnpsRGtodXF6dUVpSmxUVlNFek54QmZrcXc4RHNYTGUwZ2dhQ2d0RGg5NjBSMExYbUJvVWZETi9YUGhTd2NneUpWR1I0cEJHQXJrWHRTS0NnRklxeWU4dXRzSUN2YVF3PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc1NTA5MDk1CWZpbGU6UXVldWVfMC4xLjExX3g2NC5kbWcKVGN6L3hZd1JYQjdqZ0wySUsxWnJjaVhCUnpZZCswdEpLdXFDL3dTc3VEWnZUZlJ1VjhsSDRCQ3R4VURuUk4vSGJCMFJDZStjWk1uRHNHQzNKaTJTRHc9PQo=",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUZnpsRGtodXF6dUdJRk4xOC9WWE5ZRnJQMEI3RVlrelViL2c3TTdBUkNza0NvVEJMamkzTDBZNDEvWjExVTkzSGE3N2dmdmVJUWlSSmJGTms4bDg0WDFzSzErRUE4M2dnPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc1NTA5MjQyCWZpbGU6UXVldWVfMC4xLjExX3g2NC5kbWcKeEZPL2NKSlNVTmlrbWtxSk9VWDFXNHhXQ1k3bmc1c1Jkekl4WVAyN293cXhPWFlOaGVRVnhtL3RZQmEzckM3UEJ4QituTlhGUnVuMC9LUXY1TEM2QkE9PQo=",
       "url": "https://github.com/smagalski/Queue-App/releases/download/v0.1.11/Queue_0.1.11_x64.dmg"
     }
   }
