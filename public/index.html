@@ -4127,11 +4127,15 @@
       .sort((a, b) => (a.flexOrder ?? Infinity) - (b.flexOrder ?? Infinity)
                    || a.priority - b.priority || a.addedAt - b.addedAt);
     const newFlex = [];
-    for (const task of flex) {
+    for (let i = 0; i < flex.length; i++) {
+      const task = flex[i];
       newFlex.push(task);
-      // Insert a break after every task
-      newFlex.push({ id: _nextIaId(), title: 'Break', priority: 1,
-        addedAt: Date.now(), duration: intervalBreakMins, isBreak: true, _ia: true });
+      // Insert a break after each non-break task, but not after the last task
+      // (pattern: Task → Break → Task → Break → Task, never Break-first or trailing Break)
+      if (!task.isBreak && i < flex.length - 1) {
+        newFlex.push({ id: _nextIaId(), title: 'Break', priority: 1,
+          addedAt: Date.now(), duration: intervalBreakMins, isBreak: true, _ia: true });
+      }
     }
     newFlex.forEach((t, i) => { t.flexOrder = i; });
     tasks = tasks.filter(t => isScheduled(t)).concat(newFlex);
