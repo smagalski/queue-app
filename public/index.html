@@ -1123,9 +1123,14 @@
   /* ── ADD TASK BUTTONS ─────────────────────────────────────────────────── */
   .add-btns-row { margin-top: 0; }
 
-  /* ── HORIZONTAL BREAK CONTROLS (right column, below End Day/Day Off) ─── */
+  /* ── HORIZONTAL BREAK CONTROLS (right column, sticky bottom) ─────────── */
   .break-controls-row {
     display: flex; align-items: flex-start; flex-wrap: wrap; gap: 0;
+    position: sticky; bottom: 0; z-index: 2; margin-top: auto;
+    background: var(--bg); border-top: 1px solid var(--border);
+    margin-left: -20px; margin-right: -20px;
+    padding: 10px 20px; box-sizing: border-box;
+    max-width: none; width: calc(100% + 40px);
   }
   .bcr-section { flex: 1; display: flex; flex-direction: column; gap: 4px; }
   .bcr-section:first-child { padding-right: 10px; }
@@ -1856,7 +1861,8 @@
   let autoBreakMins      = 5;     // duration (minutes) of auto-inserted breaks
   let breakIsAuto        = false; // whether the current break was triggered automatically
   let _autoBreakPrompting = false; // auto-break prompt is currently visible
-  const _suppressAutoBreakBefore = new Set(); // task IDs before which auto-break prompt was skipped/taken
+  const _suppressAutoBreakBefore = new Set(); // task IDs before which auto-break was skipped/taken
+  const _forceBreakBefore = new Set();        // task IDs that need a break inserted before them (even if first)
 
   // ── Firebase config ────────────────────────────────────────────────────
   // 1. Go to https://console.firebase.google.com and create a project
@@ -3568,6 +3574,17 @@
       task.endTime   = `${dp}T${fmtMins(nowMins)}`;
     }
 
+    // If auto-breaks are on and a real flex task was just completed,
+    // record the next task's ID so applyAutoBreaks inserts a break before it
+    // even if it becomes the first task in the queue.
+    if (autoBreakAfterTask && !task.isBreak && !task._ab && !isScheduled(task)) {
+      const nextFlex = tasks
+        .filter(t => !isScheduled(t) && !t._ab && !t.isBreak)
+        .sort((a, b) => (a.flexOrder ?? Infinity) - (b.flexOrder ?? Infinity)
+                     || a.priority - b.priority || a.addedAt - b.addedAt);
+      if (nextFlex.length > 0) _forceBreakBefore.add(nextFlex[0].id);
+    }
+
     doneTasks.unshift({ ...task, doneAt });
     closeBlockDetail();
     save(); render();
@@ -3708,9 +3725,20 @@
     const newFlex = [];
     let bIdx = 0;
     for (let i = 0; i < flex.length; i++) {
-      // Insert a break BEFORE this task (except before the very first, and before/after existing breaks)
-      // This way, when the previous task completes, the break rises to slot 0 and triggers the prompt.
-      if (i > 0 && !flex[i].isBreak && !flex[i - 1].isBreak && !_suppressAutoBreakBefore.has(flex[i].id)) {
+      let insertBreak = false;
+      if (i === 0) {
+        // Insert break before the first task only when explicitly requested
+        // (i.e. a real task was just completed and this is the next in queue).
+        insertBreak = _forceBreakBefore.has(flex[i].id)
+                      && !flex[i].isBreak
+                      && !_suppressAutoBreakBefore.has(flex[i].id);
+      } else {
+        // Insert a break BEFORE this task when the previous task isn't a break.
+        // This way, when the previous task completes, the break rises to slot 0.
+        insertBreak = !flex[i].isBreak && !flex[i - 1].isBreak
+                      && !_suppressAutoBreakBefore.has(flex[i].id);
+      }
+      if (insertBreak) {
         newFlex.push({ id: -(++bIdx), title: 'Break', priority: 1,
           addedAt: Date.now(), duration: autoBreakMins, isBreak: true, _ab: true });
       }
@@ -3725,6 +3753,7 @@
     if (!on) {
       // Reset skips so breaks re-prompt from scratch if re-enabled
       _suppressAutoBreakBefore.clear();
+      _forceBreakBefore.clear();
       if (_autoBreakPrompting) {
         _autoBreakPrompting = false;
         document.getElementById('autoBreakPrompt').classList.remove('active');
@@ -3819,8 +3848,10 @@
       .sort((a, b) => (a.flexOrder ?? Infinity) - (b.flexOrder ?? Infinity)
                    || a.priority - b.priority || a.addedAt - b.addedAt);
     const breakIdx = flex.findIndex(t => t._ab && t.isBreak);
-    if (breakIdx >= 0 && flex[breakIdx + 1]) {
-      _suppressAutoBreakBefore.add(flex[breakIdx + 1].id);
+    const nextTask = breakIdx >= 0 ? flex[breakIdx + 1] : null;
+    if (nextTask) {
+      _suppressAutoBreakBefore.add(nextTask.id);
+      _forceBreakBefore.delete(nextTask.id);
     }
   }
 
