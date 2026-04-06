@@ -1403,9 +1403,10 @@
       <div class="cal-drawer-label">Timeline</div>
 <div class="cal-container" id="calContainer"></div>
     </div>
-    <div class="bbp-header" style="padding:10px 12px 0">
-      <span class="bbp-label">Day Start</span>
-      <select class="bbp-select" id="calStartSelect" onchange="setCalBounds()">
+    <div style="flex-shrink:0;border-top:1px solid var(--border);padding:10px 12px;display:flex;flex-direction:column;gap:7px;">
+      <div class="bbp-header">
+        <span class="bbp-label">Day Start</span>
+        <select class="bbp-select" id="calStartSelect" onchange="setCalBounds()">
           <option value="240">4 AM</option>
           <option value="300">5 AM</option>
           <option value="360">6 AM</option>
@@ -1414,7 +1415,7 @@
           <option value="540">9 AM</option>
         </select>
       </div>
-      <div class="bbp-header" style="padding:4px 12px 10px">
+      <div class="bbp-header">
         <span class="bbp-label">Day End</span>
         <select class="bbp-select" id="calEndSelect" onchange="setCalBounds()">
           <option value="1080">6 PM</option>
