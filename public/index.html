@@ -946,11 +946,19 @@
   .break-toggle-btn.over { border-color: var(--p1); color: #fff; background: rgba(255,107,138,0.07); }
   .break-toggle-btn.over:hover:not(:disabled) { color: var(--p1); }
 
+  /* ── BOTTOM PANEL SECTIONS ────────────────────────────────────────────── */
+  .bottom-section {
+    margin-top: 0; padding: 12px 0 0;
+    border-top: 1px solid rgba(255,255,255,0.07);
+  }
+  .bottom-section-label {
+    font-size: 8px; font-weight: 700; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--text-dim); margin-bottom: 7px;
+  }
+
   /* ── END DAY BUTTON ───────────────────────────────────────────────────── */
   .end-btns-row {
     display: flex; gap: 8px;
-    margin-top: 20px; padding-top: 16px;
-    border-top: 1px solid rgba(255,255,255,0.07);
   }
   .end-btns-row .end-day-btn { margin-top: 0; flex: 1; }
   .end-day-btn {
@@ -1112,15 +1120,12 @@
   }
   .ab-toggle input:checked ~ .ab-thumb { transform: translateX(16px); }
 
-  /* ── END-DAY / DAY-OFF BUTTON ROW ────────────────────────────────────── */
-  /* (primary definition is .end-btns-row above; only add the flex:1/width:auto override here) */
-  .end-btns-row .end-day-btn { flex: 1; margin-top: 0; width: auto; }
+  /* ── ADD TASK BUTTONS ─────────────────────────────────────────────────── */
+  .add-btns-row { margin-top: 0; }
 
   /* ── HORIZONTAL BREAK CONTROLS (right column, below End Day/Day Off) ─── */
   .break-controls-row {
-    display: flex; align-items: flex-start; gap: 0;
-    margin-top: 10px; padding-top: 10px;
-    border-top: 1px solid rgba(255,255,255,0.07);
+    display: flex; align-items: flex-start; flex-wrap: wrap; gap: 0;
   }
   .bcr-section { flex: 1; display: flex; flex-direction: column; gap: 4px; }
   .bcr-section:first-child { padding-right: 10px; }
@@ -1442,24 +1447,31 @@
     <div class="done-list" id="doneList"></div>
 
 
-    <!-- ADD TASK — three buttons: Flex + Scheduled + Break -->
-    <div class="add-btns-row">
-      <button class="add-toggle-btn" id="addToggleBtn" onclick="openAddForm()">
-        <span class="add-toggle-icon">+</span>
-        Flex Task
-      </button>
-      <button class="add-sched-toggle-btn" id="addSchedToggleBtn" onclick="openSchedForm()">
-        <span class="add-toggle-icon">+</span>
-        Schedule
-      </button>
-      <button class="break-toggle-btn" id="takeBreakBtn" onclick="takeBreak()" disabled>Take a Break</button>
-      <button class="gcal-import-btn" id="gcalImportBtn" onclick="openGcalImport()">Google Cal</button>
+    <!-- BOTTOM SECTIONS -->
+    <div class="bottom-section">
+      <div class="bottom-section-label">Add</div>
+      <div class="add-btns-row">
+        <button class="add-toggle-btn" id="addToggleBtn" onclick="openAddForm()">
+          <span class="add-toggle-icon">+</span>
+          Flex Task
+        </button>
+        <button class="add-sched-toggle-btn" id="addSchedToggleBtn" onclick="openSchedForm()">
+          <span class="add-toggle-icon">+</span>
+          Schedule
+        </button>
+        <button class="break-toggle-btn" id="takeBreakBtn" onclick="takeBreak()" disabled>Take a Break</button>
+        <button class="gcal-import-btn" id="gcalImportBtn" onclick="openGcalImport()">Google Cal</button>
+      </div>
     </div>
-    <div class="end-btns-row">
-      <button class="end-day-btn" id="endDayBtn" onclick="openEndDayModal()">End Day</button>
-      <button class="end-day-btn" id="dayOffBtn" onclick="enterDayOff()">Day Off</button>
+    <div class="bottom-section">
+      <div class="bottom-section-label">Day</div>
+      <div class="end-btns-row">
+        <button class="end-day-btn" id="endDayBtn" onclick="openEndDayModal()">End Day</button>
+        <button class="end-day-btn" id="dayOffBtn" onclick="enterDayOff()">Day Off</button>
+      </div>
     </div>
-    <div class="break-controls-row" id="breakControlsRow">
+    <div class="bottom-section break-controls-row" id="breakControlsRow">
+      <div class="bottom-section-label" style="width:100%;margin-bottom:8px">Breaks</div>
       <div class="bcr-section">
         <div class="bcr-hd">
           <span class="bcr-label">Break Budget</span>
