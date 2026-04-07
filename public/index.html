@@ -532,6 +532,7 @@
   .edm-task-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
   .edm-task-title { font-size: 12px; color: var(--text-mid); }
   .edm-task-time  { font-size: 11px; color: var(--text-dim); }
+  .edm-cat-subtotal { display: flex; justify-content: space-between; padding: 5px 0 2px; font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.5); border-top: 1px solid rgba(255,255,255,0.1); margin-top: 1px; }
   .edm-priority-row { display: flex; gap: 8px; flex-wrap: wrap; }
   .edm-priority-chip {
     padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 600;
@@ -615,6 +616,7 @@
   .hdc-task-row { display: flex; justify-content: space-between; font-size: 11px; padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
   .hdc-task-title { color: var(--text-mid); }
   .hdc-task-time  { color: var(--text-dim); }
+  .hdc-cat-subtotal { display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; padding: 4px 0 2px; color: rgba(255,255,255,0.5); border-top: 1px solid rgba(255,255,255,0.08); margin-top: 1px; }
   .hdc-priority-row { display: flex; gap: 6px; flex-wrap: wrap; }
   .hdc-priority-chip { padding: 2px 8px; border-radius: 20px; font-size: 9px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
   .history-empty { text-align: center; color: var(--text-dim); font-size: 13px; padding: 60px 0; }
@@ -4254,6 +4256,9 @@
         </div>`;
       }
 
+      const catTotal = items.reduce((s, { mins }) => s + mins, 0);
+      if (catTotal > 0) html += `<div class="edm-cat-subtotal"><span>Total</span><span>${fmtTaskMins(catTotal)}</span></div>`;
+
       html += `</div></div>`;
     }
 
@@ -4521,6 +4526,8 @@
       for (const r of items) {
         taskHtml += `<div class="hdc-task-row"><span class="hdc-task-title">${esc(r.title)}</span><span class="hdc-task-time">${fmtTaskMins(r.mins)}</span></div>`;
       }
+      const catTotal = items.reduce((s, r) => s + r.mins, 0);
+      if (catTotal > 0) taskHtml += `<div class="hdc-cat-subtotal"><span>Total</span><span>${fmtTaskMins(catTotal)}</span></div>`;
       taskHtml += `</div></div>`;
     }
     if (!taskHtml) {
