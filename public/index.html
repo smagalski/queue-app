@@ -298,6 +298,33 @@
   .task-input:focus, .time-input:focus, .duration-select:focus { border-color: rgba(255,255,255,0.35); }
   .task-input::placeholder { color: var(--text-dim); }
   .time-input::-webkit-calendar-picker-indicator { filter: invert(0.35); cursor: pointer; }
+
+  /* ── SMART TIME PICKER ────────────────────────────────────────────────── */
+  .smart-time {
+    display: flex; align-items: stretch;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+    overflow: hidden; width: 100%; transition: border-color 0.15s; box-sizing: border-box;
+  }
+  .smart-time:focus-within { border-color: rgba(255,255,255,0.35); }
+  .st-hour, .st-min {
+    background: none; border: none; outline: none;
+    color: #fff; font-family: 'Inter',sans-serif; font-size: 12px;
+    text-align: center; -moz-appearance: textfield; padding: 8px 0;
+  }
+  .st-hour::-webkit-outer-spin-button, .st-hour::-webkit-inner-spin-button,
+  .st-min::-webkit-outer-spin-button,  .st-min::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .st-hour { width: 30px; padding-left: 10px; }
+  .st-min  { width: 26px; padding-right: 4px; }
+  .st-sep  { color: var(--text-dim); font-size: 12px; display: flex; align-items: center; padding: 0 1px; }
+  .st-ampm {
+    background: none; border: none; border-left: 1px solid var(--border);
+    color: var(--text-dim); font-family: 'Inter',sans-serif; font-size: 11px; font-weight: 600;
+    padding: 0 9px; cursor: pointer; transition: all 0.12s; white-space: nowrap;
+  }
+  .st-ampm:hover, .st-ampm:focus { background: rgba(255,255,255,0.08); color: #fff; outline: none; }
+  .smart-time.compact .st-hour, .smart-time.compact .st-min { font-size: 11px; padding-top: 5px; padding-bottom: 5px; }
+  .smart-time.compact .st-sep  { font-size: 11px; }
+  .smart-time.compact .st-ampm { font-size: 10px; padding: 0 7px; }
   .duration-select option { background: #1a1724; }
 
   .form-row-half { display: flex; gap: 12px; align-items: flex-start; }
@@ -488,6 +515,15 @@
   }
   .signout-btn:hover { border-color: #fff; color: #fff; background: rgba(255,255,255,0.05); }
 
+  /* ── TITLEBAR UNDO ────────────────────────────────────────────────────── */
+  .titlebar-undo-btn {
+    background: none; border: 1px solid var(--border); border-radius: 4px;
+    color: var(--text-dim); font-size: 15px; width: 28px; height: 26px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s; padding: 0;
+  }
+  .titlebar-undo-btn:hover { border-color: #fff; color: #fff; background: rgba(255,255,255,0.05); }
+
   /* ── GEAR MENU ────────────────────────────────────────────────────────── */
   .gear-wrap { position: relative; }
   .gear-btn {
@@ -512,6 +548,31 @@
   }
   .gear-menu-item:hover { background: rgba(255,255,255,0.07); color: #fff; }
   .gear-menu-divider { height: 1px; background: var(--border); margin: 3px 0; }
+
+  /* ── APP DETAILS OVERLAY ────────────────────────────────────────────── */
+  .app-details-overlay {
+    display: none; position: fixed; inset: 0; z-index: 1100;
+    background: rgba(0,0,0,0.75); align-items: center; justify-content: center;
+  }
+  .app-details-overlay.active { display: flex; }
+  .app-details-modal {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 28px; width: 400px; max-width: 94vw; max-height: 80vh;
+    overflow-y: auto; position: relative;
+  }
+  .app-details-close {
+    position: absolute; top: 14px; right: 16px;
+    background: none; border: none; color: var(--text-dim);
+    font-size: 18px; cursor: pointer; line-height: 1; padding: 4px;
+  }
+  .app-details-close:hover { color: #fff; }
+  .app-details-title { font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 18px; }
+  .app-details-row { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 12px; }
+  .app-details-label { color: var(--text-dim); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; font-size: 10px; }
+  .app-details-value { color: #fff; font-weight: 600; }
+  .app-details-changes-header { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); margin: 16px 0 8px; }
+  .app-details-change { font-size: 12px; color: var(--text-mid); padding: 4px 0; padding-left: 12px; position: relative; line-height: 1.5; }
+  .app-details-change::before { content: '·'; position: absolute; left: 2px; color: var(--text-dim); }
 
   /* ── END DAY MODAL ───────────────────────────────────────────────────── */
   .end-day-overlay {
@@ -788,15 +849,20 @@
     border-right: 1px solid var(--border);
     border-bottom: none;
     flex-direction: column;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
     flex-shrink: 0;
     position: sticky;
     top: 0;
     height: 100svh;            /* stick to viewport while right column scrolls */
   }
 
-  /* Clock: compact vertical stack */
+  /* Clock: sticky at top of scrollable left panel */
   body.mobile-view .clock-section {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--bg);
     flex-direction: column;
     align-items: center;
     justify-content: center;
@@ -813,11 +879,10 @@
     font-size: 9px; margin-top: 3px; text-align: center;
   }
 
-  /* Calendar: show inline in the sticky left column */
+  /* Calendar: show inline in the scrollable left column, natural height */
   body.mobile-view .calendar-section {
-    flex: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
+    flex-shrink: 0;
+    overflow: visible;
     display: block;
     padding: 0;
     cursor: default;
@@ -898,19 +963,27 @@
   body.mobile-view .task-input,
   body.mobile-view .time-input,
   body.mobile-view .duration-select { font-size: 16px; padding: 10px 10px; }
+  body.mobile-view .smart-time .st-hour,
+  body.mobile-view .smart-time .st-min { font-size: 16px; padding-top: 10px; padding-bottom: 10px; }
+  body.mobile-view .smart-time .st-sep  { font-size: 16px; }
+  body.mobile-view .smart-time .st-ampm { font-size: 14px; }
 
   /* More section touch target */
   body.mobile-view .more-header { padding: 10px 2px; }
 
-  /* Compact day-bounds: place between clock and calendar */
+  /* Compact day-bounds: stick to bottom of sidebar, below timeline */
   body.mobile-view .clock-section  { order: 1; }
+  body.mobile-view .calendar-section { order: 2; }
   body.mobile-view .cal-bounds-section {
     padding: 8px 8px;
-    order: 2;
+    order: 3;
     flex-shrink: 0;
-    border-bottom: 1px solid var(--border);
+    position: sticky;
+    bottom: 0;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    z-index: 1;
   }
-  body.mobile-view .calendar-section { order: 3; }
 
   /* ── AUTH SCREEN ──────────────────────────────────────────────────────── */
   #authScreen {
@@ -1328,6 +1401,7 @@
       <button class="seg-btn" id="segDesktop" onclick="applyViewMode(false)">🖥</button>
       <button class="seg-btn" id="segMobile"  onclick="applyViewMode(true)">📱</button>
     </div>
+    <button class="titlebar-undo-btn" id="titlebarUndoBtn" onclick="undoLastAction()" title="Undo last action" style="display:none">↺</button>
     <div class="gear-wrap" id="gearWrap" style="display:none">
       <button class="gear-btn" id="gearBtn" onclick="toggleGearMenu(event)">⚙</button>
       <div class="gear-menu" id="gearMenu">
@@ -1336,11 +1410,35 @@
         <button class="gear-menu-item" onclick="openCategoryManager();closeGearMenu()">Manage Categories</button>
         <button class="gear-menu-item" onclick="openClearHistoryConfirm();closeGearMenu()">Clear history older than 7 days</button>
         <div class="gear-menu-divider"></div>
+        <button class="gear-menu-item" onclick="openAppDetails();closeGearMenu()">App Details</button>
+        <div class="gear-menu-divider"></div>
         <button class="gear-menu-item" onclick="openPasswordModal();closeGearMenu()">Change Password</button>
         <div class="gear-menu-divider"></div>
         <button class="gear-menu-item" onclick="signOut()">Sign Out</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- APP DETAILS OVERLAY -->
+<div class="app-details-overlay" id="appDetailsOverlay">
+  <div class="app-details-modal">
+    <button class="app-details-close" onclick="document.getElementById('appDetailsOverlay').classList.remove('active')">✕</button>
+    <div class="app-details-title">App Details</div>
+    <div class="app-details-row">
+      <span class="app-details-label">Version</span>
+      <span class="app-details-value">v0.1.13</span>
+    </div>
+    <div class="app-details-row">
+      <span class="app-details-label">Deployed</span>
+      <span class="app-details-value">April 7, 2026</span>
+    </div>
+    <div class="app-details-changes-header">What's new</div>
+    <div class="app-details-change">Mobile two-column layout matching desktop</div>
+    <div class="app-details-change">Category subtotals in End Day report and Day History</div>
+    <div class="app-details-change">Fixed scrollbar bar at bottom of task panel</div>
+    <div class="app-details-change">ADD buttons wrap to 2×2 grid on mobile — no horizontal scrolling</div>
+    <div class="app-details-change">Day Start / Day End repositioned to top of mobile sidebar</div>
   </div>
 </div>
 
@@ -1589,7 +1687,12 @@
           <button class="p-btn sel-sched" id="anchorStartBtn" onclick="setAnchor('start');checkSchedAdd()" style="flex:1">Start time</button>
           <button class="p-btn" id="anchorEndBtn" onclick="setAnchor('end');checkSchedAdd()" style="flex:1">End time</button>
         </div>
-        <input class="time-input" id="schedTimeInput" type="time" oninput="checkSchedAdd()" onchange="checkSchedAdd()"/>
+        <div class="smart-time" id="schedTimeInput" data-onchange="checkSchedAdd()">
+          <input class="st-hour" type="text" inputmode="numeric" maxlength="2" placeholder="hh">
+          <span class="st-sep">:</span>
+          <input class="st-min" type="text" inputmode="numeric" maxlength="2" placeholder="mm">
+          <button class="st-ampm" type="button">AM</button>
+        </div>
       </div>
       <div>
         <label class="form-label">Duration</label>
@@ -1766,7 +1869,12 @@
       <button class="dd-anchor-btn active" id="sdAnchorStart" onclick="sdSetAnchor('start')">Start</button>
       <button class="dd-anchor-btn"        id="sdAnchorEnd"   onclick="sdSetAnchor('end')"  >End</button>
     </div>
-    <input class="time-input" id="sdTimeInput" type="time" style="font-size:11px;padding:5px 8px;" oninput="sdCheckSave()" onchange="sdCheckSave()"/>
+    <div class="smart-time compact" id="sdTimeInput" data-onchange="sdCheckSave()">
+      <input class="st-hour" type="text" inputmode="numeric" maxlength="2" placeholder="hh">
+      <span class="st-sep">:</span>
+      <input class="st-min" type="text" inputmode="numeric" maxlength="2" placeholder="mm">
+      <button class="st-ampm" type="button">AM</button>
+    </div>
     <select class="duration-select" id="sdDurInput" style="font-size:11px;padding:5px 8px;"></select>
     <button id="sdSaveBtn" class="dd-save-btn sched" onclick="commitSchedEdit()">Save</button>
     <button class="dd-sec-btn" onclick="convertToFlex()">Remove time → Flex</button>
@@ -1791,10 +1899,107 @@
 </div>
 
 <script>
+  // ── Smart time picker ─────────────────────────────────────────────────
+  function getSmartTime(id) {
+    const el = document.getElementById(id);
+    if (!el || !el.classList.contains('smart-time')) return el ? el.value : '';
+    const h = el.querySelector('.st-hour').value.trim();
+    const m = el.querySelector('.st-min').value.trim();
+    if (!h || !m) return '';
+    let hNum = parseInt(h, 10);
+    const mNum = parseInt(m, 10);
+    if (isNaN(hNum) || hNum < 1 || hNum > 12 || isNaN(mNum) || mNum < 0 || mNum > 59) return '';
+    const ap = el.querySelector('.st-ampm').textContent.trim();
+    if (ap === 'PM' && hNum !== 12) hNum += 12;
+    if (ap === 'AM' && hNum === 12) hNum = 0;
+    return `${String(hNum).padStart(2,'0')}:${String(mNum).padStart(2,'0')}`;
+  }
+
+  function setSmartTime(id, val24) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (!el.classList.contains('smart-time')) { el.value = val24 || ''; return; }
+    const hourEl = el.querySelector('.st-hour');
+    const minEl  = el.querySelector('.st-min');
+    const ampmEl = el.querySelector('.st-ampm');
+    if (!val24) { hourEl.value = ''; minEl.value = ''; ampmEl.textContent = 'AM'; return; }
+    const [hStr, mStr] = val24.split(':');
+    let hNum = parseInt(hStr, 10);
+    const mNum = parseInt(mStr, 10);
+    const ap = hNum >= 12 ? 'PM' : 'AM';
+    if (hNum > 12) hNum -= 12;
+    if (hNum === 0) hNum = 12;
+    hourEl.value = String(hNum);
+    minEl.value  = String(mNum).padStart(2, '0');
+    ampmEl.textContent = ap;
+  }
+
+  function _stAutoAmPm(hNum, ampmEl) {
+    if (hNum >= 6 && hNum <= 11) ampmEl.textContent = 'AM';
+    else if (hNum === 12 || (hNum >= 1 && hNum <= 5)) ampmEl.textContent = 'PM';
+  }
+
+  function initSmartTime(id) {
+    const el = document.getElementById(id);
+    if (!el || !el.classList.contains('smart-time')) return;
+    const hourEl = el.querySelector('.st-hour');
+    const minEl  = el.querySelector('.st-min');
+    const ampmEl = el.querySelector('.st-ampm');
+    const onchange = el.dataset.onchange;
+
+    function fireChange() { if (onchange) (new Function(onchange))(); }
+
+    hourEl.addEventListener('input', () => {
+      const val = hourEl.value.replace(/\D/g,'');
+      hourEl.value = val.slice(0, 2);
+      const num = parseInt(val, 10);
+      if (!isNaN(num)) _stAutoAmPm(num, ampmEl);
+      if (val.length === 2 || (val.length === 1 && num >= 3 && num <= 9)) {
+        minEl.focus(); minEl.select();
+      }
+      fireChange();
+    });
+    hourEl.addEventListener('keydown', e => {
+      if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        const cur = parseInt(hourEl.value, 10) || 12;
+        const next = e.key === 'ArrowUp' ? (cur % 12) + 1 : cur === 1 ? 12 : cur - 1;
+        hourEl.value = String(next);
+        _stAutoAmPm(next, ampmEl);
+        fireChange();
+      }
+    });
+
+    minEl.addEventListener('input', () => {
+      const val = minEl.value.replace(/\D/g,'');
+      minEl.value = val.slice(0, 2);
+      if (val.length === 2) ampmEl.focus();
+      fireChange();
+    });
+    minEl.addEventListener('keydown', e => {
+      if (e.key === 'Backspace' && !minEl.value) { hourEl.focus(); hourEl.select(); }
+    });
+    minEl.addEventListener('blur', () => {
+      const num = parseInt(minEl.value, 10);
+      if (!isNaN(num) && minEl.value.length === 1) minEl.value = String(num).padStart(2,'0');
+    });
+
+    ampmEl.addEventListener('click', e => {
+      e.preventDefault();
+      ampmEl.textContent = ampmEl.textContent === 'AM' ? 'PM' : 'AM';
+      fireChange();
+    });
+    ampmEl.addEventListener('keydown', e => {
+      if (e.key === 'a' || e.key === 'A') { ampmEl.textContent = 'AM'; e.preventDefault(); fireChange(); }
+      if (e.key === 'p' || e.key === 'P') { ampmEl.textContent = 'PM'; e.preventDefault(); fireChange(); }
+      if (e.key === 'Tab') return;
+    });
+  }
+
   // ── App constants ──────────────────────────────────────────────────────
   const DONE_TTL    = 48 * 60 * 60 * 1000;   // how long completed tasks persist
   const DEFAULT_DUR = 60;                      // default task duration in minutes
-  const PX_PER_MIN  = 44 / 60;                // calendar pixels per minute
+  let   PX_PER_MIN  = 44 / 60;                // calendar pixels per minute (recalculated on resize)
 
   // Priority display arrays (indexed 1–4: Urgent, High, Medium, Low)
   const P_LABELS = ['','URGENT','HIGH','MEDIUM','LOW'];
@@ -2043,6 +2248,10 @@
     if (m) m.classList.remove('open');
   }
   document.addEventListener('click', () => closeGearMenu());
+
+  function openAppDetails() {
+    document.getElementById('appDetailsOverlay').classList.add('active');
+  }
 
   function hasPasswordProvider() {
     return !!(_currentUser && _currentUser.providerData.some(p => p.providerId === 'password'));
@@ -2535,7 +2744,7 @@
       ? task.startTime.match(/T(\d{2}:\d{2})/)?.[1] ?? '09:00'
       : '09:00';
     sdSetAnchor('start');
-    document.getElementById('sdTimeInput').value = timeStr;
+    setSmartTime('sdTimeInput', timeStr);
     document.getElementById('sdDurInput').value  = String(task.duration || DEFAULT_DUR);
     sdCheckSave();
     openDropdown(document.getElementById('schedDropdown'), event.target.getBoundingClientRect(), 218);
@@ -2613,14 +2822,14 @@
 
   function sdCheckSave() {
     document.getElementById('sdSaveBtn').disabled =
-      !document.getElementById('sdTimeInput').value;
+      !getSmartTime('sdTimeInput');
   }
 
   function commitSchedEdit() {
     if (!sdTargetId) return;
     const task    = tasks.find(t => t.id === sdTargetId);
     if (!task) return;
-    const timeVal = document.getElementById('sdTimeInput').value;
+    const timeVal = getSmartTime('sdTimeInput');
     if (!timeVal) return;
     const dur      = parseInt(document.getElementById('sdDurInput').value) || DEFAULT_DUR;
     const dp       = todayPstDateStr();
@@ -2990,6 +3199,10 @@
             <button class="undo-btn" onclick="unmarkDone(${t.id})">↩ Undo</button>
           </div>`).join('');
 
+    // Titlebar undo button: visible when there are done tasks
+    const undoBtn = document.getElementById('titlebarUndoBtn');
+    if (undoBtn) undoBtn.style.display = doneTasks.length > 0 ? '' : 'none';
+
     updateBreakUI();
     _refreshBlockDetail();
     renderCategoryTally();
@@ -3000,7 +3213,24 @@
     return (mins - CAL_START) * PX_PER_MIN + 8;
   }
 
+  function updatePxPerMin() {
+    // In desktop view, scale timeline to fill available calendar-section height
+    if (!document.body.classList.contains('mobile-view')) {
+      const sec = document.querySelector('.calendar-section');
+      if (sec) {
+        const availH = sec.clientHeight - 24; // subtract top/bottom padding
+        const spanMins = CAL_END - CAL_START;
+        if (spanMins > 0 && availH > 50) {
+          PX_PER_MIN = Math.max(44 / 60, availH / spanMins);
+        }
+      }
+    } else {
+      PX_PER_MIN = 44 / 60; // fixed size on mobile
+    }
+  }
+
   function renderCalendar() {
+    updatePxPerMin();
     const pst      = getPST();
     const todayStr = pst.toDateString();
     const nowMins  = pst.getHours() * 60 + pst.getMinutes();
@@ -3270,8 +3500,7 @@
   function openSchedForm() {
     closeAddForm();
     schedOpen = true;
-    const ti = document.getElementById('schedTimeInput');
-    if (!ti.value) ti.value = '09:00';
+    if (!getSmartTime('schedTimeInput')) setSmartTime('schedTimeInput', '09:00');
     checkSchedAdd();
     document.getElementById('addSchedFormOverlay').classList.add('active');
     setTimeout(() => document.getElementById('schedTitleInput').focus(), 80);
@@ -3283,7 +3512,7 @@
 
   function checkSchedAdd() {
     const hasTitle    = document.getElementById('schedTitleInput').value.trim().length > 0;
-    const hasTime     = document.getElementById('schedTimeInput').value.length > 0;
+    const hasTime     = getSmartTime('schedTimeInput').length > 0;
     const isRecurring = document.getElementById('schedRecurringCheck').checked;
     const hasDays     = !isRecurring || selectedRecurringDays.size > 0;
     document.getElementById('schedAddBtn').disabled = !(hasTitle && hasTime && hasDays);
@@ -3313,7 +3542,7 @@
 
   function addScheduledTask() {
     const title   = document.getElementById('schedTitleInput').value.trim();
-    const timeVal = document.getElementById('schedTimeInput').value; // "HH:MM"
+    const timeVal = getSmartTime('schedTimeInput'); // "HH:MM"
     if (!title || !timeVal) return;
 
     const dur      = parseInt(document.getElementById('schedDurInput').value) || DEFAULT_DUR;
@@ -3356,7 +3585,7 @@
 
     // Reset
     document.getElementById('schedTitleInput').value = '';
-    document.getElementById('schedTimeInput').value  = '09:00';
+    setSmartTime('schedTimeInput', '09:00');
     document.getElementById('schedDurInput').value   = '60';
     document.getElementById('schedRecurringCheck').checked = false;
     selectedRecurringDays.clear();
@@ -3625,6 +3854,11 @@
     save(); render();
   }
 
+  function undoLastAction() {
+    if (!doneTasks.length) return;
+    unmarkDone(doneTasks[0].id);
+  }
+
   function toggleDone() {
     doneOpen = !doneOpen;
     document.getElementById('doneList').classList.toggle('open', doneOpen);
@@ -3801,56 +4035,71 @@
   function takeBreak() {
     const all     = getAllSorted();
     const nowTask = all[0];
-    if (!nowTask || breakStartMs) return;
+    if (breakStartMs) return;
 
     const pst     = getPST();
     const nowMins = pst.getHours() * 60 + pst.getMinutes();
 
-    // ── Calculate how many minutes remain on the interrupted task ──────────
-    let remaining = nowTask.duration || DEFAULT_DUR;
-    if (!isScheduled(nowTask) && nowTask.calStartTime) {
-      const elapsedMins = Math.floor((Date.now() - nowTask.calStartTime) / 60000);
-      remaining = Math.max((nowTask.duration || DEFAULT_DUR) - elapsedMins, 1);
-    } else if (isScheduled(nowTask) && nowTask._etMins != null) {
-      remaining = Math.max(nowTask._etMins - nowMins, 1);
+    if (nowTask) {
+      // ── Calculate how many minutes remain on the interrupted task ────────
+      let remaining = nowTask.duration || DEFAULT_DUR;
+      if (!isScheduled(nowTask) && nowTask.calStartTime) {
+        const elapsedMins = Math.floor((Date.now() - nowTask.calStartTime) / 60000);
+        remaining = Math.max((nowTask.duration || DEFAULT_DUR) - elapsedMins, 1);
+      } else if (isScheduled(nowTask) && nowTask._etMins != null) {
+        remaining = Math.max(nowTask._etMins - nowMins, 1);
+      }
+
+      // ── Mark current task done (inline to avoid double render) ──────────
+      tasks = tasks.filter(t => t.id !== nowTask.id);
+      const doneAt = Date.now();
+      const dp     = todayPstDateStr();
+      const doneEntry = { ...nowTask, doneAt };
+      // strip computed properties
+      delete doneEntry._eff; delete doneEntry._stMins; delete doneEntry._etMins; delete doneEntry._active;
+      if (isScheduled(nowTask) && nowTask.startTime) {
+        doneEntry.endTime = `${dp}T${fmtMins(nowMins)}`;
+      } else if (!isScheduled(nowTask) && nowTask.calStartTime) {
+        doneEntry.startTime = `${dp}T${fmtMins(msMinsToCalMins(nowTask.calStartTime))}`;
+        doneEntry.endTime   = `${dp}T${fmtMins(nowMins)}`;
+      }
+      doneTasks.unshift(doneEntry);
+
+      // ── Shift any existing ordered flex tasks down by 2 ─────────────────
+      tasks.forEach(t => {
+        if (!isScheduled(t) && t.flexOrder !== undefined) t.flexOrder += 2;
+      });
+
+      // ── Create "Taking a Break" task at position 0 ──────────────────────
+      const bId = Date.now();
+      const rId = bId + 1;
+      const breakTask = {
+        id: bId, title: 'BREAK', priority: 1,
+        addedAt: Date.now(), duration: breakBudgetMins, flexOrder: 0, isBreak: true,
+      };
+      // ── Create resume duplicate at position 1 ───────────────────────────
+      const resumeTask = {
+        id: rId, title: nowTask.title,
+        priority: nowTask.priority || 3,
+        addedAt: Date.now() + 1, duration: remaining, flexOrder: 1,
+      };
+
+      tasks.push(breakTask, resumeTask);
+      breakTaskId = bId;
+    } else {
+      // ── No current task — just insert a standalone break ─────────────────
+      tasks.forEach(t => {
+        if (!isScheduled(t) && t.flexOrder !== undefined) t.flexOrder += 1;
+      });
+      const bId = Date.now();
+      const breakTask = {
+        id: bId, title: 'BREAK', priority: 1,
+        addedAt: Date.now(), duration: breakBudgetMins, flexOrder: 0, isBreak: true,
+      };
+      tasks.push(breakTask);
+      breakTaskId = bId;
     }
 
-    // ── Mark current task done (inline to avoid double render) ────────────
-    tasks = tasks.filter(t => t.id !== nowTask.id);
-    const doneAt = Date.now();
-    const dp     = todayPstDateStr();
-    const doneEntry = { ...nowTask, doneAt };
-    // strip computed properties
-    delete doneEntry._eff; delete doneEntry._stMins; delete doneEntry._etMins; delete doneEntry._active;
-    if (isScheduled(nowTask) && nowTask.startTime) {
-      doneEntry.endTime = `${dp}T${fmtMins(nowMins)}`;
-    } else if (!isScheduled(nowTask) && nowTask.calStartTime) {
-      doneEntry.startTime = `${dp}T${fmtMins(msMinsToCalMins(nowTask.calStartTime))}`;
-      doneEntry.endTime   = `${dp}T${fmtMins(nowMins)}`;
-    }
-    doneTasks.unshift(doneEntry);
-
-    // ── Shift any existing ordered flex tasks down by 2 ───────────────────
-    tasks.forEach(t => {
-      if (!isScheduled(t) && t.flexOrder !== undefined) t.flexOrder += 2;
-    });
-
-    // ── Create "Taking a Break" task at position 0 ────────────────────────
-    const bId = Date.now();
-    const rId = bId + 1;
-    const breakTask = {
-      id: bId, title: 'BREAK', priority: 1,
-      addedAt: Date.now(), duration: breakBudgetMins, flexOrder: 0, isBreak: true,
-    };
-    // ── Create resume duplicate at position 1 ─────────────────────────────
-    const resumeTask = {
-      id: rId, title: nowTask.title,
-      priority: nowTask.priority || 3,
-      addedAt: Date.now() + 1, duration: remaining, flexOrder: 1,
-    };
-
-    tasks.push(breakTask, resumeTask);
-    breakTaskId  = bId;
     breakStartMs = Date.now();
     breakIsAuto  = false;
 
@@ -4021,12 +4270,10 @@
       barFill.classList.toggle('over', over);
     }
 
-    // Enable break button only when a task is in the now slot
-    const all    = getAllSorted();
-    const hasNow = all.length > 0;
-    const btn    = document.getElementById('takeBreakBtn');
+    // Enable break button whenever not already on a break
+    const btn = document.getElementById('takeBreakBtn');
     if (btn) {
-      btn.disabled = !hasNow || !!breakStartMs;
+      btn.disabled = !!breakStartMs;
       btn.classList.toggle('over', over);
     }
   }
@@ -5238,11 +5485,22 @@
   if (!_auth) { load(); } // local-only fallback
   loadBreakState();
   loadCalBounds();
+  // Initialize smart time pickers
+  initSmartTime('schedTimeInput');
+  initSmartTime('sdTimeInput');
+
   checkDayEndedReset();
   checkDayOffState();
   setInterval(checkDayOffState, 60000);
   updateClock();
   render();
+
+  // Re-render calendar on window resize so timeline scales to available height
+  let _resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(_resizeTimer);
+    _resizeTimer = setTimeout(() => renderCalendar(), 100);
+  });
 </script>
 </body>
 </html>
