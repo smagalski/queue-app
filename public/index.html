@@ -690,6 +690,13 @@
     cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px; transition: all 0.2s;
   }
   .gcal-import-btn:hover { background: rgba(66,133,244,0.14); border-color: rgba(66,133,244,0.45); color: #c8daff; }
+  .sidequest-btn {
+    background: rgba(126,200,227,0.07); border: 1px solid rgba(126,200,227,0.22);
+    border-radius: 8px; color: #7ec8e3; font-family: 'Inter',sans-serif; font-weight: 600;
+    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; padding: 9px 14px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px; transition: all 0.2s;
+  }
+  .sidequest-btn:hover { background: rgba(126,200,227,0.14); border-color: rgba(126,200,227,0.45); color: #a8dcef; }
   .gcal-overlay {
     display: none; position: fixed; inset: 0; z-index: 8500;
     background: rgba(0,0,0,0.75); align-items: center; justify-content: center;
@@ -943,7 +950,8 @@
   body.mobile-view .add-toggle-btn,
   body.mobile-view .add-sched-toggle-btn,
   body.mobile-view .break-toggle-btn,
-  body.mobile-view .gcal-import-btn { padding: 10px 8px; font-size: 11px; width: 100%; }
+  body.mobile-view .gcal-import-btn,
+  body.mobile-view .sidequest-btn { padding: 10px 8px; font-size: 11px; width: 100%; }
   body.mobile-view .break-budget-panel { display: none; }
   body.mobile-view .add-btn,
   body.mobile-view .add-sched-btn { height: 40px; font-size: 11px; }
@@ -1197,6 +1205,42 @@
   }
   .end-break-btn:hover { opacity: 0.85; }
   .end-break-btn.over { background: var(--p1); color: #fff; }
+
+  /* ── SIDEQUEST OVERLAY ────────────────────────────────────────────────── */
+  .sidequest-overlay {
+    position: fixed; inset: 0; z-index: 9000;
+    background: rgba(6,10,18,0.93); backdrop-filter: blur(6px);
+    display: none; flex-direction: column; align-items: center; justify-content: center; gap: 22px;
+  }
+  .sidequest-overlay.active { display: flex; }
+  .sq-heading {
+    font-size: 11px; font-weight: 800; letter-spacing: 0.35em; text-transform: uppercase;
+    color: #7ec8e3;
+  }
+  .sq-icon { font-size: 36px; line-height: 1; }
+  .sq-task-title {
+    font-size: 22px; font-weight: 700; color: #fff; text-align: center;
+    max-width: 320px; line-height: 1.3;
+  }
+  .sq-timer {
+    font-size: 72px; font-weight: 800; letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums; color: #7ec8e3; line-height: 1;
+  }
+  .sq-paused-label {
+    font-size: 11px; color: var(--text-dim); letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .sq-paused-task {
+    font-size: 13px; color: var(--text-mid); text-align: center;
+    max-width: 280px; line-height: 1.4;
+  }
+  .sq-end-btn {
+    background: #7ec8e3; border: none; border-radius: 6px; color: #0b0a0f;
+    font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase; padding: 13px 36px;
+    cursor: pointer; transition: opacity 0.15s;
+  }
+  .sq-end-btn:hover { opacity: 0.85; }
 
   /* ── INTERVAL TIMER PANEL ────────────────────────────────────────────────────── */
   /* ── AUTO-BREAK TOGGLE ───────────────────────────────────────────────── */
@@ -1587,6 +1631,7 @@
         </button>
         <button class="break-toggle-btn" id="takeBreakBtn" onclick="takeBreak()" disabled>Take a Break</button>
         <button class="gcal-import-btn" id="gcalImportBtn" onclick="openGcalImport()">Google Cal</button>
+        <button class="sidequest-btn" id="sidequestBtn" onclick="openSidequest()">⚡ Sidequest</button>
       </div>
     </div>
     <div class="bottom-section">
@@ -1749,6 +1794,17 @@
   </div>
   <div class="break-status" id="breakStatus"></div>
   <button class="end-break-btn" id="endBreakBtn" onclick="endBreak()">End Break</button>
+</div>
+
+<!-- SIDEQUEST OVERLAY -->
+<div class="sidequest-overlay" id="sidequestOverlay">
+  <div class="sq-heading">On a Sidequest</div>
+  <div class="sq-icon">⚡</div>
+  <div class="sq-task-title" id="sqTaskTitle"></div>
+  <div class="sq-timer" id="sqTimerDisplay">0:00</div>
+  <div class="sq-paused-label">Paused</div>
+  <div class="sq-paused-task" id="sqPausedTask"></div>
+  <button class="sq-end-btn" onclick="endSidequest()">End Sidequest</button>
 </div>
 
 <!-- DAY OFF OVERLAY -->
@@ -3485,9 +3541,11 @@
       document.getElementById('addFormInner').classList.remove(c);
       document.getElementById('addBtn').classList.remove(c);
     });
+    const newTask = tasks[tasks.length - 1];
     checkAdd();
     save(); closeAddForm();
     render();
+    _afterAddFlexTask(newTask);
   }
 
   // ── Scheduled task form ────────────────────────────────────────────────
@@ -3905,7 +3963,11 @@
     const commit = () => {
       if (card) card.draggable = true;
       const newTitle = input.value.trim();
-      if (newTitle && newTitle !== original) { task.title = newTitle; save(); }
+      if (newTitle && newTitle !== original) {
+        task.title = newTitle;
+        delete task.categoryOverride; // re-match category from new title
+        save();
+      }
       onCommit();
     };
     input.addEventListener('blur', commit, { once: true });
@@ -4112,6 +4174,89 @@
     updateBreakTimer();
     document.getElementById('breakOverlay').classList.add('active');
     breakTimerInt = setInterval(updateBreakTimer, 1000);
+  }
+
+  // ── Sidequest ─────────────────────────────────────────────────────────
+  let _sqStartMs     = null;
+  let _sqTimerInt    = null;
+  let _sqPausedTask  = null; // snapshot of paused now-task (for display)
+
+  function openSidequest() {
+    // Open the flex-task add form; on save, the sidequest kicks in
+    _sqPending = true;
+    openAddForm();
+  }
+
+  let _sqPending = false; // flag: next flex task added should trigger sidequest
+
+  // Called by addFlexTask() at the end — check if sidequest is pending
+  function _afterAddFlexTask(newTask) {
+    if (!_sqPending) return;
+    _sqPending = false;
+    _startSidequest(newTask);
+  }
+
+  function _startSidequest(sqTask) {
+    const all     = getAllSorted();
+    const nowTask = all[0];
+
+    // Pause current task: mark it done then re-add at position 1 (resume after sidequest)
+    if (nowTask && nowTask.id !== sqTask.id) {
+      tasks = tasks.filter(t => t.id !== nowTask.id);
+      const pst     = getPST();
+      const nowMins = pst.getHours() * 60 + pst.getMinutes();
+      const dp      = todayPstDateStr();
+      const doneEntry = { ...nowTask, doneAt: Date.now() };
+      delete doneEntry._eff; delete doneEntry._stMins; delete doneEntry._etMins; delete doneEntry._active;
+      if (!isScheduled(nowTask) && nowTask.calStartTime) {
+        doneEntry.startTime = `${dp}T${fmtMins(msMinsToCalMins(nowTask.calStartTime))}`;
+        doneEntry.endTime   = `${dp}T${fmtMins(nowMins)}`;
+      }
+      doneTasks.unshift(doneEntry);
+      _sqPausedTask = nowTask;
+    } else {
+      _sqPausedTask = null;
+    }
+
+    // Move sidequest task to front
+    tasks.forEach(t => {
+      if (!isScheduled(t) && t.flexOrder !== undefined && t.id !== sqTask.id) t.flexOrder += 1;
+    });
+    const sq = tasks.find(t => t.id === sqTask.id);
+    if (sq) { sq.flexOrder = 0; sq.isSidequest = true; }
+
+    _sqStartMs = Date.now();
+    save();
+    render();
+
+    // Show overlay
+    document.getElementById('sqTaskTitle').textContent = sqTask.title;
+    document.getElementById('sqPausedTask').textContent =
+      _sqPausedTask ? `Paused: ${_sqPausedTask.title}` : '';
+    document.getElementById('sqPausedTask').style.display = _sqPausedTask ? '' : 'none';
+    _updateSqTimer();
+    document.getElementById('sidequestOverlay').classList.add('active');
+    _sqTimerInt = setInterval(_updateSqTimer, 1000);
+  }
+
+  function _updateSqTimer() {
+    if (!_sqStartMs) return;
+    const secs = Math.floor((Date.now() - _sqStartMs) / 1000);
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    document.getElementById('sqTimerDisplay').textContent = `${m}:${String(s).padStart(2,'0')}`;
+  }
+
+  function endSidequest() {
+    if (_sqTimerInt) { clearInterval(_sqTimerInt); _sqTimerInt = null; }
+    _sqStartMs = null;
+    document.getElementById('sidequestOverlay').classList.remove('active');
+
+    // Mark the sidequest task done
+    const all = getAllSorted();
+    const sqTask = all.find(t => t.isSidequest);
+    if (sqTask) markDoneById(sqTask.id);
+    else { save(); render(); }
   }
 
   function _suppressCurrentAutoBreak() {
@@ -4748,6 +4893,112 @@
     document.getElementById('historyOverlay').classList.remove('active');
   }
 
+  // ── Day History drag-to-recategorize ──────────────────────────────────
+  let _hdcDragTitle = null;
+  let _hdcDragDate  = null;
+
+  function hdcDragStart(event, date, title) {
+    _hdcDragTitle = title;
+    _hdcDragDate  = date;
+    event.dataTransfer.effectAllowed = 'move';
+    event.currentTarget.classList.add('edm-dragging');
+  }
+
+  function hdcDragEnd(event) {
+    _hdcDragTitle = null;
+    _hdcDragDate  = null;
+    event.currentTarget.classList.remove('edm-dragging');
+    document.querySelectorAll('.hdc-cat-section').forEach(s => s.classList.remove('edm-drag-over'));
+  }
+
+  function hdcDragOver(event) {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    document.querySelectorAll('.hdc-cat-section').forEach(s => s.classList.remove('edm-drag-over'));
+    event.currentTarget.classList.add('edm-drag-over');
+  }
+
+  function hdcDragLeave(event) {
+    if (!event.currentTarget.contains(event.relatedTarget)) {
+      event.currentTarget.classList.remove('edm-drag-over');
+    }
+  }
+
+  function hdcDrop(event, date, catId) {
+    event.preventDefault();
+    event.currentTarget.classList.remove('edm-drag-over');
+    if (!_hdcDragTitle || !date || !catId) return;
+
+    // Update Firestore: merge override into the day's taskCategoryOverrides (title-keyed)
+    if (_db && _currentUser) {
+      const update = {};
+      update[`taskCategoryOverrides.${_hdcDragTitle}`] = catId;
+      _db.collection('users').doc(_currentUser.uid).collection('history')
+        .doc(date)
+        .set({ taskCategoryOverrides: { [_hdcDragTitle]: catId } }, { merge: true })
+        .catch(() => {});
+    }
+
+    // Re-render this day card in-place using updated overrides
+    const card = event.currentTarget.closest('.history-day-card');
+    if (card) {
+      // Fetch fresh and re-render, or just apply locally
+      const titleOverridesEl = card._titleOverrides || {};
+      titleOverridesEl[_hdcDragTitle] = catId;
+      card._titleOverrides = titleOverridesEl;
+      // Re-render the categories portion
+      const tasksEl = card.querySelector('.hdc-tasks');
+      if (tasksEl && card._dayData) {
+        card._dayData.taskCategoryOverrides = card._dayData.taskCategoryOverrides || {};
+        card._dayData.taskCategoryOverrides[_hdcDragTitle] = catId;
+        tasksEl.innerHTML = _buildHdcTaskHtml(card._dayData);
+      }
+    }
+    _hdcDragTitle = null;
+    _hdcDragDate  = null;
+  }
+
+  function _buildHdcTaskHtml(day) {
+    const titleOverrides = {};
+    if (day.taskCategoryOverrides) {
+      Object.assign(titleOverrides, day.taskCategoryOverrides);
+    }
+    const rules = categoryRules.length ? categoryRules : DEFAULT_CATEGORY_RULES;
+    const grouped = {};
+    for (const cat of rules) grouped[cat.id] = [];
+    for (const r of (day.timePerTask || [])) {
+      const catId = getCategoryForTask(r.title, titleOverrides, r.title);
+      if (!grouped[catId]) grouped[catId] = [];
+      grouped[catId].push(r);
+    }
+    let html = '';
+    for (const cat of rules) {
+      const items = grouped[cat.id] || [];
+      if (items.length === 0) continue;
+      const escapedCatId = cat.id.replace(/'/g, "\\'");
+      html += `<div class="edm-cat-section hdc-cat-section" data-cat="${esc(cat.id)}"
+        ondragover="hdcDragOver(event)"
+        ondragleave="hdcDragLeave(event)"
+        ondrop="hdcDrop(event,'${esc(day.date)}','${escapedCatId}')">
+        <div class="edm-cat-header">${esc(cat.name.toUpperCase())}</div>
+        <div class="edm-cat-tasks">`;
+      for (const r of items) {
+        const escapedTitle = r.title.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+        html += `<div class="edm-drag-row hdc-drag-row" draggable="true"
+          ondragstart="hdcDragStart(event,'${esc(day.date)}','${escapedTitle}')"
+          ondragend="hdcDragEnd(event)">
+          <span class="edm-drag-handle">⠿</span>
+          <span class="hdc-task-title">${esc(r.title)}</span>
+          <span class="hdc-task-time">${fmtTaskMins(r.mins)}</span>
+        </div>`;
+      }
+      const catTotal = items.reduce((s, r) => s + r.mins, 0);
+      if (catTotal > 0) html += `<div class="hdc-cat-subtotal"><span>Total</span><span>${fmtTaskMins(catTotal)}</span></div>`;
+      html += `</div></div>`;
+    }
+    return html || '<div class="history-no-data">No recorded data</div>';
+  }
+
   function renderHistoryDay(day) {
     // Format date (shared by both paths)
     const [y,m,d] = day.date.split('-').map(Number);
@@ -4766,49 +5017,28 @@
     const col   = stressColor(day.stressScore || 1);
     const label = stressLabel(day.stressScore || 1);
 
-    // Build title-keyed overrides from ID-keyed taskCategoryOverrides
-    const titleOverrides = {};
+    // Normalize taskCategoryOverrides: support both title-keyed (new) and id-keyed (legacy)
     if (day.taskCategoryOverrides && day.doneTasks) {
       for (const t of day.doneTasks) {
-        if (day.taskCategoryOverrides[t.id] != null) {
-          titleOverrides[t.title] = day.taskCategoryOverrides[t.id];
+        if (day.taskCategoryOverrides[t.id] != null && day.taskCategoryOverrides[t.title] == null) {
+          day.taskCategoryOverrides[t.title] = day.taskCategoryOverrides[t.id];
         }
       }
     }
 
-    // Group timePerTask entries by category
-    const rules = categoryRules.length ? categoryRules : DEFAULT_CATEGORY_RULES;
-    const grouped = {};
-    for (const cat of rules) grouped[cat.id] = [];
-    for (const r of (day.timePerTask || [])) {
-      const catId = getCategoryForTask(r.title, titleOverrides, r.title);
-      if (!grouped[catId]) grouped[catId] = [];
-      grouped[catId].push(r);
-    }
-
-    // Render category sections (reuse edm-cat-* classes for visual parity)
-    let taskHtml = '';
-    for (const cat of rules) {
-      const items = grouped[cat.id] || [];
-      if (items.length === 0) continue;
-      taskHtml += `<div class="edm-cat-section">
-        <div class="edm-cat-header">${esc(cat.name.toUpperCase())}</div>
-        <div class="edm-cat-tasks">`;
-      for (const r of items) {
-        taskHtml += `<div class="hdc-task-row"><span class="hdc-task-title">${esc(r.title)}</span><span class="hdc-task-time">${fmtTaskMins(r.mins)}</span></div>`;
-      }
-      const catTotal = items.reduce((s, r) => s + r.mins, 0);
-      if (catTotal > 0) taskHtml += `<div class="hdc-cat-subtotal"><span>Total</span><span>${fmtTaskMins(catTotal)}</span></div>`;
-      taskHtml += `</div></div>`;
-    }
-    if (!taskHtml) {
-      taskHtml = '<div class="history-no-data">No recorded data</div>';
-    }
+    const taskHtml = _buildHdcTaskHtml(day);
 
     const pb = day.priorityBreakdown || {};
     const priorityHtml = buildPriorityHtml(pb, pb.total || 0, 'hdc-priority-chip');
 
-    return `<div class="history-day-card">
+    // Use a wrapper so we can attach _dayData after insertion
+    const cardId = `hdcCard_${day.date.replace(/-/g,'')}`;
+    setTimeout(() => {
+      const card = document.getElementById(cardId);
+      if (card) card._dayData = day;
+    }, 0);
+
+    return `<div class="history-day-card" id="${cardId}">
       <div class="hdc-header">
         <div class="hdc-date">${dateLabel}</div>
         <div class="hdc-stress" style="background:${col}22;color:${col}">Stress ${day.stressScore || '—'}/10 · ${label}</div>
@@ -5338,54 +5568,88 @@
 
   async function fetchGcalEvents() {
     const overlay = document.getElementById('gcalOverlay');
-    // Overlay is already open (opened by openGcalImport), just update message
     setGcalListMessage('Loading…');
     document.getElementById('gcalConfirmBtn').style.display = 'none';
-    overlay.classList.add('active'); // ensure it's open if called from token-refresh path
+    overlay.classList.add('active');
 
-    // Build today's date range in PST/PDT with correct UTC offset.
-    // Derive offset in whole minutes to handle half-hour zones correctly,
-    // and pad to two digits so it works for UTC-10 through UTC-01.
-    const now        = new Date();
-    const laDate     = new Date(now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
-    const offsetMins = Math.round((now.getTime() - laDate.getTime()) / 60000);
-    const sign       = offsetMins >= 0 ? '-' : '+';
-    const absOff     = Math.abs(offsetMins);
+    // Build today's date range in PST/PDT with a timezone-independent offset computation.
+    // We compute "LA time interpreted as UTC" minus real UTC to get the LA→UTC offset,
+    // which works regardless of the system's local timezone.
+    const now    = new Date();
+    const laStr  = now.toLocaleString('en-US', {
+      timeZone: 'America/Los_Angeles',
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+    });
+    // Parse as UTC to get LA-clock-as-UTC
+    const [datePart, timePart] = laStr.split(', ');
+    const [mo2, d2, y2] = datePart.split('/');
+    const [h2, min2, s2] = timePart.split(':').map(Number);
+    const laAsUtcMs  = Date.UTC(parseInt(y2), parseInt(mo2) - 1, parseInt(d2), h2, min2, s2);
+    const rawOffMins = Math.round((laAsUtcMs - now.getTime()) / 60000); // neg for US timezones
+    const sign       = rawOffMins >= 0 ? '+' : '-';
+    const absOff     = Math.abs(rawOffMins);
     const offsetStr  = `${sign}${pad2(Math.floor(absOff / 60))}:${pad2(absOff % 60)}`;
-    // laDate fields already reflect LA local time — no need for a second toLocaleString via getPST()
-    const y   = laDate.getFullYear();
-    const mo  = pad2(laDate.getMonth() + 1);
-    const d   = pad2(laDate.getDate());
-    const timeMin = `${y}-${mo}-${d}T00:00:00${offsetStr}`;
-    const timeMax = `${y}-${mo}-${d}T23:59:59${offsetStr}`;
+    const y   = pad2(parseInt(y2));
+    const mo  = mo2;
+    const d   = d2;
+    const timeMin = `${y2}-${mo}-${d}T00:00:00${offsetStr}`;
+    const timeMax = `${y2}-${mo}-${d}T23:59:59${offsetStr}`;
+
+    const authHeaders = { Authorization: `Bearer ${_gcalAccessToken}` };
+
+    const handle401 = () => {
+      _gcalAccessToken = null;
+      _gcalTokenExpiry  = 0;
+      setGcalListMessage('Re-authenticating with Google…');
+      _gcalTokenClient = _buildGcalTokenClient(fetchGcalEvents);
+      _gcalTokenClient.requestAccessToken({ prompt: 'consent' });
+    };
 
     try {
-      const url = new URL('https://www.googleapis.com/calendar/v3/calendars/primary/events');
-      url.searchParams.set('timeMin', timeMin);
-      url.searchParams.set('timeMax', timeMax);
-      url.searchParams.set('singleEvents', 'true');
-      url.searchParams.set('orderBy', 'startTime');
+      // 1. Get all calendars the user has access to (includes invited/shared)
+      const listRes = await fetch(
+        'https://www.googleapis.com/calendar/v3/users/me/calendarList?maxResults=250',
+        { headers: authHeaders }
+      );
+      if (listRes.status === 401) { handle401(); return; }
+      if (!listRes.ok) { setGcalListMessage('Failed to load calendars. Please try again.'); return; }
+      const listData   = await listRes.json();
+      const calendars  = (listData.items || []).filter(c => c.accessRole !== 'none');
 
-      const res = await fetch(url.toString(), {
-        headers: { Authorization: `Bearer ${_gcalAccessToken}` },
-      });
+      // 2. Fetch today's events from each calendar in parallel
+      const fetchCal = async (calId) => {
+        const url = new URL(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events`);
+        url.searchParams.set('timeMin', timeMin);
+        url.searchParams.set('timeMax', timeMax);
+        url.searchParams.set('singleEvents', 'true');
+        url.searchParams.set('orderBy', 'startTime');
+        url.searchParams.set('maxResults', '100');
+        const r = await fetch(url.toString(), { headers: authHeaders });
+        if (!r.ok) return [];
+        const data = await r.json();
+        return data.items || [];
+      };
 
-      if (res.status === 401) {
-        _gcalAccessToken = null;
-        _gcalTokenExpiry  = 0;
-        setGcalListMessage('Re-authenticating with Google…');
-        _gcalTokenClient = _buildGcalTokenClient(fetchGcalEvents);
-        _gcalTokenClient.requestAccessToken({ prompt: 'consent' });
-        return;
+      const results = await Promise.all(calendars.map(c => fetchCal(c.id)));
+
+      // 3. Merge, deduplicate by id, filter out all-day and declined events
+      const seen = new Set();
+      const events = [];
+      for (const items of results) {
+        for (const e of items) {
+          if (seen.has(e.id)) continue;
+          seen.add(e.id);
+          if (!e.start || !e.start.dateTime) continue; // skip all-day
+          // Skip events the user declined
+          const selfAttendee = (e.attendees || []).find(a => a.self);
+          if (selfAttendee && selfAttendee.responseStatus === 'declined') continue;
+          events.push(e);
+        }
       }
-      if (!res.ok) {
-        setGcalListMessage('Failed to load events. Please try again.');
-        return;
-      }
+      // Sort by start time
+      events.sort((a, b) => new Date(a.start.dateTime) - new Date(b.start.dateTime));
 
-      const data = await res.json();
-      // Filter out all-day events (they have .date but not .dateTime)
-      const events = (data.items || []).filter(e => e.start && e.start.dateTime);
       _gcalPendingEvents = events;
       renderGcalEvents(events);
     } catch (e) {
