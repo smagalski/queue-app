@@ -902,13 +902,15 @@
   /* More section touch target */
   body.mobile-view .more-header { padding: 10px 2px; }
 
-  /* Compact day-bounds: move above calendar so it's not pushed off-screen */
+  /* Compact day-bounds: place between clock and calendar */
+  body.mobile-view .clock-section  { order: 1; }
   body.mobile-view .cal-bounds-section {
     padding: 8px 8px;
-    order: -1;
+    order: 2;
     flex-shrink: 0;
     border-bottom: 1px solid var(--border);
   }
+  body.mobile-view .calendar-section { order: 3; }
 
   /* ── AUTH SCREEN ──────────────────────────────────────────────────────── */
   #authScreen {
