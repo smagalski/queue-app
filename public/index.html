@@ -902,8 +902,13 @@
   /* More section touch target */
   body.mobile-view .more-header { padding: 10px 2px; }
 
-  /* Compact day-bounds in narrow left column */
-  body.mobile-view .cal-bounds-section { padding: 8px 8px; }
+  /* Compact day-bounds: move above calendar so it's not pushed off-screen */
+  body.mobile-view .cal-bounds-section {
+    padding: 8px 8px;
+    order: -1;
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--border);
+  }
 
   /* ── AUTH SCREEN ──────────────────────────────────────────────────────── */
   #authScreen {
