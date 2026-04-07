@@ -248,9 +248,6 @@
   /* ── ADD TASK ─────────────────────────────────────────────────────────── */
   .add-toggle-btn {
     width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 8px; color: #fff; font-family: 'Inter',sans-serif; font-weight: 600;
-    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; padding: 9px 14px;
-    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px; transition: all 0.2s;
   }
   .add-toggle-btn:hover { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.25); }
   .add-toggle-icon { font-size: 15px; line-height: 1; font-weight: 300; }
@@ -443,12 +440,17 @@
 
   /* ── Two-button add row ───────────────────────────────────────────────── */
   .add-btns-row { display: flex; gap: 8px; margin-top: 4px; }
-  .add-btns-row > button { flex: 1; }
+  .add-btns-row > button {
+    flex: 1;
+    color: #fff !important;
+    font-family: 'Inter',sans-serif; font-weight: 600;
+    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+    padding: 9px 14px; border-radius: 8px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px;
+    transition: all 0.2s;
+  }
   .add-sched-toggle-btn {
     background: rgba(126,200,227,0.07); border: 1px solid rgba(126,200,227,0.25);
-    border-radius: 8px; color: #fff; font-family: 'Inter',sans-serif; font-weight: 600;
-    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; padding: 9px 14px;
-    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px; transition: all 0.2s;
   }
   .add-sched-toggle-btn:hover { background: rgba(126,200,227,0.13); border-color: rgba(126,200,227,0.5); }
   .add-sched-form { display: flex; flex-direction: column; gap: 12px; }
@@ -685,18 +687,12 @@
   /* ── GOOGLE CALENDAR IMPORT ─────────────────────────────────────────── */
   .gcal-import-btn {
     background: rgba(66,133,244,0.07); border: 1px solid rgba(66,133,244,0.22);
-    border-radius: 8px; color: #adc8ff; font-family: 'Inter',sans-serif; font-weight: 600;
-    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; padding: 9px 14px;
-    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px; transition: all 0.2s;
   }
-  .gcal-import-btn:hover { background: rgba(66,133,244,0.14); border-color: rgba(66,133,244,0.45); color: #c8daff; }
+  .gcal-import-btn:hover { background: rgba(66,133,244,0.14); border-color: rgba(66,133,244,0.45); }
   .sidequest-btn {
     background: rgba(126,200,227,0.07); border: 1px solid rgba(126,200,227,0.22);
-    border-radius: 8px; color: #7ec8e3; font-family: 'Inter',sans-serif; font-weight: 600;
-    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; padding: 9px 14px;
-    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px; transition: all 0.2s;
   }
-  .sidequest-btn:hover { background: rgba(126,200,227,0.14); border-color: rgba(126,200,227,0.45); color: #a8dcef; }
+  .sidequest-btn:hover { background: rgba(126,200,227,0.14); border-color: rgba(126,200,227,0.45); }
   .gcal-overlay {
     display: none; position: fixed; inset: 0; z-index: 8500;
     background: rgba(0,0,0,0.75); align-items: center; justify-content: center;
@@ -1039,11 +1035,7 @@
   /* ── BREAK BUTTON / CONTROLS ──────────────────────────────────────────── */
   .slot-label-row { padding: 2px 2px 5px; }
   .break-toggle-btn {
-    flex: 1; background: rgba(152,99,243,0.07); border: 1px solid rgba(152,99,243,0.28);
-    border-radius: 8px; color: #fff; font-family: 'Inter', sans-serif; font-weight: 600;
-    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; padding: 9px 14px;
-    cursor: pointer; display: flex; align-items: center; justify-content: center;
-    transition: all 0.2s;
+    background: rgba(152,99,243,0.07); border: 1px solid rgba(152,99,243,0.28);
   }
   .break-toggle-btn:hover:not(:disabled) { background: rgba(152,99,243,0.14); border-color: rgba(152,99,243,0.55); }
   .break-toggle-btn:disabled { opacity: 0.25; cursor: default; }
@@ -1631,7 +1623,7 @@
         </button>
         <button class="break-toggle-btn" id="takeBreakBtn" onclick="takeBreak()" disabled>Take a Break</button>
         <button class="gcal-import-btn" id="gcalImportBtn" onclick="openGcalImport()">Google Cal</button>
-        <button class="sidequest-btn" id="sidequestBtn" onclick="openSidequest()">⚡ Sidequest</button>
+        <button class="sidequest-btn" id="sidequestBtn" onclick="openSidequest()">Sidequest</button>
       </div>
     </div>
     <div class="bottom-section">
