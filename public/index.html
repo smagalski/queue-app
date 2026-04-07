@@ -869,13 +869,30 @@
   body.mobile-view .delete-btn { padding: 6px 8px; font-size: 14px; top: 8px; right: 8px; }
   body.mobile-view .priority-badge { padding: 4px 8px; font-size: 10px; }
 
-  /* Add buttons fit the narrower column */
+  /* Add buttons: 2×2 grid so nothing overflows */
+  body.mobile-view .add-btns-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
   body.mobile-view .add-toggle-btn,
   body.mobile-view .add-sched-toggle-btn,
-  body.mobile-view .break-toggle-btn { padding: 10px 10px; font-size: 11px; }
+  body.mobile-view .break-toggle-btn,
+  body.mobile-view .gcal-import-btn { padding: 10px 8px; font-size: 11px; width: 100%; }
   body.mobile-view .break-budget-panel { display: none; }
   body.mobile-view .add-btn,
   body.mobile-view .add-sched-btn { height: 40px; font-size: 11px; }
+
+  /* DAY buttons: stack full-width */
+  body.mobile-view .end-btns-row { flex-direction: column; gap: 6px; }
+  body.mobile-view .end-btns-row .end-day-btn { width: 100%; }
+
+  /* Break controls: fix negative margin for narrower padding */
+  body.mobile-view .break-controls-row {
+    margin-left: -10px; margin-right: -10px;
+    width: calc(100% + 20px);
+    padding-left: 10px; padding-right: 10px;
+  }
 
   /* 16px prevents iOS auto-zoom on input focus */
   body.mobile-view .task-input,
