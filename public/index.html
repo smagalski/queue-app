@@ -677,9 +677,14 @@
   .hdc-stress { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
   .hdc-tasks { display: flex; flex-direction: column; gap: 2px; }
   .hdc-task-row { display: flex; justify-content: space-between; font-size: 11px; padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-  .hdc-task-title { color: var(--text-mid); }
-  .hdc-task-time  { color: var(--text-dim); }
+  .hdc-task-title { color: var(--text-mid); font-size: 10px; }
+  .hdc-task-time  { color: var(--text-dim); font-size: 10px; flex-shrink: 0; margin-left: 6px; }
   .hdc-cat-subtotal { display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; padding: 4px 0 2px; color: rgba(255,255,255,0.5); border-top: 1px solid rgba(255,255,255,0.08); margin-top: 1px; }
+  .hdc-cat-header-sm { display: flex; justify-content: space-between; align-items: center; font-size: 8px; }
+  .hdc-cat-hd-time { font-size: 9px; color: rgba(255,255,255,0.45); font-weight: 600; letter-spacing: 0.04em; }
+  .hdc-empty-cat { font-size: 9px; color: var(--text-dim); font-style: italic; padding: 3px 2px; opacity: 0.5; }
+  .edm-drag-row.hdc-drag-row { padding: 4px 2px; }
+  .edm-drag-row.hdc-drag-row .edm-drag-handle { font-size: 9px; }
   .hdc-priority-row { display: flex; gap: 6px; flex-wrap: wrap; }
   .hdc-priority-chip { padding: 2px 8px; border-radius: 20px; font-size: 9px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
   .history-empty { text-align: center; color: var(--text-dim); font-size: 13px; padding: 60px 0; }
@@ -4947,6 +4952,7 @@
     if (day.taskCategoryOverrides) {
       Object.assign(titleOverrides, day.taskCategoryOverrides);
     }
+    // Always use current category rules so retroactive changes apply
     const rules = categoryRules.length ? categoryRules : DEFAULT_CATEGORY_RULES;
     const grouped = {};
     for (const cat of rules) grouped[cat.id] = [];
@@ -4958,26 +4964,29 @@
     let html = '';
     for (const cat of rules) {
       const items = grouped[cat.id] || [];
-      if (items.length === 0) continue;
       const escapedCatId = cat.id.replace(/'/g, "\\'");
+      const catTotal = items.reduce((s, r) => s + r.mins, 0);
+      // Always render every category — empty ones show a drop target
       html += `<div class="edm-cat-section hdc-cat-section" data-cat="${esc(cat.id)}"
         ondragover="hdcDragOver(event)"
         ondragleave="hdcDragLeave(event)"
         ondrop="hdcDrop(event,'${esc(day.date)}','${escapedCatId}')">
-        <div class="edm-cat-header">${esc(cat.name.toUpperCase())}</div>
+        <div class="edm-cat-header hdc-cat-header-sm">${esc(cat.name.toUpperCase())}${catTotal > 0 ? `<span class="hdc-cat-hd-time">${fmtTaskMins(catTotal)}</span>` : ''}</div>
         <div class="edm-cat-tasks">`;
-      for (const r of items) {
-        const escapedTitle = r.title.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-        html += `<div class="edm-drag-row hdc-drag-row" draggable="true"
-          ondragstart="hdcDragStart(event,'${esc(day.date)}','${escapedTitle}')"
-          ondragend="hdcDragEnd(event)">
-          <span class="edm-drag-handle">⠿</span>
-          <span class="hdc-task-title">${esc(r.title)}</span>
-          <span class="hdc-task-time">${fmtTaskMins(r.mins)}</span>
-        </div>`;
+      if (items.length === 0) {
+        html += `<div class="hdc-empty-cat">—</div>`;
+      } else {
+        for (const r of items) {
+          const escapedTitle = r.title.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+          html += `<div class="edm-drag-row hdc-drag-row" draggable="true"
+            ondragstart="hdcDragStart(event,'${esc(day.date)}','${escapedTitle}')"
+            ondragend="hdcDragEnd(event)">
+            <span class="edm-drag-handle">⠿</span>
+            <span class="hdc-task-title">${esc(r.title)}</span>
+            ${r.mins > 0 ? `<span class="hdc-task-time">${fmtTaskMins(r.mins)}</span>` : ''}
+          </div>`;
+        }
       }
-      const catTotal = items.reduce((s, r) => s + r.mins, 0);
-      if (catTotal > 0) html += `<div class="hdc-cat-subtotal"><span>Total</span><span>${fmtTaskMins(catTotal)}</span></div>`;
       html += `</div></div>`;
     }
     return html || '<div class="history-no-data">No recorded data</div>';
