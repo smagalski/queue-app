@@ -4950,6 +4950,17 @@
         card._dayData.taskCategoryOverrides = card._dayData.taskCategoryOverrides || {};
         card._dayData.taskCategoryOverrides[_hdcDragTitle] = catId;
         tasksEl.innerHTML = _buildHdcTaskHtml(card._dayData);
+        // Recompute and update the stress score badge
+        const newScore = _recomputeStressScore(card._dayData);
+        if (newScore != null) {
+          const stressEl = card.querySelector('.hdc-stress');
+          if (stressEl) {
+            const col = stressColor(newScore);
+            stressEl.style.background = `${col}22`;
+            stressEl.style.color = col;
+            stressEl.textContent = `Stress ${newScore}/10 · ${stressLabel(newScore)}`;
+          }
+        }
       }
     }
     _hdcDragTitle = null;
