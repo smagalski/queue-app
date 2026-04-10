@@ -131,7 +131,7 @@
 
   /* ── TASK PANEL ───────────────────────────────────────────────────────── */
   .task-panel {
-    flex: 1; overflow-y: auto; padding: 16px 20px 32px;
+    flex: 1; overflow-y: auto; overflow-x: hidden; padding: 16px 20px 32px;
     display: flex; flex-direction: column; align-items: center; gap: 10px;
   }
   .task-panel::-webkit-scrollbar { width: 4px; }
@@ -247,10 +247,7 @@
 
   /* ── ADD TASK ─────────────────────────────────────────────────────────── */
   .add-toggle-btn {
-    width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 8px; color: #fff; font-family: 'Inter',sans-serif; font-weight: 600;
-    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; padding: 9px 14px;
-    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px; transition: all 0.2s;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
   }
   .add-toggle-btn:hover { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.25); }
   .add-toggle-icon { font-size: 15px; line-height: 1; font-weight: 300; }
@@ -298,6 +295,33 @@
   .task-input:focus, .time-input:focus, .duration-select:focus { border-color: rgba(255,255,255,0.35); }
   .task-input::placeholder { color: var(--text-dim); }
   .time-input::-webkit-calendar-picker-indicator { filter: invert(0.35); cursor: pointer; }
+
+  /* ── SMART TIME PICKER ────────────────────────────────────────────────── */
+  .smart-time {
+    display: flex; align-items: stretch;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+    overflow: hidden; width: 100%; transition: border-color 0.15s; box-sizing: border-box;
+  }
+  .smart-time:focus-within { border-color: rgba(255,255,255,0.35); }
+  .st-hour, .st-min {
+    background: none; border: none; outline: none;
+    color: #fff; font-family: 'Inter',sans-serif; font-size: 12px;
+    text-align: center; -moz-appearance: textfield; padding: 8px 0;
+  }
+  .st-hour::-webkit-outer-spin-button, .st-hour::-webkit-inner-spin-button,
+  .st-min::-webkit-outer-spin-button,  .st-min::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .st-hour { width: 30px; padding-left: 10px; }
+  .st-min  { width: 26px; padding-right: 4px; }
+  .st-sep  { color: var(--text-dim); font-size: 12px; display: flex; align-items: center; padding: 0 1px; }
+  .st-ampm {
+    background: none; border: none; border-left: 1px solid var(--border);
+    color: var(--text-dim); font-family: 'Inter',sans-serif; font-size: 11px; font-weight: 600;
+    padding: 0 9px; cursor: pointer; transition: all 0.12s; white-space: nowrap;
+  }
+  .st-ampm:hover, .st-ampm:focus { background: rgba(255,255,255,0.08); color: #fff; outline: none; }
+  .smart-time.compact .st-hour, .smart-time.compact .st-min { font-size: 11px; padding-top: 5px; padding-bottom: 5px; }
+  .smart-time.compact .st-sep  { font-size: 11px; }
+  .smart-time.compact .st-ampm { font-size: 10px; padding: 0 7px; }
   .duration-select option { background: #1a1724; }
 
   .form-row-half { display: flex; gap: 12px; align-items: flex-start; }
@@ -415,13 +439,18 @@
   .empty-queue { text-align: center; color: var(--text-dim); font-size: 10px; padding: 6px 0; }
 
   /* ── Two-button add row ───────────────────────────────────────────────── */
-  .add-btns-row { display: flex; gap: 8px; margin-top: 4px; }
-  .add-btns-row > button { flex: 1; }
+  .add-btns-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 4px; }
+  .add-btns-row > button {
+    color: #fff !important;
+    font-family: 'Inter',sans-serif; font-weight: 600;
+    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+    padding: 9px 8px; border-radius: 8px; min-height: 52px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    text-align: center; line-height: 1.3;
+    transition: all 0.2s;
+  }
   .add-sched-toggle-btn {
     background: rgba(126,200,227,0.07); border: 1px solid rgba(126,200,227,0.25);
-    border-radius: 8px; color: #fff; font-family: 'Inter',sans-serif; font-weight: 600;
-    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; padding: 9px 14px;
-    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px; transition: all 0.2s;
   }
   .add-sched-toggle-btn:hover { background: rgba(126,200,227,0.13); border-color: rgba(126,200,227,0.5); }
   .add-sched-form { display: flex; flex-direction: column; gap: 12px; }
@@ -488,6 +517,15 @@
   }
   .signout-btn:hover { border-color: #fff; color: #fff; background: rgba(255,255,255,0.05); }
 
+  /* ── TITLEBAR UNDO ────────────────────────────────────────────────────── */
+  .titlebar-undo-btn {
+    background: none; border: 1px solid var(--border); border-radius: 4px;
+    color: var(--text-dim); font-size: 15px; width: 28px; height: 26px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s; padding: 0;
+  }
+  .titlebar-undo-btn:hover { border-color: #fff; color: #fff; background: rgba(255,255,255,0.05); }
+
   /* ── GEAR MENU ────────────────────────────────────────────────────────── */
   .gear-wrap { position: relative; }
   .gear-btn {
@@ -513,6 +551,31 @@
   .gear-menu-item:hover { background: rgba(255,255,255,0.07); color: #fff; }
   .gear-menu-divider { height: 1px; background: var(--border); margin: 3px 0; }
 
+  /* ── APP DETAILS OVERLAY ────────────────────────────────────────────── */
+  .app-details-overlay {
+    display: none; position: fixed; inset: 0; z-index: 1100;
+    background: rgba(0,0,0,0.75); align-items: center; justify-content: center;
+  }
+  .app-details-overlay.active { display: flex; }
+  .app-details-modal {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 28px; width: 400px; max-width: 94vw; max-height: 80vh;
+    overflow-y: auto; position: relative;
+  }
+  .app-details-close {
+    position: absolute; top: 14px; right: 16px;
+    background: none; border: none; color: var(--text-dim);
+    font-size: 18px; cursor: pointer; line-height: 1; padding: 4px;
+  }
+  .app-details-close:hover { color: #fff; }
+  .app-details-title { font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 18px; }
+  .app-details-row { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 12px; }
+  .app-details-label { color: var(--text-dim); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; font-size: 10px; }
+  .app-details-value { color: #fff; font-weight: 600; }
+  .app-details-changes-header { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); margin: 16px 0 8px; }
+  .app-details-change { font-size: 12px; color: var(--text-mid); padding: 4px 0; padding-left: 12px; position: relative; line-height: 1.5; }
+  .app-details-change::before { content: '·'; position: absolute; left: 2px; color: var(--text-dim); }
+
   /* ── END DAY MODAL ───────────────────────────────────────────────────── */
   .end-day-overlay {
     display: none; position: fixed; inset: 0; z-index: 1100;
@@ -532,6 +595,7 @@
   .edm-task-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
   .edm-task-title { font-size: 12px; color: var(--text-mid); }
   .edm-task-time  { font-size: 11px; color: var(--text-dim); }
+  .edm-cat-subtotal { display: flex; justify-content: space-between; padding: 5px 0 2px; font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.5); border-top: 1px solid rgba(255,255,255,0.1); margin-top: 1px; }
   .edm-priority-row { display: flex; gap: 8px; flex-wrap: wrap; }
   .edm-priority-chip {
     padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 600;
@@ -613,8 +677,14 @@
   .hdc-stress { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
   .hdc-tasks { display: flex; flex-direction: column; gap: 2px; }
   .hdc-task-row { display: flex; justify-content: space-between; font-size: 11px; padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-  .hdc-task-title { color: var(--text-mid); }
-  .hdc-task-time  { color: var(--text-dim); }
+  .hdc-task-title { color: var(--text-mid); font-size: 10px; }
+  .hdc-task-time  { color: var(--text-dim); font-size: 10px; flex-shrink: 0; margin-left: 6px; }
+  .hdc-cat-subtotal { display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; padding: 4px 0 2px; color: rgba(255,255,255,0.5); border-top: 1px solid rgba(255,255,255,0.08); margin-top: 1px; }
+  .hdc-cat-header-sm { display: flex; justify-content: space-between; align-items: center; font-size: 8px; }
+  .hdc-cat-hd-time { font-size: 9px; color: rgba(255,255,255,0.45); font-weight: 600; letter-spacing: 0.04em; }
+  .hdc-empty-cat { font-size: 9px; color: var(--text-dim); font-style: italic; padding: 3px 2px; opacity: 0.5; }
+  .edm-drag-row.hdc-drag-row { padding: 4px 2px; }
+  .edm-drag-row.hdc-drag-row .edm-drag-handle { font-size: 9px; }
   .hdc-priority-row { display: flex; gap: 6px; flex-wrap: wrap; }
   .hdc-priority-chip { padding: 2px 8px; border-radius: 20px; font-size: 9px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
   .history-empty { text-align: center; color: var(--text-dim); font-size: 13px; padding: 60px 0; }
@@ -622,11 +692,12 @@
   /* ── GOOGLE CALENDAR IMPORT ─────────────────────────────────────────── */
   .gcal-import-btn {
     background: rgba(66,133,244,0.07); border: 1px solid rgba(66,133,244,0.22);
-    border-radius: 8px; color: #adc8ff; font-family: 'Inter',sans-serif; font-weight: 600;
-    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; padding: 9px 14px;
-    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px; transition: all 0.2s;
   }
-  .gcal-import-btn:hover { background: rgba(66,133,244,0.14); border-color: rgba(66,133,244,0.45); color: #c8daff; }
+  .gcal-import-btn:hover { background: rgba(66,133,244,0.14); border-color: rgba(66,133,244,0.45); }
+  .sidequest-btn {
+    background: rgba(126,200,227,0.07); border: 1px solid rgba(126,200,227,0.22);
+  }
+  .sidequest-btn:hover { background: rgba(126,200,227,0.14); border-color: rgba(126,200,227,0.45); }
   .gcal-overlay {
     display: none; position: fixed; inset: 0; z-index: 8500;
     background: rgba(0,0,0,0.75); align-items: center; justify-content: center;
@@ -786,15 +857,20 @@
     border-right: 1px solid var(--border);
     border-bottom: none;
     flex-direction: column;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
     flex-shrink: 0;
     position: sticky;
     top: 0;
     height: 100svh;            /* stick to viewport while right column scrolls */
   }
 
-  /* Clock: compact vertical stack */
+  /* Clock: sticky at top of scrollable left panel */
   body.mobile-view .clock-section {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--bg);
     flex-direction: column;
     align-items: center;
     justify-content: center;
@@ -811,11 +887,10 @@
     font-size: 9px; margin-top: 3px; text-align: center;
   }
 
-  /* Calendar: show inline in the sticky left column */
+  /* Calendar: show inline in the scrollable left column, natural height */
   body.mobile-view .calendar-section {
-    flex: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
+    flex-shrink: 0;
+    overflow: visible;
     display: block;
     padding: 0;
     cursor: default;
@@ -867,24 +942,49 @@
   body.mobile-view .delete-btn { padding: 6px 8px; font-size: 14px; top: 8px; right: 8px; }
   body.mobile-view .priority-badge { padding: 4px 8px; font-size: 10px; }
 
-  /* Add buttons fit the narrower column */
-  body.mobile-view .add-toggle-btn,
-  body.mobile-view .add-sched-toggle-btn,
-  body.mobile-view .break-toggle-btn { padding: 10px 10px; font-size: 11px; }
+  /* Add buttons: 3-col grid on mobile too, matching desktop */
+  body.mobile-view .add-btns-row { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  body.mobile-view .add-btns-row > button { font-size: 10px; padding: 8px 4px; min-height: 48px; }
   body.mobile-view .break-budget-panel { display: none; }
   body.mobile-view .add-btn,
   body.mobile-view .add-sched-btn { height: 40px; font-size: 11px; }
+
+  /* DAY buttons: stack full-width */
+  body.mobile-view .end-btns-row { flex-direction: column; gap: 6px; }
+  body.mobile-view .end-btns-row .end-day-btn { width: 100%; }
+
+  /* Break controls: fix negative margin for narrower padding */
+  body.mobile-view .break-controls-row {
+    margin-left: -10px; margin-right: -10px;
+    width: calc(100% + 20px);
+    padding-left: 10px; padding-right: 10px;
+  }
 
   /* 16px prevents iOS auto-zoom on input focus */
   body.mobile-view .task-input,
   body.mobile-view .time-input,
   body.mobile-view .duration-select { font-size: 16px; padding: 10px 10px; }
+  body.mobile-view .smart-time .st-hour,
+  body.mobile-view .smart-time .st-min { font-size: 16px; padding-top: 10px; padding-bottom: 10px; }
+  body.mobile-view .smart-time .st-sep  { font-size: 16px; }
+  body.mobile-view .smart-time .st-ampm { font-size: 14px; }
 
   /* More section touch target */
   body.mobile-view .more-header { padding: 10px 2px; }
 
-  /* Compact day-bounds in narrow left column */
-  body.mobile-view .cal-bounds-section { padding: 8px 8px; }
+  /* Compact day-bounds: stick to bottom of sidebar, below timeline */
+  body.mobile-view .clock-section  { order: 1; }
+  body.mobile-view .calendar-section { order: 2; }
+  body.mobile-view .cal-bounds-section {
+    padding: 8px 8px;
+    order: 3;
+    flex-shrink: 0;
+    position: sticky;
+    bottom: 0;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    z-index: 1;
+  }
 
   /* ── AUTH SCREEN ──────────────────────────────────────────────────────── */
   #authScreen {
@@ -932,11 +1032,7 @@
   /* ── BREAK BUTTON / CONTROLS ──────────────────────────────────────────── */
   .slot-label-row { padding: 2px 2px 5px; }
   .break-toggle-btn {
-    flex: 1; background: rgba(152,99,243,0.07); border: 1px solid rgba(152,99,243,0.28);
-    border-radius: 8px; color: #fff; font-family: 'Inter', sans-serif; font-weight: 600;
-    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; padding: 9px 14px;
-    cursor: pointer; display: flex; align-items: center; justify-content: center;
-    transition: all 0.2s;
+    background: rgba(152,99,243,0.07); border: 1px solid rgba(152,99,243,0.28);
   }
   .break-toggle-btn:hover:not(:disabled) { background: rgba(152,99,243,0.14); border-color: rgba(152,99,243,0.55); }
   .break-toggle-btn:disabled { opacity: 0.25; cursor: default; }
@@ -1098,6 +1194,42 @@
   }
   .end-break-btn:hover { opacity: 0.85; }
   .end-break-btn.over { background: var(--p1); color: #fff; }
+
+  /* ── SIDEQUEST OVERLAY ────────────────────────────────────────────────── */
+  .sidequest-overlay {
+    position: fixed; inset: 0; z-index: 9000;
+    background: rgba(6,10,18,0.93); backdrop-filter: blur(6px);
+    display: none; flex-direction: column; align-items: center; justify-content: center; gap: 22px;
+  }
+  .sidequest-overlay.active { display: flex; }
+  .sq-heading {
+    font-size: 11px; font-weight: 800; letter-spacing: 0.35em; text-transform: uppercase;
+    color: #7ec8e3;
+  }
+  .sq-icon { font-size: 36px; line-height: 1; }
+  .sq-task-title {
+    font-size: 22px; font-weight: 700; color: #fff; text-align: center;
+    max-width: 320px; line-height: 1.3;
+  }
+  .sq-timer {
+    font-size: 72px; font-weight: 800; letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums; color: #7ec8e3; line-height: 1;
+  }
+  .sq-paused-label {
+    font-size: 11px; color: var(--text-dim); letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .sq-paused-task {
+    font-size: 13px; color: var(--text-mid); text-align: center;
+    max-width: 280px; line-height: 1.4;
+  }
+  .sq-end-btn {
+    background: #7ec8e3; border: none; border-radius: 6px; color: #0b0a0f;
+    font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase; padding: 13px 36px;
+    cursor: pointer; transition: opacity 0.15s;
+  }
+  .sq-end-btn:hover { opacity: 0.85; }
 
   /* ── INTERVAL TIMER PANEL ────────────────────────────────────────────────────── */
   /* ── AUTO-BREAK TOGGLE ───────────────────────────────────────────────── */
@@ -1302,6 +1434,7 @@
       <button class="seg-btn" id="segDesktop" onclick="applyViewMode(false)">🖥</button>
       <button class="seg-btn" id="segMobile"  onclick="applyViewMode(true)">📱</button>
     </div>
+    <button class="titlebar-undo-btn" id="titlebarUndoBtn" onclick="undoLastAction()" title="Undo last action" style="display:none">↺</button>
     <div class="gear-wrap" id="gearWrap" style="display:none">
       <button class="gear-btn" id="gearBtn" onclick="toggleGearMenu(event)">⚙</button>
       <div class="gear-menu" id="gearMenu">
@@ -1310,11 +1443,35 @@
         <button class="gear-menu-item" onclick="openCategoryManager();closeGearMenu()">Manage Categories</button>
         <button class="gear-menu-item" onclick="openClearHistoryConfirm();closeGearMenu()">Clear history older than 7 days</button>
         <div class="gear-menu-divider"></div>
+        <button class="gear-menu-item" onclick="openAppDetails();closeGearMenu()">App Details</button>
+        <div class="gear-menu-divider"></div>
         <button class="gear-menu-item" onclick="openPasswordModal();closeGearMenu()">Change Password</button>
         <div class="gear-menu-divider"></div>
         <button class="gear-menu-item" onclick="signOut()">Sign Out</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- APP DETAILS OVERLAY -->
+<div class="app-details-overlay" id="appDetailsOverlay">
+  <div class="app-details-modal">
+    <button class="app-details-close" onclick="document.getElementById('appDetailsOverlay').classList.remove('active')">✕</button>
+    <div class="app-details-title">App Details</div>
+    <div class="app-details-row">
+      <span class="app-details-label">Version</span>
+      <span class="app-details-value">v0.1.13</span>
+    </div>
+    <div class="app-details-row">
+      <span class="app-details-label">Deployed</span>
+      <span class="app-details-value">April 7, 2026</span>
+    </div>
+    <div class="app-details-changes-header">What's new</div>
+    <div class="app-details-change">Mobile two-column layout matching desktop</div>
+    <div class="app-details-change">Category subtotals in End Day report and Day History</div>
+    <div class="app-details-change">Fixed scrollbar bar at bottom of task panel</div>
+    <div class="app-details-change">ADD buttons wrap to 2×2 grid on mobile — no horizontal scrolling</div>
+    <div class="app-details-change">Day Start / Day End repositioned to top of mobile sidebar</div>
   </div>
 </div>
 
@@ -1463,6 +1620,7 @@
         </button>
         <button class="break-toggle-btn" id="takeBreakBtn" onclick="takeBreak()" disabled>Take a Break</button>
         <button class="gcal-import-btn" id="gcalImportBtn" onclick="openGcalImport()">Google Cal</button>
+        <button class="sidequest-btn" id="sidequestBtn" onclick="openSidequest()">Sidequest</button>
       </div>
     </div>
     <div class="bottom-section">
@@ -1563,7 +1721,12 @@
           <button class="p-btn sel-sched" id="anchorStartBtn" onclick="setAnchor('start');checkSchedAdd()" style="flex:1">Start time</button>
           <button class="p-btn" id="anchorEndBtn" onclick="setAnchor('end');checkSchedAdd()" style="flex:1">End time</button>
         </div>
-        <input class="time-input" id="schedTimeInput" type="time" oninput="checkSchedAdd()" onchange="checkSchedAdd()"/>
+        <div class="smart-time" id="schedTimeInput" data-onchange="checkSchedAdd()">
+          <input class="st-hour" type="text" inputmode="numeric" maxlength="2" placeholder="hh">
+          <span class="st-sep">:</span>
+          <input class="st-min" type="text" inputmode="numeric" maxlength="2" placeholder="mm">
+          <button class="st-ampm" type="button">AM</button>
+        </div>
       </div>
       <div>
         <label class="form-label">Duration</label>
@@ -1620,6 +1783,17 @@
   </div>
   <div class="break-status" id="breakStatus"></div>
   <button class="end-break-btn" id="endBreakBtn" onclick="endBreak()">End Break</button>
+</div>
+
+<!-- SIDEQUEST OVERLAY -->
+<div class="sidequest-overlay" id="sidequestOverlay">
+  <div class="sq-heading">On a Sidequest</div>
+  <div class="sq-icon">⚡</div>
+  <div class="sq-task-title" id="sqTaskTitle"></div>
+  <div class="sq-timer" id="sqTimerDisplay">0:00</div>
+  <div class="sq-paused-label">Paused</div>
+  <div class="sq-paused-task" id="sqPausedTask"></div>
+  <button class="sq-end-btn" onclick="endSidequest()">End Sidequest</button>
 </div>
 
 <!-- DAY OFF OVERLAY -->
@@ -1740,7 +1914,12 @@
       <button class="dd-anchor-btn active" id="sdAnchorStart" onclick="sdSetAnchor('start')">Start</button>
       <button class="dd-anchor-btn"        id="sdAnchorEnd"   onclick="sdSetAnchor('end')"  >End</button>
     </div>
-    <input class="time-input" id="sdTimeInput" type="time" style="font-size:11px;padding:5px 8px;" oninput="sdCheckSave()" onchange="sdCheckSave()"/>
+    <div class="smart-time compact" id="sdTimeInput" data-onchange="sdCheckSave()">
+      <input class="st-hour" type="text" inputmode="numeric" maxlength="2" placeholder="hh">
+      <span class="st-sep">:</span>
+      <input class="st-min" type="text" inputmode="numeric" maxlength="2" placeholder="mm">
+      <button class="st-ampm" type="button">AM</button>
+    </div>
     <select class="duration-select" id="sdDurInput" style="font-size:11px;padding:5px 8px;"></select>
     <button id="sdSaveBtn" class="dd-save-btn sched" onclick="commitSchedEdit()">Save</button>
     <button class="dd-sec-btn" onclick="convertToFlex()">Remove time → Flex</button>
@@ -1765,10 +1944,107 @@
 </div>
 
 <script>
+  // ── Smart time picker ─────────────────────────────────────────────────
+  function getSmartTime(id) {
+    const el = document.getElementById(id);
+    if (!el || !el.classList.contains('smart-time')) return el ? el.value : '';
+    const h = el.querySelector('.st-hour').value.trim();
+    const m = el.querySelector('.st-min').value.trim();
+    if (!h || !m) return '';
+    let hNum = parseInt(h, 10);
+    const mNum = parseInt(m, 10);
+    if (isNaN(hNum) || hNum < 1 || hNum > 12 || isNaN(mNum) || mNum < 0 || mNum > 59) return '';
+    const ap = el.querySelector('.st-ampm').textContent.trim();
+    if (ap === 'PM' && hNum !== 12) hNum += 12;
+    if (ap === 'AM' && hNum === 12) hNum = 0;
+    return `${String(hNum).padStart(2,'0')}:${String(mNum).padStart(2,'0')}`;
+  }
+
+  function setSmartTime(id, val24) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (!el.classList.contains('smart-time')) { el.value = val24 || ''; return; }
+    const hourEl = el.querySelector('.st-hour');
+    const minEl  = el.querySelector('.st-min');
+    const ampmEl = el.querySelector('.st-ampm');
+    if (!val24) { hourEl.value = ''; minEl.value = ''; ampmEl.textContent = 'AM'; return; }
+    const [hStr, mStr] = val24.split(':');
+    let hNum = parseInt(hStr, 10);
+    const mNum = parseInt(mStr, 10);
+    const ap = hNum >= 12 ? 'PM' : 'AM';
+    if (hNum > 12) hNum -= 12;
+    if (hNum === 0) hNum = 12;
+    hourEl.value = String(hNum);
+    minEl.value  = String(mNum).padStart(2, '0');
+    ampmEl.textContent = ap;
+  }
+
+  function _stAutoAmPm(hNum, ampmEl) {
+    if (hNum >= 6 && hNum <= 11) ampmEl.textContent = 'AM';
+    else if (hNum === 12 || (hNum >= 1 && hNum <= 5)) ampmEl.textContent = 'PM';
+  }
+
+  function initSmartTime(id) {
+    const el = document.getElementById(id);
+    if (!el || !el.classList.contains('smart-time')) return;
+    const hourEl = el.querySelector('.st-hour');
+    const minEl  = el.querySelector('.st-min');
+    const ampmEl = el.querySelector('.st-ampm');
+    const onchange = el.dataset.onchange;
+
+    function fireChange() { if (onchange) (new Function(onchange))(); }
+
+    hourEl.addEventListener('input', () => {
+      const val = hourEl.value.replace(/\D/g,'');
+      hourEl.value = val.slice(0, 2);
+      const num = parseInt(val, 10);
+      if (!isNaN(num)) _stAutoAmPm(num, ampmEl);
+      if (val.length === 2 || (val.length === 1 && num >= 3 && num <= 9)) {
+        minEl.focus(); minEl.select();
+      }
+      fireChange();
+    });
+    hourEl.addEventListener('keydown', e => {
+      if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        const cur = parseInt(hourEl.value, 10) || 12;
+        const next = e.key === 'ArrowUp' ? (cur % 12) + 1 : cur === 1 ? 12 : cur - 1;
+        hourEl.value = String(next);
+        _stAutoAmPm(next, ampmEl);
+        fireChange();
+      }
+    });
+
+    minEl.addEventListener('input', () => {
+      const val = minEl.value.replace(/\D/g,'');
+      minEl.value = val.slice(0, 2);
+      if (val.length === 2) ampmEl.focus();
+      fireChange();
+    });
+    minEl.addEventListener('keydown', e => {
+      if (e.key === 'Backspace' && !minEl.value) { hourEl.focus(); hourEl.select(); }
+    });
+    minEl.addEventListener('blur', () => {
+      const num = parseInt(minEl.value, 10);
+      if (!isNaN(num) && minEl.value.length === 1) minEl.value = String(num).padStart(2,'0');
+    });
+
+    ampmEl.addEventListener('click', e => {
+      e.preventDefault();
+      ampmEl.textContent = ampmEl.textContent === 'AM' ? 'PM' : 'AM';
+      fireChange();
+    });
+    ampmEl.addEventListener('keydown', e => {
+      if (e.key === 'a' || e.key === 'A') { ampmEl.textContent = 'AM'; e.preventDefault(); fireChange(); }
+      if (e.key === 'p' || e.key === 'P') { ampmEl.textContent = 'PM'; e.preventDefault(); fireChange(); }
+      if (e.key === 'Tab') return;
+    });
+  }
+
   // ── App constants ──────────────────────────────────────────────────────
   const DONE_TTL    = 48 * 60 * 60 * 1000;   // how long completed tasks persist
   const DEFAULT_DUR = 60;                      // default task duration in minutes
-  const PX_PER_MIN  = 44 / 60;                // calendar pixels per minute
+  let   PX_PER_MIN  = 44 / 60;                // calendar pixels per minute (recalculated on resize)
 
   // Priority display arrays (indexed 1–4: Urgent, High, Medium, Low)
   const P_LABELS = ['','URGENT','HIGH','MEDIUM','LOW'];
@@ -2017,6 +2293,10 @@
     if (m) m.classList.remove('open');
   }
   document.addEventListener('click', () => closeGearMenu());
+
+  function openAppDetails() {
+    document.getElementById('appDetailsOverlay').classList.add('active');
+  }
 
   function hasPasswordProvider() {
     return !!(_currentUser && _currentUser.providerData.some(p => p.providerId === 'password'));
@@ -2509,7 +2789,7 @@
       ? task.startTime.match(/T(\d{2}:\d{2})/)?.[1] ?? '09:00'
       : '09:00';
     sdSetAnchor('start');
-    document.getElementById('sdTimeInput').value = timeStr;
+    setSmartTime('sdTimeInput', timeStr);
     document.getElementById('sdDurInput').value  = String(task.duration || DEFAULT_DUR);
     sdCheckSave();
     openDropdown(document.getElementById('schedDropdown'), event.target.getBoundingClientRect(), 218);
@@ -2587,14 +2867,14 @@
 
   function sdCheckSave() {
     document.getElementById('sdSaveBtn').disabled =
-      !document.getElementById('sdTimeInput').value;
+      !getSmartTime('sdTimeInput');
   }
 
   function commitSchedEdit() {
     if (!sdTargetId) return;
     const task    = tasks.find(t => t.id === sdTargetId);
     if (!task) return;
-    const timeVal = document.getElementById('sdTimeInput').value;
+    const timeVal = getSmartTime('sdTimeInput');
     if (!timeVal) return;
     const dur      = parseInt(document.getElementById('sdDurInput').value) || DEFAULT_DUR;
     const dp       = todayPstDateStr();
@@ -2964,6 +3244,10 @@
             <button class="undo-btn" onclick="unmarkDone(${t.id})">↩ Undo</button>
           </div>`).join('');
 
+    // Titlebar undo button: visible when there are done tasks
+    const undoBtn = document.getElementById('titlebarUndoBtn');
+    if (undoBtn) undoBtn.style.display = doneTasks.length > 0 ? '' : 'none';
+
     updateBreakUI();
     _refreshBlockDetail();
     renderCategoryTally();
@@ -2974,7 +3258,24 @@
     return (mins - CAL_START) * PX_PER_MIN + 8;
   }
 
+  function updatePxPerMin() {
+    // In desktop view, scale timeline to fill available calendar-section height
+    if (!document.body.classList.contains('mobile-view')) {
+      const sec = document.querySelector('.calendar-section');
+      if (sec) {
+        const availH = sec.clientHeight - 24; // subtract top/bottom padding
+        const spanMins = CAL_END - CAL_START;
+        if (spanMins > 0 && availH > 50) {
+          PX_PER_MIN = Math.max(44 / 60, availH / spanMins);
+        }
+      }
+    } else {
+      PX_PER_MIN = 44 / 60; // fixed size on mobile
+    }
+  }
+
   function renderCalendar() {
+    updatePxPerMin();
     const pst      = getPST();
     const todayStr = pst.toDateString();
     const nowMins  = pst.getHours() * 60 + pst.getMinutes();
@@ -3229,9 +3530,11 @@
       document.getElementById('addFormInner').classList.remove(c);
       document.getElementById('addBtn').classList.remove(c);
     });
+    const newTask = tasks[tasks.length - 1];
     checkAdd();
     save(); closeAddForm();
     render();
+    _afterAddFlexTask(newTask);
   }
 
   // ── Scheduled task form ────────────────────────────────────────────────
@@ -3244,8 +3547,7 @@
   function openSchedForm() {
     closeAddForm();
     schedOpen = true;
-    const ti = document.getElementById('schedTimeInput');
-    if (!ti.value) ti.value = '09:00';
+    if (!getSmartTime('schedTimeInput')) setSmartTime('schedTimeInput', '09:00');
     checkSchedAdd();
     document.getElementById('addSchedFormOverlay').classList.add('active');
     setTimeout(() => document.getElementById('schedTitleInput').focus(), 80);
@@ -3257,7 +3559,7 @@
 
   function checkSchedAdd() {
     const hasTitle    = document.getElementById('schedTitleInput').value.trim().length > 0;
-    const hasTime     = document.getElementById('schedTimeInput').value.length > 0;
+    const hasTime     = getSmartTime('schedTimeInput').length > 0;
     const isRecurring = document.getElementById('schedRecurringCheck').checked;
     const hasDays     = !isRecurring || selectedRecurringDays.size > 0;
     document.getElementById('schedAddBtn').disabled = !(hasTitle && hasTime && hasDays);
@@ -3287,7 +3589,7 @@
 
   function addScheduledTask() {
     const title   = document.getElementById('schedTitleInput').value.trim();
-    const timeVal = document.getElementById('schedTimeInput').value; // "HH:MM"
+    const timeVal = getSmartTime('schedTimeInput'); // "HH:MM"
     if (!title || !timeVal) return;
 
     const dur      = parseInt(document.getElementById('schedDurInput').value) || DEFAULT_DUR;
@@ -3330,7 +3632,7 @@
 
     // Reset
     document.getElementById('schedTitleInput').value = '';
-    document.getElementById('schedTimeInput').value  = '09:00';
+    setSmartTime('schedTimeInput', '09:00');
     document.getElementById('schedDurInput').value   = '60';
     document.getElementById('schedRecurringCheck').checked = false;
     selectedRecurringDays.clear();
@@ -3599,6 +3901,11 @@
     save(); render();
   }
 
+  function undoLastAction() {
+    if (!doneTasks.length) return;
+    unmarkDone(doneTasks[0].id);
+  }
+
   function toggleDone() {
     doneOpen = !doneOpen;
     document.getElementById('doneList').classList.toggle('open', doneOpen);
@@ -3645,7 +3952,11 @@
     const commit = () => {
       if (card) card.draggable = true;
       const newTitle = input.value.trim();
-      if (newTitle && newTitle !== original) { task.title = newTitle; save(); }
+      if (newTitle && newTitle !== original) {
+        task.title = newTitle;
+        delete task.categoryOverride; // re-match category from new title
+        save();
+      }
       onCommit();
     };
     input.addEventListener('blur', commit, { once: true });
@@ -3775,56 +4086,71 @@
   function takeBreak() {
     const all     = getAllSorted();
     const nowTask = all[0];
-    if (!nowTask || breakStartMs) return;
+    if (breakStartMs) return;
 
     const pst     = getPST();
     const nowMins = pst.getHours() * 60 + pst.getMinutes();
 
-    // ── Calculate how many minutes remain on the interrupted task ──────────
-    let remaining = nowTask.duration || DEFAULT_DUR;
-    if (!isScheduled(nowTask) && nowTask.calStartTime) {
-      const elapsedMins = Math.floor((Date.now() - nowTask.calStartTime) / 60000);
-      remaining = Math.max((nowTask.duration || DEFAULT_DUR) - elapsedMins, 1);
-    } else if (isScheduled(nowTask) && nowTask._etMins != null) {
-      remaining = Math.max(nowTask._etMins - nowMins, 1);
+    if (nowTask) {
+      // ── Calculate how many minutes remain on the interrupted task ────────
+      let remaining = nowTask.duration || DEFAULT_DUR;
+      if (!isScheduled(nowTask) && nowTask.calStartTime) {
+        const elapsedMins = Math.floor((Date.now() - nowTask.calStartTime) / 60000);
+        remaining = Math.max((nowTask.duration || DEFAULT_DUR) - elapsedMins, 1);
+      } else if (isScheduled(nowTask) && nowTask._etMins != null) {
+        remaining = Math.max(nowTask._etMins - nowMins, 1);
+      }
+
+      // ── Mark current task done (inline to avoid double render) ──────────
+      tasks = tasks.filter(t => t.id !== nowTask.id);
+      const doneAt = Date.now();
+      const dp     = todayPstDateStr();
+      const doneEntry = { ...nowTask, doneAt };
+      // strip computed properties
+      delete doneEntry._eff; delete doneEntry._stMins; delete doneEntry._etMins; delete doneEntry._active;
+      if (isScheduled(nowTask) && nowTask.startTime) {
+        doneEntry.endTime = `${dp}T${fmtMins(nowMins)}`;
+      } else if (!isScheduled(nowTask) && nowTask.calStartTime) {
+        doneEntry.startTime = `${dp}T${fmtMins(msMinsToCalMins(nowTask.calStartTime))}`;
+        doneEntry.endTime   = `${dp}T${fmtMins(nowMins)}`;
+      }
+      doneTasks.unshift(doneEntry);
+
+      // ── Shift any existing ordered flex tasks down by 2 ─────────────────
+      tasks.forEach(t => {
+        if (!isScheduled(t) && t.flexOrder !== undefined) t.flexOrder += 2;
+      });
+
+      // ── Create "Taking a Break" task at position 0 ──────────────────────
+      const bId = Date.now();
+      const rId = bId + 1;
+      const breakTask = {
+        id: bId, title: 'BREAK', priority: 1,
+        addedAt: Date.now(), duration: breakBudgetMins, flexOrder: 0, isBreak: true,
+      };
+      // ── Create resume duplicate at position 1 ───────────────────────────
+      const resumeTask = {
+        id: rId, title: nowTask.title,
+        priority: nowTask.priority || 3,
+        addedAt: Date.now() + 1, duration: remaining, flexOrder: 1,
+      };
+
+      tasks.push(breakTask, resumeTask);
+      breakTaskId = bId;
+    } else {
+      // ── No current task — just insert a standalone break ─────────────────
+      tasks.forEach(t => {
+        if (!isScheduled(t) && t.flexOrder !== undefined) t.flexOrder += 1;
+      });
+      const bId = Date.now();
+      const breakTask = {
+        id: bId, title: 'BREAK', priority: 1,
+        addedAt: Date.now(), duration: breakBudgetMins, flexOrder: 0, isBreak: true,
+      };
+      tasks.push(breakTask);
+      breakTaskId = bId;
     }
 
-    // ── Mark current task done (inline to avoid double render) ────────────
-    tasks = tasks.filter(t => t.id !== nowTask.id);
-    const doneAt = Date.now();
-    const dp     = todayPstDateStr();
-    const doneEntry = { ...nowTask, doneAt };
-    // strip computed properties
-    delete doneEntry._eff; delete doneEntry._stMins; delete doneEntry._etMins; delete doneEntry._active;
-    if (isScheduled(nowTask) && nowTask.startTime) {
-      doneEntry.endTime = `${dp}T${fmtMins(nowMins)}`;
-    } else if (!isScheduled(nowTask) && nowTask.calStartTime) {
-      doneEntry.startTime = `${dp}T${fmtMins(msMinsToCalMins(nowTask.calStartTime))}`;
-      doneEntry.endTime   = `${dp}T${fmtMins(nowMins)}`;
-    }
-    doneTasks.unshift(doneEntry);
-
-    // ── Shift any existing ordered flex tasks down by 2 ───────────────────
-    tasks.forEach(t => {
-      if (!isScheduled(t) && t.flexOrder !== undefined) t.flexOrder += 2;
-    });
-
-    // ── Create "Taking a Break" task at position 0 ────────────────────────
-    const bId = Date.now();
-    const rId = bId + 1;
-    const breakTask = {
-      id: bId, title: 'BREAK', priority: 1,
-      addedAt: Date.now(), duration: breakBudgetMins, flexOrder: 0, isBreak: true,
-    };
-    // ── Create resume duplicate at position 1 ─────────────────────────────
-    const resumeTask = {
-      id: rId, title: nowTask.title,
-      priority: nowTask.priority || 3,
-      addedAt: Date.now() + 1, duration: remaining, flexOrder: 1,
-    };
-
-    tasks.push(breakTask, resumeTask);
-    breakTaskId  = bId;
     breakStartMs = Date.now();
     breakIsAuto  = false;
 
@@ -3837,6 +4163,89 @@
     updateBreakTimer();
     document.getElementById('breakOverlay').classList.add('active');
     breakTimerInt = setInterval(updateBreakTimer, 1000);
+  }
+
+  // ── Sidequest ─────────────────────────────────────────────────────────
+  let _sqStartMs     = null;
+  let _sqTimerInt    = null;
+  let _sqPausedTask  = null; // snapshot of paused now-task (for display)
+
+  function openSidequest() {
+    // Open the flex-task add form; on save, the sidequest kicks in
+    _sqPending = true;
+    openAddForm();
+  }
+
+  let _sqPending = false; // flag: next flex task added should trigger sidequest
+
+  // Called by addFlexTask() at the end — check if sidequest is pending
+  function _afterAddFlexTask(newTask) {
+    if (!_sqPending) return;
+    _sqPending = false;
+    _startSidequest(newTask);
+  }
+
+  function _startSidequest(sqTask) {
+    const all     = getAllSorted();
+    const nowTask = all[0];
+
+    // Pause current task: mark it done then re-add at position 1 (resume after sidequest)
+    if (nowTask && nowTask.id !== sqTask.id) {
+      tasks = tasks.filter(t => t.id !== nowTask.id);
+      const pst     = getPST();
+      const nowMins = pst.getHours() * 60 + pst.getMinutes();
+      const dp      = todayPstDateStr();
+      const doneEntry = { ...nowTask, doneAt: Date.now() };
+      delete doneEntry._eff; delete doneEntry._stMins; delete doneEntry._etMins; delete doneEntry._active;
+      if (!isScheduled(nowTask) && nowTask.calStartTime) {
+        doneEntry.startTime = `${dp}T${fmtMins(msMinsToCalMins(nowTask.calStartTime))}`;
+        doneEntry.endTime   = `${dp}T${fmtMins(nowMins)}`;
+      }
+      doneTasks.unshift(doneEntry);
+      _sqPausedTask = nowTask;
+    } else {
+      _sqPausedTask = null;
+    }
+
+    // Move sidequest task to front
+    tasks.forEach(t => {
+      if (!isScheduled(t) && t.flexOrder !== undefined && t.id !== sqTask.id) t.flexOrder += 1;
+    });
+    const sq = tasks.find(t => t.id === sqTask.id);
+    if (sq) { sq.flexOrder = 0; sq.isSidequest = true; }
+
+    _sqStartMs = Date.now();
+    save();
+    render();
+
+    // Show overlay
+    document.getElementById('sqTaskTitle').textContent = sqTask.title;
+    document.getElementById('sqPausedTask').textContent =
+      _sqPausedTask ? `Paused: ${_sqPausedTask.title}` : '';
+    document.getElementById('sqPausedTask').style.display = _sqPausedTask ? '' : 'none';
+    _updateSqTimer();
+    document.getElementById('sidequestOverlay').classList.add('active');
+    _sqTimerInt = setInterval(_updateSqTimer, 1000);
+  }
+
+  function _updateSqTimer() {
+    if (!_sqStartMs) return;
+    const secs = Math.floor((Date.now() - _sqStartMs) / 1000);
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    document.getElementById('sqTimerDisplay').textContent = `${m}:${String(s).padStart(2,'0')}`;
+  }
+
+  function endSidequest() {
+    if (_sqTimerInt) { clearInterval(_sqTimerInt); _sqTimerInt = null; }
+    _sqStartMs = null;
+    document.getElementById('sidequestOverlay').classList.remove('active');
+
+    // Mark the sidequest task done
+    const all = getAllSorted();
+    const sqTask = all.find(t => t.isSidequest);
+    if (sqTask) markDoneById(sqTask.id);
+    else { save(); render(); }
   }
 
   function _suppressCurrentAutoBreak() {
@@ -3995,12 +4404,10 @@
       barFill.classList.toggle('over', over);
     }
 
-    // Enable break button only when a task is in the now slot
-    const all    = getAllSorted();
-    const hasNow = all.length > 0;
-    const btn    = document.getElementById('takeBreakBtn');
+    // Enable break button whenever not already on a break
+    const btn = document.getElementById('takeBreakBtn');
     if (btn) {
-      btn.disabled = !hasNow || !!breakStartMs;
+      btn.disabled = !!breakStartMs;
       btn.classList.toggle('over', over);
     }
   }
@@ -4042,14 +4449,23 @@
     };
 
     // ── Stress score ───────────────────────────────────────────────────
-    // All three factors use nonBreak counts — breaks are excluded.
+    // "Other" category tasks are excluded — only deliberate work counts toward stress.
     // Hours carries 3× weight; volume 1×; urgency 0.5× (priority mix matters less).
     // Calibrated: ~6h mixed-priority day → 4, 10h active day → 8.
-    const urgencyRaw  = Math.min(pCount[1] + pCount[2], 10);              // urgent + high tasks, max 10
+    const otherCatId    = categoryRules.length ? categoryRules[categoryRules.length - 1].id : 'other';
+    const stressNonBreak = nonBreak.filter(t => getCategoryForTask(t.title, {}, t.id, t.categoryOverride) !== otherCatId);
+    const sPCount = { 1: 0, 2: 0, 3: 0, 4: 0 };
+    for (const t of stressNonBreak) { if (t.priority && sPCount[t.priority] !== undefined) sPCount[t.priority]++; }
+    const sTotal      = stressNonBreak.length;
+    const urgencyRaw  = Math.min(sPCount[1] + sPCount[2], 10);            // urgent + high tasks, max 10
     const urgencyNorm = urgencyRaw / 10;
-    const volumeRaw   = Math.min(Math.max(total, 3), 20);                  // task count (excl. breaks)
+    const volumeRaw   = Math.min(Math.max(sTotal, 3), 20);                // task count (excl. breaks + other)
     const volumeNorm  = (volumeRaw - 3) / 17;
-    const workMins    = timePerTask.reduce((s, r) => s + r.mins, 0);
+    const stressTimePerTask = timePerTask.filter(r => {
+      const catId = getCategoryForTask(r.title, {}, null, null);
+      return catId !== otherCatId;
+    });
+    const workMins    = stressTimePerTask.reduce((s, r) => s + r.mins, 0);
     const workHours   = workMins / 60;
     const hoursRaw    = Math.min(Math.max(workHours, 4), 10);              // active hours, floor 4, max 10
     const hoursNorm   = (hoursRaw - 4) / 6;
@@ -4253,6 +4669,9 @@
           ${mins > 0 ? `<span class="edm-task-time">${fmtTaskMins(mins)}</span>` : ''}
         </div>`;
       }
+
+      const catTotal = items.reduce((s, { mins }) => s + mins, 0);
+      if (catTotal > 0) html += `<div class="edm-cat-subtotal"><span>Total</span><span>${fmtTaskMins(catTotal)}</span></div>`;
 
       html += `</div></div>`;
     }
@@ -4472,6 +4891,146 @@
     document.getElementById('historyOverlay').classList.remove('active');
   }
 
+  // ── Day History drag-to-recategorize ──────────────────────────────────
+  let _hdcDragTitle = null;
+  let _hdcDragDate  = null;
+
+  function hdcDragStart(event, date, title) {
+    _hdcDragTitle = title;
+    _hdcDragDate  = date;
+    event.dataTransfer.effectAllowed = 'move';
+    event.currentTarget.classList.add('edm-dragging');
+  }
+
+  function hdcDragEnd(event) {
+    _hdcDragTitle = null;
+    _hdcDragDate  = null;
+    event.currentTarget.classList.remove('edm-dragging');
+    document.querySelectorAll('.hdc-cat-section').forEach(s => s.classList.remove('edm-drag-over'));
+  }
+
+  function hdcDragOver(event) {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    document.querySelectorAll('.hdc-cat-section').forEach(s => s.classList.remove('edm-drag-over'));
+    event.currentTarget.classList.add('edm-drag-over');
+  }
+
+  function hdcDragLeave(event) {
+    if (!event.currentTarget.contains(event.relatedTarget)) {
+      event.currentTarget.classList.remove('edm-drag-over');
+    }
+  }
+
+  function hdcDrop(event, date, catId) {
+    event.preventDefault();
+    event.currentTarget.classList.remove('edm-drag-over');
+    if (!_hdcDragTitle || !date || !catId) return;
+
+    // Update Firestore: merge override into the day's taskCategoryOverrides (title-keyed)
+    if (_db && _currentUser) {
+      const update = {};
+      update[`taskCategoryOverrides.${_hdcDragTitle}`] = catId;
+      _db.collection('users').doc(_currentUser.uid).collection('history')
+        .doc(date)
+        .set({ taskCategoryOverrides: { [_hdcDragTitle]: catId } }, { merge: true })
+        .catch(() => {});
+    }
+
+    // Re-render this day card in-place using updated overrides
+    const card = event.currentTarget.closest('.history-day-card');
+    if (card) {
+      // Fetch fresh and re-render, or just apply locally
+      const titleOverridesEl = card._titleOverrides || {};
+      titleOverridesEl[_hdcDragTitle] = catId;
+      card._titleOverrides = titleOverridesEl;
+      // Re-render the categories portion
+      const tasksEl = card.querySelector('.hdc-tasks');
+      if (tasksEl && card._dayData) {
+        card._dayData.taskCategoryOverrides = card._dayData.taskCategoryOverrides || {};
+        card._dayData.taskCategoryOverrides[_hdcDragTitle] = catId;
+        tasksEl.innerHTML = _buildHdcTaskHtml(card._dayData);
+      }
+    }
+    _hdcDragTitle = null;
+    _hdcDragDate  = null;
+  }
+
+  function _buildHdcTaskHtml(day) {
+    const titleOverrides = {};
+    if (day.taskCategoryOverrides) {
+      Object.assign(titleOverrides, day.taskCategoryOverrides);
+    }
+    // Always use current category rules so retroactive changes apply
+    const rules = categoryRules.length ? categoryRules : DEFAULT_CATEGORY_RULES;
+    const grouped = {};
+    for (const cat of rules) grouped[cat.id] = [];
+    for (const r of (day.timePerTask || [])) {
+      const catId = getCategoryForTask(r.title, titleOverrides, r.title);
+      if (!grouped[catId]) grouped[catId] = [];
+      grouped[catId].push(r);
+    }
+    let html = '';
+    for (const cat of rules) {
+      const items = grouped[cat.id] || [];
+      const escapedCatId = cat.id.replace(/'/g, "\\'");
+      const catTotal = items.reduce((s, r) => s + r.mins, 0);
+      // Always render every category — empty ones show a drop target
+      html += `<div class="edm-cat-section hdc-cat-section" data-cat="${esc(cat.id)}"
+        ondragover="hdcDragOver(event)"
+        ondragleave="hdcDragLeave(event)"
+        ondrop="hdcDrop(event,'${esc(day.date)}','${escapedCatId}')">
+        <div class="edm-cat-header hdc-cat-header-sm">${esc(cat.name.toUpperCase())}${catTotal > 0 ? `<span class="hdc-cat-hd-time">${fmtTaskMins(catTotal)}</span>` : ''}</div>
+        <div class="edm-cat-tasks">`;
+      if (items.length === 0) {
+        html += `<div class="hdc-empty-cat">—</div>`;
+      } else {
+        for (const r of items) {
+          const escapedTitle = r.title.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+          html += `<div class="edm-drag-row hdc-drag-row" draggable="true"
+            ondragstart="hdcDragStart(event,'${esc(day.date)}','${escapedTitle}')"
+            ondragend="hdcDragEnd(event)">
+            <span class="edm-drag-handle">⠿</span>
+            <span class="hdc-task-title">${esc(r.title)}</span>
+            ${r.mins > 0 ? `<span class="hdc-task-time">${fmtTaskMins(r.mins)}</span>` : ''}
+          </div>`;
+        }
+      }
+      html += `</div></div>`;
+    }
+    return html || '<div class="history-no-data">No recorded data</div>';
+  }
+
+  function _recomputeStressScore(day) {
+    if (!day.timePerTask || !day.timePerTask.length) return null;
+    const otherCatId = categoryRules.length ? categoryRules[categoryRules.length - 1].id : 'other';
+    const overrides  = day.taskCategoryOverrides || {};
+
+    // Filter out "other" from hours
+    const stressTime = day.timePerTask.filter(r => {
+      const catId = getCategoryForTask(r.title, overrides, r.title);
+      return catId !== otherCatId;
+    });
+    const workMins  = stressTime.reduce((s, r) => s + r.mins, 0);
+    const workHours = workMins / 60;
+
+    // Filter doneTasks to non-break, non-other
+    const nonBreak = (day.doneTasks || []).filter(t => !t.isBreak);
+    const stressTasks = nonBreak.filter(t => {
+      const catId = getCategoryForTask(t.title, overrides, t.title, t.categoryOverride);
+      return catId !== otherCatId;
+    });
+    const sPCount = { 1: 0, 2: 0, 3: 0, 4: 0 };
+    for (const t of stressTasks) { if (t.priority && sPCount[t.priority] !== undefined) sPCount[t.priority]++; }
+    const sTotal = stressTasks.length;
+
+    const urgencyNorm = Math.min(sPCount[1] + sPCount[2], 10) / 10;
+    const volumeNorm  = (Math.min(Math.max(sTotal, 3), 20) - 3) / 17;
+    const hoursNorm   = (Math.min(Math.max(workHours, 4), 10) - 4) / 6;
+    const raw = (3 * hoursNorm + volumeNorm + 0.5 * urgencyNorm) / 4.5 * 10;
+    return Math.min(Math.max(Math.round(raw), 1), 10);
+  }
+
   function renderHistoryDay(day) {
     // Format date (shared by both paths)
     const [y,m,d] = day.date.split('-').map(Number);
@@ -4487,53 +5046,37 @@
       </div>`;
     }
 
-    const col   = stressColor(day.stressScore || 1);
-    const label = stressLabel(day.stressScore || 1);
+    // Recompute stress score live using current category rules (excludes "other")
+    const liveStress = _recomputeStressScore(day);
+    const displayScore = liveStress ?? day.stressScore ?? 1;
+    const col   = stressColor(displayScore);
+    const label = stressLabel(displayScore);
 
-    // Build title-keyed overrides from ID-keyed taskCategoryOverrides
-    const titleOverrides = {};
+    // Normalize taskCategoryOverrides: support both title-keyed (new) and id-keyed (legacy)
     if (day.taskCategoryOverrides && day.doneTasks) {
       for (const t of day.doneTasks) {
-        if (day.taskCategoryOverrides[t.id] != null) {
-          titleOverrides[t.title] = day.taskCategoryOverrides[t.id];
+        if (day.taskCategoryOverrides[t.id] != null && day.taskCategoryOverrides[t.title] == null) {
+          day.taskCategoryOverrides[t.title] = day.taskCategoryOverrides[t.id];
         }
       }
     }
 
-    // Group timePerTask entries by category
-    const rules = categoryRules.length ? categoryRules : DEFAULT_CATEGORY_RULES;
-    const grouped = {};
-    for (const cat of rules) grouped[cat.id] = [];
-    for (const r of (day.timePerTask || [])) {
-      const catId = getCategoryForTask(r.title, titleOverrides, r.title);
-      if (!grouped[catId]) grouped[catId] = [];
-      grouped[catId].push(r);
-    }
-
-    // Render category sections (reuse edm-cat-* classes for visual parity)
-    let taskHtml = '';
-    for (const cat of rules) {
-      const items = grouped[cat.id] || [];
-      if (items.length === 0) continue;
-      taskHtml += `<div class="edm-cat-section">
-        <div class="edm-cat-header">${esc(cat.name.toUpperCase())}</div>
-        <div class="edm-cat-tasks">`;
-      for (const r of items) {
-        taskHtml += `<div class="hdc-task-row"><span class="hdc-task-title">${esc(r.title)}</span><span class="hdc-task-time">${fmtTaskMins(r.mins)}</span></div>`;
-      }
-      taskHtml += `</div></div>`;
-    }
-    if (!taskHtml) {
-      taskHtml = '<div class="history-no-data">No recorded data</div>';
-    }
+    const taskHtml = _buildHdcTaskHtml(day);
 
     const pb = day.priorityBreakdown || {};
     const priorityHtml = buildPriorityHtml(pb, pb.total || 0, 'hdc-priority-chip');
 
-    return `<div class="history-day-card">
+    // Use a wrapper so we can attach _dayData after insertion
+    const cardId = `hdcCard_${day.date.replace(/-/g,'')}`;
+    setTimeout(() => {
+      const card = document.getElementById(cardId);
+      if (card) card._dayData = day;
+    }, 0);
+
+    return `<div class="history-day-card" id="${cardId}">
       <div class="hdc-header">
         <div class="hdc-date">${dateLabel}</div>
-        <div class="hdc-stress" style="background:${col}22;color:${col}">Stress ${day.stressScore || '—'}/10 · ${label}</div>
+        <div class="hdc-stress" style="background:${col}22;color:${col}">Stress ${displayScore}/10 · ${label}</div>
       </div>
       <div class="hdc-tasks">${taskHtml}</div>
       ${priorityHtml ? `<div class="hdc-priority-row">${priorityHtml}</div>` : ''}
@@ -5060,54 +5603,88 @@
 
   async function fetchGcalEvents() {
     const overlay = document.getElementById('gcalOverlay');
-    // Overlay is already open (opened by openGcalImport), just update message
     setGcalListMessage('Loading…');
     document.getElementById('gcalConfirmBtn').style.display = 'none';
-    overlay.classList.add('active'); // ensure it's open if called from token-refresh path
+    overlay.classList.add('active');
 
-    // Build today's date range in PST/PDT with correct UTC offset.
-    // Derive offset in whole minutes to handle half-hour zones correctly,
-    // and pad to two digits so it works for UTC-10 through UTC-01.
-    const now        = new Date();
-    const laDate     = new Date(now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
-    const offsetMins = Math.round((now.getTime() - laDate.getTime()) / 60000);
-    const sign       = offsetMins >= 0 ? '-' : '+';
-    const absOff     = Math.abs(offsetMins);
+    // Build today's date range in PST/PDT with a timezone-independent offset computation.
+    // We compute "LA time interpreted as UTC" minus real UTC to get the LA→UTC offset,
+    // which works regardless of the system's local timezone.
+    const now    = new Date();
+    const laStr  = now.toLocaleString('en-US', {
+      timeZone: 'America/Los_Angeles',
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+    });
+    // Parse as UTC to get LA-clock-as-UTC
+    const [datePart, timePart] = laStr.split(', ');
+    const [mo2, d2, y2] = datePart.split('/');
+    const [h2, min2, s2] = timePart.split(':').map(Number);
+    const laAsUtcMs  = Date.UTC(parseInt(y2), parseInt(mo2) - 1, parseInt(d2), h2, min2, s2);
+    const rawOffMins = Math.round((laAsUtcMs - now.getTime()) / 60000); // neg for US timezones
+    const sign       = rawOffMins >= 0 ? '+' : '-';
+    const absOff     = Math.abs(rawOffMins);
     const offsetStr  = `${sign}${pad2(Math.floor(absOff / 60))}:${pad2(absOff % 60)}`;
-    // laDate fields already reflect LA local time — no need for a second toLocaleString via getPST()
-    const y   = laDate.getFullYear();
-    const mo  = pad2(laDate.getMonth() + 1);
-    const d   = pad2(laDate.getDate());
-    const timeMin = `${y}-${mo}-${d}T00:00:00${offsetStr}`;
-    const timeMax = `${y}-${mo}-${d}T23:59:59${offsetStr}`;
+    const y   = pad2(parseInt(y2));
+    const mo  = mo2;
+    const d   = d2;
+    const timeMin = `${y2}-${mo}-${d}T00:00:00${offsetStr}`;
+    const timeMax = `${y2}-${mo}-${d}T23:59:59${offsetStr}`;
+
+    const authHeaders = { Authorization: `Bearer ${_gcalAccessToken}` };
+
+    const handle401 = () => {
+      _gcalAccessToken = null;
+      _gcalTokenExpiry  = 0;
+      setGcalListMessage('Re-authenticating with Google…');
+      _gcalTokenClient = _buildGcalTokenClient(fetchGcalEvents);
+      _gcalTokenClient.requestAccessToken({ prompt: 'consent' });
+    };
 
     try {
-      const url = new URL('https://www.googleapis.com/calendar/v3/calendars/primary/events');
-      url.searchParams.set('timeMin', timeMin);
-      url.searchParams.set('timeMax', timeMax);
-      url.searchParams.set('singleEvents', 'true');
-      url.searchParams.set('orderBy', 'startTime');
+      // 1. Get all calendars the user has access to (includes invited/shared)
+      const listRes = await fetch(
+        'https://www.googleapis.com/calendar/v3/users/me/calendarList?maxResults=250',
+        { headers: authHeaders }
+      );
+      if (listRes.status === 401) { handle401(); return; }
+      if (!listRes.ok) { setGcalListMessage('Failed to load calendars. Please try again.'); return; }
+      const listData   = await listRes.json();
+      const calendars  = (listData.items || []).filter(c => c.accessRole !== 'none');
 
-      const res = await fetch(url.toString(), {
-        headers: { Authorization: `Bearer ${_gcalAccessToken}` },
-      });
+      // 2. Fetch today's events from each calendar in parallel
+      const fetchCal = async (calId) => {
+        const url = new URL(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events`);
+        url.searchParams.set('timeMin', timeMin);
+        url.searchParams.set('timeMax', timeMax);
+        url.searchParams.set('singleEvents', 'true');
+        url.searchParams.set('orderBy', 'startTime');
+        url.searchParams.set('maxResults', '100');
+        const r = await fetch(url.toString(), { headers: authHeaders });
+        if (!r.ok) return [];
+        const data = await r.json();
+        return data.items || [];
+      };
 
-      if (res.status === 401) {
-        _gcalAccessToken = null;
-        _gcalTokenExpiry  = 0;
-        setGcalListMessage('Re-authenticating with Google…');
-        _gcalTokenClient = _buildGcalTokenClient(fetchGcalEvents);
-        _gcalTokenClient.requestAccessToken({ prompt: 'consent' });
-        return;
+      const results = await Promise.all(calendars.map(c => fetchCal(c.id)));
+
+      // 3. Merge, deduplicate by id, filter out all-day and declined events
+      const seen = new Set();
+      const events = [];
+      for (const items of results) {
+        for (const e of items) {
+          if (seen.has(e.id)) continue;
+          seen.add(e.id);
+          if (!e.start || !e.start.dateTime) continue; // skip all-day
+          // Skip events the user declined
+          const selfAttendee = (e.attendees || []).find(a => a.self);
+          if (selfAttendee && selfAttendee.responseStatus === 'declined') continue;
+          events.push(e);
+        }
       }
-      if (!res.ok) {
-        setGcalListMessage('Failed to load events. Please try again.');
-        return;
-      }
+      // Sort by start time
+      events.sort((a, b) => new Date(a.start.dateTime) - new Date(b.start.dateTime));
 
-      const data = await res.json();
-      // Filter out all-day events (they have .date but not .dateTime)
-      const events = (data.items || []).filter(e => e.start && e.start.dateTime);
       _gcalPendingEvents = events;
       renderGcalEvents(events);
     } catch (e) {
@@ -5207,11 +5784,22 @@
   if (!_auth) { load(); } // local-only fallback
   loadBreakState();
   loadCalBounds();
+  // Initialize smart time pickers
+  initSmartTime('schedTimeInput');
+  initSmartTime('sdTimeInput');
+
   checkDayEndedReset();
   checkDayOffState();
   setInterval(checkDayOffState, 60000);
   updateClock();
   render();
+
+  // Re-render calendar on window resize so timeline scales to available height
+  let _resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(_resizeTimer);
+    _resizeTimer = setTimeout(() => renderCalendar(), 100);
+  });
 </script>
 </body>
 </html>
