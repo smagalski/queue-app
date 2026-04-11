@@ -439,7 +439,10 @@
   .empty-queue { text-align: center; color: var(--text-dim); font-size: 10px; padding: 6px 0; }
 
   /* ── Two-button add row ───────────────────────────────────────────────── */
-  .add-btns-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 4px; }
+  .add-btns-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-top: 4px; }
+  .add-btns-row > button { grid-column: span 2; }
+  .add-btns-row > button:nth-child(4) { grid-column: 2 / span 2; }
+  .add-btns-row > button:nth-child(5) { grid-column: 4 / span 2; }
   .add-btns-row > button {
     color: #fff !important;
     font-family: 'Inter',sans-serif; font-weight: 600;
@@ -942,8 +945,8 @@
   body.mobile-view .delete-btn { padding: 6px 8px; font-size: 14px; top: 8px; right: 8px; }
   body.mobile-view .priority-badge { padding: 4px 8px; font-size: 10px; }
 
-  /* Add buttons: 3-col grid on mobile too, matching desktop */
-  body.mobile-view .add-btns-row { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  /* Add buttons: 6-col grid on mobile too, matching desktop */
+  body.mobile-view .add-btns-row { grid-template-columns: repeat(6, 1fr); gap: 6px; }
   body.mobile-view .add-btns-row > button { font-size: 10px; padding: 8px 4px; min-height: 48px; }
   body.mobile-view .break-budget-panel { display: none; }
   body.mobile-view .add-btn,
@@ -1618,8 +1621,8 @@
           <span class="add-toggle-icon">+</span>
           Schedule
         </button>
-        <button class="break-toggle-btn" id="takeBreakBtn" onclick="takeBreak()" disabled>Take a Break</button>
         <button class="gcal-import-btn" id="gcalImportBtn" onclick="openGcalImport()">Google Cal</button>
+        <button class="break-toggle-btn" id="takeBreakBtn" onclick="takeBreak()" disabled>Take a Break</button>
         <button class="sidequest-btn" id="sidequestBtn" onclick="openSidequest()">Sidequest</button>
       </div>
     </div>
