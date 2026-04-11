@@ -4451,7 +4451,7 @@
     // ── Stress score ───────────────────────────────────────────────────
     // "Other" category tasks are excluded — only deliberate work counts toward stress.
     // Hours carries 3× weight; volume 1×; urgency 0.5× (priority mix matters less).
-    // Calibrated: ~6h mixed-priority day → 4, 10h active day → 8.
+    // Calibrated: ~8h low-urgency day → 3, 12h+ intense day → 10.
     const otherCatId    = categoryRules.length ? categoryRules[categoryRules.length - 1].id : 'other';
     const stressNonBreak = nonBreak.filter(t => getCategoryForTask(t.title, {}, t.id, t.categoryOverride) !== otherCatId);
     const sPCount = { 1: 0, 2: 0, 3: 0, 4: 0 };
@@ -4461,14 +4461,18 @@
     const urgencyNorm = urgencyRaw / 10;
     const volumeRaw   = Math.min(Math.max(sTotal, 3), 20);                // task count (excl. breaks + other)
     const volumeNorm  = (volumeRaw - 3) / 17;
-    const stressTimePerTask = timePerTask.filter(r => {
-      const catId = getCategoryForTask(r.title, {}, null, null);
-      return catId !== otherCatId;
-    });
-    const workMins    = stressTimePerTask.reduce((s, r) => s + r.mins, 0);
+    // Hours computed from stressNonBreak (override-aware) to avoid title-only mismatch
+    const _stressTimeMap = {};
+    for (const t of stressNonBreak) {
+      let mins = 0;
+      if (t.startTime && t.endTime) mins = parseDateLocalMins(t.endTime) - parseDateLocalMins(t.startTime);
+      else mins = t.duration || 0;
+      if (mins > 0) _stressTimeMap[t.title || 'Untitled'] = (_stressTimeMap[t.title || 'Untitled'] || 0) + mins;
+    }
+    const workMins    = Object.values(_stressTimeMap).reduce((s, m) => s + m, 0);
     const workHours   = workMins / 60;
-    const hoursRaw    = Math.min(Math.max(workHours, 4), 10);              // active hours, floor 4, max 10
-    const hoursNorm   = (hoursRaw - 4) / 6;
+    const hoursRaw    = Math.min(Math.max(workHours, 4), 12);              // active hours, floor 4, max 12
+    const hoursNorm   = (hoursRaw - 4) / 8;
     const rawScore    = (3 * hoursNorm + volumeNorm + 0.5 * urgencyNorm) / 4.5 * 10;
     const stressScore = Math.min(Math.max(Math.round(rawScore), 1), 10);
 
@@ -5013,31 +5017,35 @@
   }
 
   function _recomputeStressScore(day) {
-    if (!day.timePerTask || !day.timePerTask.length) return null;
+    if (!day.doneTasks || !day.doneTasks.length) return null;
     const otherCatId = categoryRules.length ? categoryRules[categoryRules.length - 1].id : 'other';
     const overrides  = day.taskCategoryOverrides || {};
 
-    // Filter out "other" from hours
-    const stressTime = day.timePerTask.filter(r => {
-      const catId = getCategoryForTask(r.title, overrides, r.title);
-      return catId !== otherCatId;
-    });
-    const workMins  = stressTime.reduce((s, r) => s + r.mins, 0);
-    const workHours = workMins / 60;
-
-    // Filter doneTasks to non-break, non-other
-    const nonBreak = (day.doneTasks || []).filter(t => !t.isBreak);
+    // Filter doneTasks to non-break, non-other (override-aware)
+    const nonBreak = day.doneTasks.filter(t => !t.isBreak);
     const stressTasks = nonBreak.filter(t => {
       const catId = getCategoryForTask(t.title, overrides, t.title, t.categoryOverride);
       return catId !== otherCatId;
     });
+
+    // Hours: computed from stressTasks directly so overrides are respected
+    const _stressTimeMap = {};
+    for (const t of stressTasks) {
+      let mins = 0;
+      if (t.startTime && t.endTime) mins = parseDateLocalMins(t.endTime) - parseDateLocalMins(t.startTime);
+      else mins = t.duration || 0;
+      if (mins > 0) _stressTimeMap[t.title || 'Untitled'] = (_stressTimeMap[t.title || 'Untitled'] || 0) + mins;
+    }
+    const workMins  = Object.values(_stressTimeMap).reduce((s, m) => s + m, 0);
+    const workHours = workMins / 60;
+
     const sPCount = { 1: 0, 2: 0, 3: 0, 4: 0 };
     for (const t of stressTasks) { if (t.priority && sPCount[t.priority] !== undefined) sPCount[t.priority]++; }
     const sTotal = stressTasks.length;
 
     const urgencyNorm = Math.min(sPCount[1] + sPCount[2], 10) / 10;
     const volumeNorm  = (Math.min(Math.max(sTotal, 3), 20) - 3) / 17;
-    const hoursNorm   = (Math.min(Math.max(workHours, 4), 10) - 4) / 6;
+    const hoursNorm   = (Math.min(Math.max(workHours, 4), 12) - 4) / 8;
     const raw = (3 * hoursNorm + volumeNorm + 0.5 * urgencyNorm) / 4.5 * 10;
     return Math.min(Math.max(Math.round(raw), 1), 10);
   }
