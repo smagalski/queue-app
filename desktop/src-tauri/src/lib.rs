@@ -87,7 +87,7 @@ fn show_overlay(app: tauri::AppHandle) -> Result<(), String> {
         .transparent(true)
         .resizable(true)
         .skip_taskbar(true)
-        .center()
+        .position(20.0, 28.0)
         .build()
         .map_err(|e: tauri::Error| e.to_string())?;
     }
