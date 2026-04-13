@@ -4242,13 +4242,12 @@
       _sqPausedTask = null;
     }
 
-    // ── Shift remaining flex tasks down by 2 to make room ──────────────────
+    // ── Shift remaining flex tasks down by 1 ───────────────────────────────
     tasks.forEach(t => {
-      if (!isScheduled(t) && t.flexOrder !== undefined && t.id !== sqTask.id) t.flexOrder += 2;
+      if (!isScheduled(t) && t.flexOrder !== undefined && t.id !== sqTask.id) t.flexOrder += 1;
     });
 
     // ── Convert sidequest task to a scheduled task starting now ─────────────
-    // This gives it an accurate startTime/endTime in history when done.
     const sq = tasks.find(t => t.id === sqTask.id);
     if (sq) {
       sq.type      = 'scheduled';
@@ -4258,25 +4257,18 @@
       _sqTaskId = sq.id;
     }
 
-    // ── Insert resume copy of interrupted task at flexOrder 0 ───────────────
+    // ── Compute remaining duration now, store on _sqPausedTask for endSidequest ──
     if (_sqPausedTask) {
       let remaining = _sqPausedTask.duration || DEFAULT_DUR;
       if (!isScheduled(_sqPausedTask) && _sqPausedTask.calStartTime) {
         const elapsed = Math.floor((Date.now() - _sqPausedTask.calStartTime) / 60000);
         remaining = Math.max((_sqPausedTask.duration || DEFAULT_DUR) - elapsed, 1);
       }
-      const resumeTask = {
-        ..._sqPausedTask,
-        id:       Date.now() + 1,
-        flexOrder: 0,
-        duration: remaining,
-        addedAt:  Date.now() + 1,
-      };
-      delete resumeTask._eff; delete resumeTask._stMins; delete resumeTask._etMins;
-      delete resumeTask._active; delete resumeTask.calStartTime;
-      delete resumeTask.startTime; delete resumeTask.endTime; delete resumeTask.doneAt;
-      tasks.push(resumeTask);
+      _sqPausedTask._sqRemaining = remaining;
     }
+
+    // NOTE: resume task is inserted in endSidequest() so render() stamps
+    // calStartTime at the correct moment (sidequest end, not start).
 
     _sqStartMs = Date.now();
     save();
@@ -4310,6 +4302,27 @@
     const dp      = todayPstDateStr();
     const sqTask  = _sqTaskId ? tasks.find(t => t.id === _sqTaskId) : null;
     if (sqTask) sqTask.endTime = `${dp}T${fmtMins(nowMins)}`;
+
+    // ── Re-insert the paused task as a fresh copy at flexOrder 0 ──────────
+    // Done HERE (not at sidequest start) so render() stamps calStartTime
+    // with the current time (= sidequest end), not sidequest start.
+    if (_sqPausedTask) {
+      tasks.forEach(t => {
+        if (!isScheduled(t) && t.flexOrder !== undefined) t.flexOrder += 1;
+      });
+      const resumeTask = {
+        ..._sqPausedTask,
+        id:        Date.now() + 1,
+        flexOrder: 0,
+        duration:  _sqPausedTask._sqRemaining || _sqPausedTask.duration || DEFAULT_DUR,
+        addedAt:   Date.now() + 1,
+      };
+      delete resumeTask._eff; delete resumeTask._stMins; delete resumeTask._etMins;
+      delete resumeTask._active; delete resumeTask.calStartTime;
+      delete resumeTask.startTime; delete resumeTask.endTime;
+      delete resumeTask.doneAt; delete resumeTask._sqRemaining;
+      tasks.push(resumeTask);
+    }
 
     _sqStartMs    = null;
     _sqPausedTask = null;
