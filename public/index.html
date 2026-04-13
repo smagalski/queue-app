@@ -1799,7 +1799,6 @@
 <!-- SIDEQUEST OVERLAY -->
 <div class="sidequest-overlay" id="sidequestOverlay">
   <div class="sq-heading">On a Sidequest</div>
-  <div class="sq-icon">⚡</div>
   <div class="sq-task-title" id="sqTaskTitle"></div>
   <div class="sq-timer" id="sqTimerDisplay">0:00</div>
   <div class="sq-paused-label">Paused</div>
@@ -2255,7 +2254,16 @@
         else             localStorage.removeItem('q_signin_ts');
       })
       .catch(e => {
-        document.getElementById('authError').textContent = friendlyAuthError(e.code);
+        if (e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user') {
+          // Popup was blocked (e.g. inside an iframe/preview) — fall back to redirect
+          _auth.setPersistence(persistence)
+            .then(() => _auth.signInWithRedirect(provider))
+            .catch(e2 => {
+              document.getElementById('authError').textContent = friendlyAuthError(e2.code);
+            });
+        } else {
+          document.getElementById('authError').textContent = friendlyAuthError(e.code);
+        }
       });
   }
 
@@ -2381,6 +2389,16 @@
   function setUserDoc(user) {
     _currentUser = user;
     _stateDoc = user ? _db.collection('users').doc(user.uid).collection('queue').doc('state') : null;
+  }
+
+  // ── Handle Google redirect result (fallback from popup-blocked) ───────────
+  if (_auth) {
+    _auth.getRedirectResult().then(result => {
+      if (result && result.user) {
+        const keepChecked = document.getElementById('keepSignedIn')?.checked ?? true;
+        if (keepChecked) localStorage.setItem('q_signin_ts', String(Date.now()));
+      }
+    }).catch(() => {});
   }
 
   // ── Auth state observer ────────────────────────────────────────────────
@@ -4251,12 +4269,38 @@
 
   function endSidequest() {
     if (_sqTimerInt) { clearInterval(_sqTimerInt); _sqTimerInt = null; }
-    _sqStartMs = null;
     document.getElementById('sidequestOverlay').classList.remove('active');
 
-    // Mark the sidequest task done
-    const all = getAllSorted();
-    const sqTask = all.find(t => t.isSidequest);
+    // Find the sidequest task and stamp its start time before marking done
+    const sqTask = tasks.find(t => t.isSidequest);
+    if (sqTask) {
+      if (_sqStartMs) sqTask.calStartTime = _sqStartMs; // ensures correct time range in history
+      delete sqTask.isSidequest;
+    }
+
+    // Re-add the paused task as a fresh copy at position 0 (the "split" resume)
+    if (_sqPausedTask) {
+      // Shift all remaining flex tasks down to make room
+      tasks.forEach(t => {
+        if (!isScheduled(t) && t.flexOrder !== undefined) t.flexOrder += 1;
+      });
+      const resumed = {
+        ..._sqPausedTask,
+        id:           Date.now(),
+        flexOrder:    0,
+        calStartTime: Date.now(), // starts now when sidequest ends
+      };
+      delete resumed._eff;
+      delete resumed.doneAt;
+      delete resumed.startTime;
+      delete resumed.endTime;
+      tasks.push(resumed);
+      _sqPausedTask = null;
+    }
+
+    _sqStartMs = null;
+
+    // markDoneById stamps startTime/endTime from calStartTime and calls save()+render()
     if (sqTask) markDoneById(sqTask.id);
     else { save(); render(); }
   }

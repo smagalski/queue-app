@@ -8,6 +8,7 @@
 
     html, body {
       width: 100%; height: 100%;
+      /* Transparent so macOS vibrancy (NSVisualEffectView) shows through */
       background: transparent;
       overflow: hidden;
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -19,145 +20,109 @@
 
     .container {
       width: 100%; height: 100%;
-      background: rgba(11, 10, 15, 0.88);
-      -webkit-backdrop-filter: blur(28px);
-      backdrop-filter: blur(28px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      /* Subtle dark tint on top of the vibrancy layer */
+      background: rgba(5, 4, 10, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: 12px;
       display: flex;
       flex-direction: column;
       overflow: hidden;
     }
 
-    /* ── Title bar ────────────────────────────────────────────────────────── */
+    /* ── Title bar (drag handle) ──────────────────────────────────────────── */
     .title-bar {
       height: 30px;
       flex-shrink: 0;
       display: flex;
       align-items: center;
       padding: 0 12px;
-      gap: 7px;
+      gap: 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
       cursor: grab;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
     }
     .title-bar:active { cursor: grabbing; }
-    /* All children must not capture the click so the title-bar div IS the target */
-    .title-bar * { pointer-events: none; }
 
     .title-dot {
       width: 7px; height: 7px; border-radius: 50%;
-      background: rgba(255,255,255,0.15); flex-shrink: 0;
+      background: rgba(255,255,255,0.2); flex-shrink: 0;
+      pointer-events: none;
     }
     .title-text {
-      font-size: 9px; font-weight: 700; letter-spacing: 0.16em;
-      text-transform: uppercase; color: rgba(255,255,255,0.25);
+      font-size: 9px; font-weight: 700; letter-spacing: 0.18em;
+      text-transform: uppercase; color: rgba(255,255,255,0.3);
+      pointer-events: none;
     }
     .title-hint {
-      margin-left: auto;
-      font-size: 8px; color: rgba(255,255,255,0.15);
+      margin-left: auto; font-size: 8px;
+      color: rgba(255,255,255,0.18);
+      pointer-events: none;
     }
 
     /* ── Body ─────────────────────────────────────────────────────────────── */
     .body {
-      flex: 1;
-      display: flex;
-      overflow: hidden;
-      min-height: 0;
+      flex: 1; display: flex; overflow: hidden; min-height: 0;
     }
 
     /* ── Timeline ─────────────────────────────────────────────────────────── */
     .timeline-panel {
-      width: 108px;
-      flex-shrink: 0;
+      width: 108px; flex-shrink: 0;
       border-right: 1px solid rgba(255,255,255,0.07);
-      overflow: hidden;
-      position: relative;
+      position: relative; overflow: hidden;
     }
-
-    /* Static inner — sized by JS, no scroll */
     .timeline-inner {
-      position: relative;
-      margin: 0 5px;
+      position: relative; margin: 0 5px;
     }
-
     .tl-hour {
-      position: absolute;
-      left: 0; right: 0;
-      display: flex;
-      align-items: flex-start;
-      pointer-events: none;
+      position: absolute; left: 0; right: 0;
+      display: flex; align-items: flex-start; pointer-events: none;
     }
     .tl-label {
       width: 22px; flex-shrink: 0;
       font-size: 7px; font-weight: 600; letter-spacing: 0.03em;
-      color: rgba(255,255,255,0.28); text-align: right;
+      color: rgba(255,255,255,0.3); text-align: right;
       padding-right: 5px; margin-top: -4px; line-height: 1;
     }
-    .tl-line {
-      flex: 1; height: 1px;
-      background: rgba(255,255,255,0.08);
-    }
+    .tl-line { flex: 1; height: 1px; background: rgba(255,255,255,0.1); }
 
     .tl-block {
-      position: absolute;
-      left: 28px; right: 0;
-      border-radius: 3px;
-      padding: 1px 3px;
-      overflow: hidden;
-      pointer-events: none;
+      position: absolute; left: 28px; right: 0;
+      border-radius: 3px; padding: 1px 3px; overflow: hidden; pointer-events: none;
     }
     .tl-block-title {
       font-size: 6px; font-weight: 600;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-      color: rgba(255,255,255,0.7); line-height: 1.3;
+      color: rgba(255,255,255,0.75); line-height: 1.3;
     }
-
     .tl-now {
-      position: absolute;
-      left: 0; right: 0;
-      height: 1.5px;
-      background: #fff;
-      z-index: 10;
-      box-shadow: 0 0 5px rgba(255,255,255,0.5);
-      pointer-events: none;
+      position: absolute; left: 0; right: 0; height: 1.5px;
+      background: #fff; z-index: 10;
+      box-shadow: 0 0 5px rgba(255,255,255,0.6); pointer-events: none;
     }
     .tl-now::before {
-      content: '';
-      position: absolute;
-      left: 20px; top: -3px;
-      width: 7px; height: 7px;
-      border-radius: 50%;
-      background: #fff;
-      box-shadow: 0 0 5px rgba(255,255,255,0.6);
+      content: ''; position: absolute;
+      left: 20px; top: -3px; width: 7px; height: 7px;
+      border-radius: 50%; background: #fff;
+      box-shadow: 0 0 5px rgba(255,255,255,0.7);
     }
 
     /* ── Tasks ────────────────────────────────────────────────────────────── */
     .tasks-panel {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 9px;
-      overflow: hidden;
-      padding: 10px 10px;
-      cursor: pointer;
+      flex: 1; display: flex; flex-direction: column;
+      gap: 9px; overflow: hidden;
+      padding: 10px; cursor: pointer;
     }
-
     .slot-section { display: flex; flex-direction: column; gap: 5px; flex-shrink: 0; }
-
     .slot-label {
       font-size: 7px; font-weight: 700; letter-spacing: 0.16em;
-      text-transform: uppercase; color: rgba(255,255,255,0.28);
-      padding-left: 2px;
+      text-transform: uppercase; color: rgba(255,255,255,0.3); padding-left: 2px;
     }
     .slot-label.now { color: #f0d060; }
 
     .task-card {
-      background: rgba(255,255,255,0.05);
+      background: rgba(255,255,255,0.06);
       border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 7px;
-      padding: 7px 9px 6px;
-      position: relative;
-      overflow: hidden;
+      border-radius: 7px; padding: 7px 9px 6px;
+      position: relative; overflow: hidden;
     }
     .task-card::before {
       content: ''; position: absolute;
@@ -174,16 +139,15 @@
       text-transform: uppercase; padding: 1px 5px; border-radius: 2px;
     }
     .empty-card {
-      border: 1px dashed rgba(255,255,255,0.1);
-      border-radius: 7px; padding: 10px;
-      display: flex; align-items: center; justify-content: center;
-      color: rgba(255,255,255,0.15); font-size: 9px; font-style: italic;
+      border: 1px dashed rgba(255,255,255,0.1); border-radius: 7px;
+      padding: 10px; display: flex; align-items: center; justify-content: center;
+      color: rgba(255,255,255,0.18); font-size: 9px; font-style: italic;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="title-bar" id="titleBar" data-tauri-drag-region>
+    <div class="title-bar" id="titleBar">
       <div class="title-dot"></div>
       <span class="title-text">Queue</span>
       <span class="title-hint">click to open →</span>
@@ -227,75 +191,72 @@
     // ── Timeline ─────────────────────────────────────────────────────────────
 
     function renderTimeline(tasks) {
-      const panel     = document.getElementById('timelinePanel');
-      const inner     = document.getElementById('timelineInner');
-      const calStart  = parseInt(localStorage.getItem('q_calStart')||'360');
-      const calEnd    = parseInt(localStorage.getItem('q_calEnd')||'1260');
-      const panelH    = panel.clientHeight || 370;
-      const pxPerMin  = panelH / (calEnd - calStart);
-      const nowMins   = dateToMins(new Date());
-
+      const panel    = document.getElementById('timelinePanel');
+      const inner    = document.getElementById('timelineInner');
+      const calStart = parseInt(localStorage.getItem('q_calStart')||'360');
+      const calEnd   = parseInt(localStorage.getItem('q_calEnd')||'1260');
+      const panelH   = panel.clientHeight || 370;
+      const pxPerMin = panelH / (calEnd - calStart);
+      const nowMins  = dateToMins(new Date());
       inner.style.height = panelH + 'px';
-
-      function y(m){ return (m-calStart)*pxPerMin; }
+      function y(m){ return (m - calStart) * pxPerMin; }
 
       let html = '';
 
-      // Hour rows — label every 2 hrs to avoid overlap at small scale
-      for(let m=calStart; m<=calEnd; m+=60){
+      // Hour labels every 2 hrs
+      for(let m = calStart; m <= calEnd; m += 60){
         const hr = Math.floor(m/60);
-        const lbl = (m%120===0||m===calStart)
-          ? (hr===0?'12a':hr<12?`${hr}a`:hr===12?'12p':`${hr-12}p`) : '';
+        const lbl = (m % 120 === 0 || m === calStart)
+          ? (hr===0?'12a': hr<12?`${hr}a`: hr===12?'12p': `${hr-12}p`) : '';
         html += `<div class="tl-hour" style="top:${y(m)}px">
           <span class="tl-label">${lbl}</span><div class="tl-line"></div>
         </div>`;
       }
 
-      // Scheduled task blocks
+      // Scheduled blocks
       for(const t of tasks){
-        if(t.type==='scheduled'&&t.startTime){
-          const s=dateToMins(new Date(t.startTime));
-          const e=t.endTime?dateToMins(new Date(t.endTime)):s+(t.duration||60);
-          if(e>calStart&&s<calEnd){
-            const top=y(Math.max(s,calStart));
-            const h=Math.max(4,(Math.min(e,calEnd)-Math.max(s,calStart))*pxPerMin);
-            const col='#9863f3';
-            html+=`<div class="tl-block" style="top:${top}px;height:${h}px;background:${col}22;border-left:2px solid ${col}">
+        if(t.type==='scheduled' && t.startTime){
+          const s = dateToMins(new Date(t.startTime));
+          const e = t.endTime ? dateToMins(new Date(t.endTime)) : s+(t.duration||60);
+          if(e > calStart && s < calEnd){
+            const top = y(Math.max(s, calStart));
+            const h   = Math.max(4,(Math.min(e, calEnd)-Math.max(s, calStart))*pxPerMin);
+            const col = '#9863f3';
+            html += `<div class="tl-block" style="top:${top}px;height:${h}px;background:${col}22;border-left:2px solid ${col}">
               <span class="tl-block-title">${esc(t.title)}</span></div>`;
           }
         }
-        // Active flex task (has calStartTime + duration)
-        if(!isScheduled(t)&&t.calStartTime&&t.duration){
-          const s=dateToMins(new Date(t.calStartTime));
-          const e=s+t.duration;
-          if(e>calStart&&s<calEnd){
-            const top=y(Math.max(s,calStart));
-            const h=Math.max(4,(Math.min(e,calEnd)-Math.max(s,calStart))*pxPerMin);
-            const col=P_COLORS[t.priority||4];
-            html+=`<div class="tl-block" style="top:${top}px;height:${h}px;background:${col}22;border-left:2px solid ${col}">
+        // Active flex task
+        if(!isScheduled(t) && t.calStartTime && t.duration){
+          const s = dateToMins(new Date(t.calStartTime));
+          const e = s + t.duration;
+          if(e > calStart && s < calEnd){
+            const top = y(Math.max(s, calStart));
+            const h   = Math.max(4,(Math.min(e, calEnd)-Math.max(s, calStart))*pxPerMin);
+            const col = P_COLORS[t.priority||4];
+            html += `<div class="tl-block" style="top:${top}px;height:${h}px;background:${col}22;border-left:2px solid ${col}">
               <span class="tl-block-title">${esc(t.title)}</span></div>`;
           }
         }
       }
 
-      // Current time line
-      if(nowMins>=calStart&&nowMins<=calEnd){
-        html+=`<div class="tl-now" id="tlNow" style="top:${y(nowMins)}px"></div>`;
+      // Now line
+      if(nowMins >= calStart && nowMins <= calEnd){
+        html += `<div class="tl-now" id="tlNow" style="top:${y(nowMins)}px"></div>`;
       }
-
       inner.innerHTML = html;
     }
 
     function updateNowLine(){
-      const calStart=parseInt(localStorage.getItem('q_calStart')||'360');
-      const calEnd=parseInt(localStorage.getItem('q_calEnd')||'1260');
-      const panel=document.getElementById('timelinePanel');
-      const panelH=panel.clientHeight||370;
-      const pxPerMin=panelH/(calEnd-calStart);
-      const nowMins=dateToMins(new Date());
-      const line=document.getElementById('tlNow');
-      if(line&&nowMins>=calStart&&nowMins<=calEnd){
-        line.style.top=((nowMins-calStart)*pxPerMin)+'px';
+      const calStart = parseInt(localStorage.getItem('q_calStart')||'360');
+      const calEnd   = parseInt(localStorage.getItem('q_calEnd')||'1260');
+      const panel    = document.getElementById('timelinePanel');
+      const panelH   = panel.clientHeight || 370;
+      const pxPerMin = panelH / (calEnd - calStart);
+      const nowMins  = dateToMins(new Date());
+      const line = document.getElementById('tlNow');
+      if(line && nowMins >= calStart && nowMins <= calEnd){
+        line.style.top = ((nowMins - calStart) * pxPerMin) + 'px';
       }
     }
 
@@ -305,9 +266,9 @@
       const cls = isNow ? 'slot-label now' : 'slot-label';
       if(!task) return `<div class="slot-section">
         <div class="${cls}">${lbl}</div><div class="empty-card">—</div></div>`;
-      const p=task.priority||4, col=P_COLORS[p]||'#fff';
-      const tl=task.calStartTime?`started ${fmtTime(task.calStartTime)}`:'';
-      const dl=fmtDur(task.duration);
+      const p = task.priority||4, col = P_COLORS[p]||'#fff';
+      const tl = task.calStartTime ? `started ${fmtTime(task.calStartTime)}` : '';
+      const dl = fmtDur(task.duration);
       return `<div class="slot-section">
         <div class="${cls}">${lbl}</div>
         <div class="task-card" style="--bar:${col};border-color:${col}22">
@@ -325,14 +286,14 @@
 
     function render(){
       try{
-        const tasks=JSON.parse(localStorage.getItem('q_tasks')||'[]');
-        const sorted=getSorted(tasks);
+        const tasks  = JSON.parse(localStorage.getItem('q_tasks')||'[]');
+        const sorted = getSorted(tasks);
         renderTimeline(tasks);
-        document.getElementById('tasksPanel').innerHTML=
-          renderSlot(sorted[0],'NOW',true)+
-          renderSlot(sorted[1],'UP NEXT',false)+
+        document.getElementById('tasksPanel').innerHTML =
+          renderSlot(sorted[0],'NOW',true) +
+          renderSlot(sorted[1],'UP NEXT',false) +
           renderSlot(sorted[2],'ON DECK',false);
-      }catch(e){ console.error('Overlay render:',e); }
+      } catch(e){ console.error('Overlay render:',e); }
     }
 
     render();
@@ -340,21 +301,40 @@
     setInterval(render, 10000);
     setInterval(updateNowLine, 60000);
 
-    // ── Drag — call the same internal Tauri command that data-tauri-drag-region uses ──
+    // ── Drag via delta IPC ────────────────────────────────────────────────────
+    // Tauri's start_dragging() requires a live NSEvent on macOS (IPC latency
+    // kills it). Instead we track delta on every mousemove and call move_overlay_by.
+
+    let _dragActive = false;
+    let _lastX = 0, _lastY = 0;
 
     document.getElementById('titleBar').addEventListener('mousedown', (e) => {
-      if(e.button !== 0) return;
+      if (e.button !== 0) return;
       e.preventDefault();
-      if(window.__TAURI_INTERNALS__){
-        window.__TAURI_INTERNALS__.invoke('plugin:window|start_dragging');
-      }
+      _dragActive = true;
+      _lastX = e.screenX;
+      _lastY = e.screenY;
     });
 
-    // ── Click tasks area → focus main window ─────────────────────────────────
+    window.addEventListener('mousemove', (e) => {
+      if (!_dragActive || !window.__TAURI__) return;
+      const scale = window.devicePixelRatio || 1;
+      const dx = Math.round((e.screenX - _lastX) * scale);
+      const dy = Math.round((e.screenY - _lastY) * scale);
+      _lastX = e.screenX;
+      _lastY = e.screenY;
+      if (dx === 0 && dy === 0) return;
+      // Fire-and-forget — fast enough for smooth drag on macOS IPC
+      window.__TAURI__.core.invoke('move_overlay_by', { dx, dy }).catch(() => {});
+    });
+
+    window.addEventListener('mouseup', () => { _dragActive = false; });
+
+    // ── Click tasks → focus main window ──────────────────────────────────────
 
     document.getElementById('tasksPanel').addEventListener('click', async () => {
-      if(window.__TAURI__){
-        try{ await window.__TAURI__.core.invoke('focus_main_window'); }
+      if (window.__TAURI__) {
+        try { await window.__TAURI__.core.invoke('focus_main_window'); }
         catch(e){ console.error(e); }
       }
     });
