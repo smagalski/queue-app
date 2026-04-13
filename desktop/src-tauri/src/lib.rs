@@ -1,4 +1,4 @@
-use tauri::Emitter;
+use tauri::{Emitter, Manager};
 use tauri_plugin_updater::UpdaterExt;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
@@ -69,6 +69,52 @@ fn open_in_browser(url: String) -> Result<(), String> {
     open::that(url).map_err(|e| e.to_string())
 }
 
+/// Creates (or shows) the always-on-top overlay window.
+#[tauri::command]
+fn show_overlay(app: tauri::AppHandle) -> Result<(), String> {
+    if let Some(overlay) = app.get_webview_window("overlay") {
+        overlay.show().map_err(|e| e.to_string())?;
+    } else {
+        tauri::WebviewWindowBuilder::new(
+            &app,
+            "overlay",
+            tauri::WebviewUrl::App("overlay.html".into()),
+        )
+        .title("")
+        .inner_size(800.0, 800.0)
+        .decorations(false)
+        .always_on_top(true)
+        .transparent(true)
+        .resizable(true)
+        .skip_taskbar(true)
+        .center()
+        .build()
+        .map_err(|e: tauri::Error| e.to_string())?;
+    }
+    Ok(())
+}
+
+/// Hides the overlay window (keeps it alive for fast re-show).
+#[tauri::command]
+fn hide_overlay(app: tauri::AppHandle) -> Result<(), String> {
+    if let Some(overlay) = app.get_webview_window("overlay") {
+        overlay.hide().map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+/// Un-minimizes and focuses the main window (called from the overlay).
+#[tauri::command]
+fn focus_main_window(app: tauri::AppHandle) -> Result<(), String> {
+    if let Some(main) = app.get_webview_window("main") {
+        if main.is_minimized().unwrap_or(false) {
+            main.unminimize().map_err(|e| e.to_string())?;
+        }
+        main.set_focus().map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -77,13 +123,45 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             get_version,
             start_oauth_server,
-            open_in_browser
+            open_in_browser,
+            show_overlay,
+            hide_overlay,
+            focus_main_window,
         ])
         .setup(|app| {
+            // Auto-update check
             let handle = app.handle().clone();
             tauri::async_runtime::spawn(async move {
                 check_for_updates(handle).await;
             });
+
+            // Watch main window: hide overlay on focus, emit event on minimize
+            if let Some(main_win) = app.get_webview_window("main") {
+                let handle = app.handle().clone();
+                main_win.on_window_event(move |event| match event {
+                    tauri::WindowEvent::Focused(true) => {
+                        // Main window came to front — hide overlay immediately
+                        if let Some(ov) = handle.get_webview_window("overlay") {
+                            ov.hide().ok();
+                        }
+                    }
+                    tauri::WindowEvent::Focused(false) => {
+                        // Focus lost — check after a short delay whether we were minimized
+                        let h = handle.clone();
+                        tauri::async_runtime::spawn(async move {
+                            tokio::time::sleep(std::time::Duration::from_millis(300)).await;
+                            if let Some(w) = h.get_webview_window("main") {
+                                if w.is_minimized().unwrap_or(false) {
+                                    // Tell JS so it can show the overlay if enabled
+                                    h.emit("main-window-minimized", ()).ok();
+                                }
+                            }
+                        });
+                    }
+                    _ => {}
+                });
+            }
+
             Ok(())
         })
         .run(tauri::generate_context!())

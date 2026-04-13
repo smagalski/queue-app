@@ -1437,6 +1437,7 @@
       <button class="seg-btn" id="segDesktop" onclick="applyViewMode(false)">🖥</button>
       <button class="seg-btn" id="segMobile"  onclick="applyViewMode(true)">📱</button>
     </div>
+    <button class="seg-btn overlay-toggle-btn" id="overlayToggleBtn" onclick="toggleOverlayMode()" title="Toggle overlay widget" style="display:none;border:1px solid var(--border);border-radius:5px">OVERLAY</button>
     <button class="titlebar-undo-btn" id="titlebarUndoBtn" onclick="undoLastAction()" title="Undo last action" style="display:none">↺</button>
     <div class="gear-wrap" id="gearWrap" style="display:none">
       <button class="gear-btn" id="gearBtn" onclick="toggleGearMenu(event)">⚙</button>
@@ -5403,6 +5404,47 @@
   (function initViewMode() {
     applyViewMode(isMobileDevice());
   })();
+
+  // ── Tauri overlay mode ────────────────────────────────────────────────────
+  let _overlayEnabled = false;
+
+  (function initTauriMode() {
+    if (!window.__TAURI__) return;
+
+    // Hide the desktop/mobile view toggle — not needed in the Mac app
+    const vs = document.getElementById('viewSegment');
+    if (vs) vs.style.display = 'none';
+
+    // Show the overlay toggle button
+    const btn = document.getElementById('overlayToggleBtn');
+    if (btn) btn.style.display = '';
+
+    // Restore saved overlay preference
+    _overlayEnabled = localStorage.getItem('overlayMode') === '1';
+    _updateOverlayBtn();
+
+    // When the main window is minimized, show overlay if enabled
+    window.__TAURI__.event.listen('main-window-minimized', async () => {
+      if (_overlayEnabled) {
+        try { await window.__TAURI__.core.invoke('show_overlay'); } catch (e) { console.error(e); }
+      }
+    });
+  })();
+
+  function toggleOverlayMode() {
+    _overlayEnabled = !_overlayEnabled;
+    localStorage.setItem('overlayMode', _overlayEnabled ? '1' : '0');
+    _updateOverlayBtn();
+    if (!_overlayEnabled && window.__TAURI__) {
+      window.__TAURI__.core.invoke('hide_overlay').catch(() => {});
+    }
+  }
+
+  function _updateOverlayBtn() {
+    const btn = document.getElementById('overlayToggleBtn');
+    if (!btn) return;
+    btn.classList.toggle('active', _overlayEnabled);
+  }
 
   // ── Populate duration selects ───────────────────────────────────────────
   (function() {
