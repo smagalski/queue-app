@@ -170,14 +170,43 @@
     function isScheduled(t) {
       return t.type==='scheduled'||(!t.type&&(t.startTime||t.endTime));
     }
-    function getSorted(tasks) {
-      return tasks.filter(t=>!isScheduled(t)&&!t.isBreak).sort((a,b)=>{
-        const ao=a.flexOrder??Infinity, bo=b.flexOrder??Infinity;
-        if(ao!==bo) return ao-bo;
-        if((a.priority||4)!==(b.priority||4)) return (a.priority||4)-(b.priority||4);
-        return (a.addedAt||0)-(b.addedAt||0);
-      });
+
+    function isoStrToMins(s) {
+      if (!s) return null;
+      const t = s.includes('T') ? s.split('T')[1] : s;
+      const [h, m] = t.split(':').map(Number);
+      return h * 60 + (m || 0);
     }
+
+    function getAllSorted(tasks) {
+      const nowMins = dateToMins(new Date());
+
+      // Flex tasks
+      const flex = tasks
+        .filter(t => !isScheduled(t) && !t.isBreak)
+        .sort((a,b) => {
+          const ao=a.flexOrder??Infinity, bo=b.flexOrder??Infinity;
+          if(ao!==bo) return ao-bo;
+          if((a.priority||4)!==(b.priority||4)) return (a.priority||4)-(b.priority||4);
+          return (a.addedAt||0)-(b.addedAt||0);
+        });
+
+      // Scheduled tasks
+      const sched = tasks
+        .filter(t => isScheduled(t))
+        .map(t => {
+          const st = isoStrToMins(t.startTime);
+          const et = t.endTime ? isoStrToMins(t.endTime) : (st != null ? st + (t.duration||60) : null);
+          const active = st != null && nowMins >= st && (et == null || nowMins < et);
+          return { ...t, _st: st, _et: et, _active: active };
+        })
+        .sort((a,b) => (a._st ?? 9999) - (b._st ?? 9999));
+
+      const active = sched.filter(t => t._active);
+      const future = sched.filter(t => !t._active);
+      return [...active, ...flex, ...future];
+    }
+
     function dateToMins(d){ return d.getHours()*60+d.getMinutes(); }
     function fmtTime(ms){
       const d=new Date(ms),h=d.getHours(),m=d.getMinutes();
@@ -285,20 +314,43 @@
 
     // ── Task slots ────────────────────────────────────────────────────────────
 
+    function fmtHHMM(s) {
+      if (!s) return '';
+      const t = s.includes('T') ? s.split('T')[1] : s;
+      const [h, m] = t.split(':').map(Number);
+      const ampm = h >= 12 ? 'pm' : 'am';
+      return `${h%12||12}:${String(m).padStart(2,'0')}${ampm}`;
+    }
+
     function renderSlot(task, lbl, isNow){
       const cls = isNow ? 'slot-label now' : 'slot-label';
       if(!task) return `<div class="slot-section">
         <div class="${cls}">${lbl}</div><div class="empty-card">—</div></div>`;
-      const p = task.priority||4, col = P_COLORS[p]||'#fff';
-      const tl = task.calStartTime ? `started ${fmtTime(task.calStartTime)}` : '';
+
+      const sched = isScheduled(task);
+      const col   = sched ? '#9863f3' : (P_COLORS[task.priority||4]||'#fff');
+
+      let timeLbl = '';
+      if (sched) {
+        if (task.startTime && task.endTime)
+          timeLbl = `${fmtHHMM(task.startTime)} – ${fmtHHMM(task.endTime)}`;
+        else if (task.startTime)
+          timeLbl = `starts ${fmtHHMM(task.startTime)}`;
+      } else if (task.calStartTime) {
+        timeLbl = `started ${fmtTime(task.calStartTime)}`;
+      }
       const dl = fmtDur(task.duration);
+      const pBadge = sched
+        ? `<span class="badge" style="background:${col}22;color:${col}">SCHEDULED</span>`
+        : `<span class="badge" style="background:${col}22;color:${col}">${P_LABELS[task.priority||4]}</span>`;
+
       return `<div class="slot-section">
         <div class="${cls}">${lbl}</div>
         <div class="task-card" style="--bar:${col};border-color:${col}22">
           <div class="task-title">${esc(task.title)}</div>
           <div class="task-meta">
-            <span class="badge" style="background:${col}22;color:${col}">${P_LABELS[p]}</span>
-            ${tl?`<span class="badge" style="background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.5)">${tl}</span>`:''}
+            ${pBadge}
+            ${timeLbl?`<span class="badge" style="background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.5)">${timeLbl}</span>`:''}
             ${dl?`<span class="badge" style="background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.5)">${dl}</span>`:''}
           </div>
         </div>
@@ -311,7 +363,7 @@
       try{
         const tasks     = JSON.parse(localStorage.getItem('q_tasks')||'[]');
         const doneTasks = JSON.parse(localStorage.getItem('q_done') ||'[]');
-        const sorted    = getSorted(tasks);
+        const sorted    = getAllSorted(tasks);
         renderTimeline(tasks, doneTasks);
         document.getElementById('tasksPanel').innerHTML =
           renderSlot(sorted[0],'NOW',true) +
@@ -352,7 +404,17 @@
       window.__TAURI__.core.invoke('move_overlay_by', { dx, dy }).catch(() => {});
     });
 
-    window.addEventListener('mouseup', () => { _dragActive = false; });
+    window.addEventListener('mouseup', async () => {
+      if (_dragActive && window.__TAURI__) {
+        _dragActive = false;
+        try {
+          const [x, y] = await window.__TAURI__.core.invoke('get_overlay_position');
+          localStorage.setItem('q_overlay_pos', JSON.stringify({ x, y }));
+        } catch(e) { /* non-fatal */ }
+      } else {
+        _dragActive = false;
+      }
+    });
 
     // ── Click tasks → focus main window ──────────────────────────────────────
 

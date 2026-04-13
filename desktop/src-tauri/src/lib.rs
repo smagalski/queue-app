@@ -56,11 +56,23 @@ fn open_in_browser(url: String) -> Result<(), String> {
 }
 
 /// Creates or shows the always-on-top overlay window.
+/// `x` / `y` are logical (point) coordinates; pass None to use the default top-left position.
 #[tauri::command]
-fn show_overlay(app: tauri::AppHandle) -> Result<(), String> {
+fn show_overlay(app: tauri::AppHandle, x: Option<f64>, y: Option<f64>) -> Result<(), String> {
     if let Some(overlay) = app.get_webview_window("overlay") {
+        // Restore saved position if provided
+        if let (Some(px), Some(py)) = (x, y) {
+            let scale = overlay.scale_factor().unwrap_or(1.0);
+            let phys_x = (px * scale) as i32;
+            let phys_y = (py * scale) as i32;
+            overlay
+                .set_position(tauri::PhysicalPosition::new(phys_x, phys_y))
+                .ok();
+        }
         overlay.show().map_err(|e| e.to_string())?;
     } else {
+        let pos_x = x.unwrap_or(20.0);
+        let pos_y = y.unwrap_or(28.0);
         let overlay = tauri::WebviewWindowBuilder::new(
             &app,
             "overlay",
@@ -73,7 +85,7 @@ fn show_overlay(app: tauri::AppHandle) -> Result<(), String> {
         .transparent(true)
         .resizable(true)
         .skip_taskbar(true)
-        .position(20.0, 28.0)
+        .position(pos_x, pos_y)
         .build()
         .map_err(|e: tauri::Error| e.to_string())?;
 
@@ -100,6 +112,18 @@ fn hide_overlay(app: tauri::AppHandle) -> Result<(), String> {
         overlay.hide().map_err(|e| e.to_string())?;
     }
     Ok(())
+}
+
+/// Returns the overlay's current logical (point) position so JS can persist it.
+#[tauri::command]
+fn get_overlay_position(app: tauri::AppHandle) -> Result<(f64, f64), String> {
+    if let Some(overlay) = app.get_webview_window("overlay") {
+        let phys = overlay.outer_position().map_err(|e| e.to_string())?;
+        let scale = overlay.scale_factor().unwrap_or(1.0);
+        Ok((phys.x as f64 / scale, phys.y as f64 / scale))
+    } else {
+        Ok((20.0, 28.0))
+    }
 }
 
 /// Moves the overlay window by a physical-pixel delta (called on every mousemove).
@@ -137,6 +161,7 @@ pub fn run() {
             open_in_browser,
             show_overlay,
             hide_overlay,
+            get_overlay_position,
             move_overlay_by,
             focus_main_window,
         ])

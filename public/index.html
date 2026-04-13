@@ -5478,7 +5478,11 @@
     // When the main window is minimized, show overlay if enabled
     window.__TAURI__.event.listen('main-window-minimized', async () => {
       if (_overlayEnabled) {
-        try { await window.__TAURI__.core.invoke('show_overlay'); } catch (e) { console.error(e); }
+        try {
+          const saved = localStorage.getItem('q_overlay_pos');
+          const pos   = saved ? JSON.parse(saved) : {};
+          await window.__TAURI__.core.invoke('show_overlay', { x: pos.x ?? null, y: pos.y ?? null });
+        } catch (e) { console.error(e); }
       }
     });
   })();
