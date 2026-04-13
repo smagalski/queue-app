@@ -415,6 +415,18 @@
   .task-card.flex-card { cursor: grab; user-select: none; }
   .task-card.flex-card:active { cursor: grabbing; }
   .task-card.flex-card.dragging { opacity: 0.35; }
+  .drag-handle {
+    position: absolute; top: 50%; left: 10px; transform: translateY(-50%);
+    display: flex; flex-direction: column; gap: 3px; cursor: grab; padding: 4px 2px;
+    opacity: 0; transition: opacity 0.15s;
+  }
+  .drag-handle span { display: flex; gap: 3px; }
+  .drag-handle span::before, .drag-handle span::after {
+    content: ''; width: 3px; height: 3px; border-radius: 50%;
+    background: rgba(255,255,255,0.4);
+  }
+  .flex-card:hover .drag-handle { opacity: 1; }
+  .flex-card:active .drag-handle { cursor: grabbing; }
   .task-card.more-drag-over { outline: 2px dashed rgba(255,255,255,0.3); outline-offset: 2px; }
 
   /* ── SCHEDULED DRAG ERROR ────────────────────────────────────────────── */
@@ -3049,8 +3061,11 @@
       ? ` ondragover="moreCardDragOver(event,${task.id})" ondrop="moreCardDrop(event,${task.id})"`
       : '';
 
+    const dragHandleHtml = (!taskSched && !taskBreak)
+      ? `<span class="drag-handle" title="Drag to reorder"><span></span><span></span><span></span></span>`
+      : '';
     return `<div class="task-card ${taskSched ? 'sched-card' : 'flex-card'}" data-id="${task.id}" ${dragAttrs}${moreAttrs} style="--card-bar:${col};border-color:${col}">
-      <button class="delete-btn" onclick="deleteTaskById(${task.id})" title="Delete">✕</button>
+      ${dragHandleHtml}<button class="delete-btn" onclick="deleteTaskById(${task.id})" title="Delete">✕</button>
       <div class="card-task-title" ondblclick="startTitleEdit(${task.id},this)" style="cursor:text">${esc(task.title)}</div>
       <div class="task-meta" style="display:flex">${badgeHtml}${catBadgeHtml}${escHtml}${carriedHtml}${timeHtml}${durHtml}<button class="done-btn" onclick="markDoneById(${task.id})">✓ Done</button></div>
       ${taskSched ? '<div class="sched-error-msg">Scheduled tasks can\'t be reordered by priority.</div>' : ''}
@@ -3352,9 +3367,7 @@
     }
 
     // ── FLEX TASKS: fill gaps in priority order ────────────────────────
-    // Exclude _ab auto-break placeholders — they're ephemeral queue markers, not real time blocks.
-    // Completed breaks show up via doneTasks; upcoming _ab cards don't clutter the timeline.
-    const flexTasks = getSorted().filter(t => !t._ab);
+    const flexTasks = getSorted();
     let cursor = findGap(nowMins, 1);
     for (const task of flexTasks) {
       const dur   = task.duration || DEFAULT_DUR;
@@ -5285,10 +5298,6 @@
       if (segDesktop) segDesktop.classList.add('active');
       if (segMobile)  segMobile.classList.remove('active');
     }
-  }
-
-  function toggleViewMode() {
-    applyViewMode(!document.body.classList.contains('mobile-view'));
   }
 
   // ── Calendar drawer (mobile only) ─────────────────────────────────────
