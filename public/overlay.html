@@ -161,7 +161,9 @@
   </div>
 
   <script>
-    const P_COLORS = ['','#ff6b8a','#f0800f','#f0d060','#4caf87'];
+    const P_COLORS  = ['','#ff6b8a','#f0800f','#f0d060','#4caf87'];
+    const SCHED_COL = '#7ec8e3';
+    const BREAK_COL = '#9863f3';
     const P_LABELS = ['','URGENT','HIGH','MEDIUM','LOW'];
 
     function esc(s) {
@@ -274,7 +276,7 @@
         const s = isoToMins(t.startTime);
         const e = isoToMins(t.endTime);
         if (s === null || e === null || e <= s) continue;
-        const col = t.isBreak ? '#9863f3' : (P_COLORS[t.priority||4] || '#fff');
+        const col = t.isBreak ? BREAK_COL : isScheduled(t) ? SCHED_COL : (P_COLORS[t.priority||4] || '#fff');
         html += addBlock(t.title, s, e, col, true);
       }
 
@@ -283,7 +285,7 @@
         if(t.type==='scheduled' && t.startTime){
           const s = isoToMins(t.startTime);
           const e = t.endTime ? isoToMins(t.endTime) : s+(t.duration||60);
-          if (s !== null && e !== null) html += addBlock(t.title, s, e, '#9863f3', false);
+          if (s !== null && e !== null) html += addBlock(t.title, s, e, SCHED_COL, false);
         }
         // Currently running flex task
         if(!isScheduled(t) && t.calStartTime && t.duration){
@@ -328,7 +330,7 @@
         <div class="${cls}">${lbl}</div><div class="empty-card">—</div></div>`;
 
       const sched = isScheduled(task);
-      const col   = sched ? '#9863f3' : (P_COLORS[task.priority||4]||'#fff');
+      const col   = sched ? SCHED_COL : (P_COLORS[task.priority||4]||'#fff');
 
       let timeLbl = '';
       if (sched) {
