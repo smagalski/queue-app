@@ -6,7 +6,14 @@
       "**/.*",
       "**/node_modules/**"
     ],
+    "headers": [
+      {
+        "source": "/overlay.html",
+        "headers": [{ "key": "X-Robots-Tag", "value": "noindex" }]
+      }
+    ],
     "rewrites": [
+      { "source": "/overlay.html", "destination": "/404.html" },
       { "source": "**", "destination": "/index.html" }
     ]
   },

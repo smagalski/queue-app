@@ -188,9 +188,23 @@
       return mins>=60?(mins%60?`${Math.floor(mins/60)}h${mins%60}m`:`${mins/60}h`):`${mins}m`;
     }
 
+    // Returns today's local date string as "YYYY-MM-DD"
+    function todayStr() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+
+    // Parse an ISO time string ("HH:MM" or "YYYY-MM-DDTHH:MM") to minutes since midnight
+    function isoToMins(s) {
+      if (!s) return null;
+      const t = s.includes('T') ? s.split('T')[1] : s;
+      const [h, m] = t.split(':').map(Number);
+      return h * 60 + (m || 0);
+    }
+
     // ── Timeline ─────────────────────────────────────────────────────────────
 
-    function renderTimeline(tasks) {
+    function renderTimeline(tasks, doneTasks) {
       const panel    = document.getElementById('timelinePanel');
       const inner    = document.getElementById('timelineInner');
       const calStart = parseInt(localStorage.getItem('q_calStart')||'360');
@@ -198,8 +212,19 @@
       const panelH   = panel.clientHeight || 370;
       const pxPerMin = panelH / (calEnd - calStart);
       const nowMins  = dateToMins(new Date());
+      const today    = todayStr();
       inner.style.height = panelH + 'px';
       function y(m){ return (m - calStart) * pxPerMin; }
+
+      function addBlock(title, s, e, col, done) {
+        if (e <= calStart || s >= calEnd) return '';
+        const top  = y(Math.max(s, calStart));
+        const h    = Math.max(4, (Math.min(e, calEnd) - Math.max(s, calStart)) * pxPerMin);
+        const bg   = done ? `${col}18` : `${col}22`;
+        const opacity = done ? 'opacity:0.6;' : '';
+        return `<div class="tl-block" style="top:${top}px;height:${h}px;${opacity}background:${bg};border-left:2px solid ${col}">
+          <span class="tl-block-title">${esc(title)}</span></div>`;
+      }
 
       let html = '';
 
@@ -213,30 +238,28 @@
         </div>`;
       }
 
-      // Scheduled blocks
+      // Completed tasks for today
+      for(const t of doneTasks) {
+        if (!t.startTime || !t.endTime) continue;
+        if (!t.startTime.startsWith(today)) continue; // only today
+        const s = isoToMins(t.startTime);
+        const e = isoToMins(t.endTime);
+        if (s === null || e === null || e <= s) continue;
+        const col = t.isBreak ? '#9863f3' : (P_COLORS[t.priority||4] || '#fff');
+        html += addBlock(t.title, s, e, col, true);
+      }
+
+      // Active scheduled tasks
       for(const t of tasks){
         if(t.type==='scheduled' && t.startTime){
-          const s = dateToMins(new Date(t.startTime));
-          const e = t.endTime ? dateToMins(new Date(t.endTime)) : s+(t.duration||60);
-          if(e > calStart && s < calEnd){
-            const top = y(Math.max(s, calStart));
-            const h   = Math.max(4,(Math.min(e, calEnd)-Math.max(s, calStart))*pxPerMin);
-            const col = '#9863f3';
-            html += `<div class="tl-block" style="top:${top}px;height:${h}px;background:${col}22;border-left:2px solid ${col}">
-              <span class="tl-block-title">${esc(t.title)}</span></div>`;
-          }
+          const s = isoToMins(t.startTime);
+          const e = t.endTime ? isoToMins(t.endTime) : s+(t.duration||60);
+          if (s !== null && e !== null) html += addBlock(t.title, s, e, '#9863f3', false);
         }
-        // Active flex task
+        // Currently running flex task
         if(!isScheduled(t) && t.calStartTime && t.duration){
           const s = dateToMins(new Date(t.calStartTime));
-          const e = s + t.duration;
-          if(e > calStart && s < calEnd){
-            const top = y(Math.max(s, calStart));
-            const h   = Math.max(4,(Math.min(e, calEnd)-Math.max(s, calStart))*pxPerMin);
-            const col = P_COLORS[t.priority||4];
-            html += `<div class="tl-block" style="top:${top}px;height:${h}px;background:${col}22;border-left:2px solid ${col}">
-              <span class="tl-block-title">${esc(t.title)}</span></div>`;
-          }
+          html += addBlock(t.title, s, s + t.duration, P_COLORS[t.priority||4], false);
         }
       }
 
@@ -286,9 +309,10 @@
 
     function render(){
       try{
-        const tasks  = JSON.parse(localStorage.getItem('q_tasks')||'[]');
-        const sorted = getSorted(tasks);
-        renderTimeline(tasks);
+        const tasks     = JSON.parse(localStorage.getItem('q_tasks')||'[]');
+        const doneTasks = JSON.parse(localStorage.getItem('q_done') ||'[]');
+        const sorted    = getSorted(tasks);
+        renderTimeline(tasks, doneTasks);
         document.getElementById('tasksPanel').innerHTML =
           renderSlot(sorted[0],'NOW',true) +
           renderSlot(sorted[1],'UP NEXT',false) +
