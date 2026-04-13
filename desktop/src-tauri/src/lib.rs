@@ -81,7 +81,7 @@ fn show_overlay(app: tauri::AppHandle) -> Result<(), String> {
             tauri::WebviewUrl::App("overlay.html".into()),
         )
         .title("")
-        .inner_size(800.0, 800.0)
+        .inner_size(400.0, 400.0)
         .decorations(false)
         .always_on_top(true)
         .transparent(true)

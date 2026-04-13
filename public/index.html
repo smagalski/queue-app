@@ -1437,7 +1437,14 @@
       <button class="seg-btn" id="segDesktop" onclick="applyViewMode(false)">🖥</button>
       <button class="seg-btn" id="segMobile"  onclick="applyViewMode(true)">📱</button>
     </div>
-    <button class="seg-btn overlay-toggle-btn" id="overlayToggleBtn" onclick="toggleOverlayMode()" title="Toggle overlay widget" style="display:none;border:1px solid var(--border);border-radius:5px">OVERLAY</button>
+    <div id="overlayToggleWrap" style="display:none;align-items:center;gap:7px" title="Show a floating widget when Queue is minimized">
+      <span style="font-size:9px;font-weight:700;letter-spacing:0.1em;color:var(--text-dim);text-transform:uppercase;user-select:none">Overlay</span>
+      <label class="ab-toggle">
+        <input type="checkbox" id="overlayToggleInput" onchange="overlayModeChanged(this.checked)">
+        <span class="ab-track"></span>
+        <span class="ab-thumb"></span>
+      </label>
+    </div>
     <button class="titlebar-undo-btn" id="titlebarUndoBtn" onclick="undoLastAction()" title="Undo last action" style="display:none">↺</button>
     <div class="gear-wrap" id="gearWrap" style="display:none">
       <button class="gear-btn" id="gearBtn" onclick="toggleGearMenu(event)">⚙</button>
@@ -5415,13 +5422,14 @@
     const vs = document.getElementById('viewSegment');
     if (vs) vs.style.display = 'none';
 
-    // Show the overlay toggle button
-    const btn = document.getElementById('overlayToggleBtn');
-    if (btn) btn.style.display = '';
+    // Show the overlay toggle
+    const wrap = document.getElementById('overlayToggleWrap');
+    if (wrap) wrap.style.display = 'flex';
 
-    // Restore saved overlay preference
+    // Restore saved preference and sync checkbox
     _overlayEnabled = localStorage.getItem('overlayMode') === '1';
-    _updateOverlayBtn();
+    const input = document.getElementById('overlayToggleInput');
+    if (input) input.checked = _overlayEnabled;
 
     // When the main window is minimized, show overlay if enabled
     window.__TAURI__.event.listen('main-window-minimized', async () => {
@@ -5431,19 +5439,12 @@
     });
   })();
 
-  function toggleOverlayMode() {
-    _overlayEnabled = !_overlayEnabled;
-    localStorage.setItem('overlayMode', _overlayEnabled ? '1' : '0');
-    _updateOverlayBtn();
-    if (!_overlayEnabled && window.__TAURI__) {
+  function overlayModeChanged(enabled) {
+    _overlayEnabled = enabled;
+    localStorage.setItem('overlayMode', enabled ? '1' : '0');
+    if (!enabled && window.__TAURI__) {
       window.__TAURI__.core.invoke('hide_overlay').catch(() => {});
     }
-  }
-
-  function _updateOverlayBtn() {
-    const btn = document.getElementById('overlayToggleBtn');
-    if (!btn) return;
-    btn.classList.toggle('active', _overlayEnabled);
   }
 
   // ── Populate duration selects ───────────────────────────────────────────

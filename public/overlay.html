@@ -16,153 +16,236 @@
 
     .container {
       width: 100%; height: 100%;
-      background: rgba(11, 10, 15, 0.85);
-      -webkit-backdrop-filter: blur(24px);
-      backdrop-filter: blur(24px);
+      background: rgba(11, 10, 15, 0.88);
+      -webkit-backdrop-filter: blur(28px);
+      backdrop-filter: blur(28px);
       border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 14px;
+      border-radius: 12px;
       display: flex;
       flex-direction: column;
       overflow: hidden;
     }
 
-    /* ── Drag bar ─────────────────────────────────────────────────────────── */
-    .drag-bar {
+    /* ── Title bar (drag handle) ──────────────────────────────────────────── */
+    .title-bar {
+      height: 32px;
+      flex-shrink: 0;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      padding: 12px 16px 10px;
-      flex-shrink: 0;
-      cursor: default;
+      padding: 0 12px;
+      gap: 7px;
+      cursor: grab;
       user-select: none;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
     }
+    .title-bar:active { cursor: grabbing; }
 
-    .app-label {
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: rgba(255, 255, 255, 0.25);
-    }
-
-    .hint-label {
-      font-size: 9px;
-      letter-spacing: 0.05em;
-      color: rgba(255, 255, 255, 0.18);
-    }
-
-    /* ── Divider ──────────────────────────────────────────────────────────── */
-    .divider {
-      height: 1px;
-      background: rgba(255, 255, 255, 0.07);
+    .title-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: rgba(255, 255, 255, 0.15);
       flex-shrink: 0;
     }
+    .title-label {
+      font-size: 9px; font-weight: 700; letter-spacing: 0.16em;
+      text-transform: uppercase; color: rgba(255, 255, 255, 0.25);
+    }
+    .title-hint {
+      margin-left: auto;
+      font-size: 8px; letter-spacing: 0.04em;
+      color: rgba(255, 255, 255, 0.15);
+    }
 
-    /* ── Scrollable content ───────────────────────────────────────────────── */
-    .content {
+    /* ── Body ─────────────────────────────────────────────────────────────── */
+    .body {
       flex: 1;
-      padding: 18px 16px 20px;
+      display: flex;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    /* ── Timeline (left) ──────────────────────────────────────────────────── */
+    .timeline-panel {
+      width: 110px;
+      flex-shrink: 0;
+      border-right: 1px solid rgba(255, 255, 255, 0.07);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .timeline-scroll {
+      position: absolute; inset: 0;
+      overflow-y: scroll;
+      overflow-x: hidden;
+      scrollbar-width: none;
+    }
+    .timeline-scroll::-webkit-scrollbar { display: none; }
+
+    .timeline-inner {
+      position: relative;
+      margin: 0 6px;
+    }
+
+    .tl-hour {
+      position: absolute;
+      left: 0; right: 0;
+      display: flex;
+      align-items: flex-start;
+      pointer-events: none;
+    }
+    .tl-label {
+      width: 24px;
+      flex-shrink: 0;
+      font-size: 7px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: rgba(255, 255, 255, 0.28);
+      text-align: right;
+      padding-right: 5px;
+      margin-top: -4px;
+      line-height: 1;
+    }
+    .tl-line {
+      flex: 1;
+      height: 1px;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .tl-block {
+      position: absolute;
+      left: 30px; right: 0;
+      border-radius: 3px;
+      padding: 1px 3px;
+      overflow: hidden;
+    }
+    .tl-block-title {
+      font-size: 6px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: rgba(255,255,255,0.75);
+      line-height: 1.3;
+    }
+
+    .tl-now {
+      position: absolute;
+      left: 0; right: 0;
+      height: 1.5px;
+      background: #fff;
+      z-index: 10;
+      box-shadow: 0 0 5px rgba(255,255,255,0.5);
+      pointer-events: none;
+    }
+    .tl-now::before {
+      content: '';
+      position: absolute;
+      left: 22px; top: -3px;
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 0 5px rgba(255,255,255,0.6);
+    }
+
+    /* ── Tasks (right) ────────────────────────────────────────────────────── */
+    .tasks-panel {
+      flex: 1;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 0;
       overflow-y: auto;
+      overflow-x: hidden;
+      padding: 10px 10px 10px 10px;
+      gap: 10px;
       cursor: pointer;
     }
+    .tasks-panel::-webkit-scrollbar { display: none; }
 
-    .content::-webkit-scrollbar { display: none; }
-
-    /* ── Slot section ─────────────────────────────────────────────────────── */
-    .slot-section {
-      display: flex;
-      flex-direction: column;
-      gap: 7px;
-    }
+    .slot-section { display: flex; flex-direction: column; gap: 5px; }
 
     .slot-label {
-      font-size: 8px;
-      font-weight: 700;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: rgba(255, 255, 255, 0.3);
+      font-size: 7px; font-weight: 700; letter-spacing: 0.16em;
+      text-transform: uppercase; color: rgba(255,255,255,0.28);
       padding-left: 2px;
     }
-
     .slot-label.now { color: #f0d060; }
 
-    /* ── Task card ────────────────────────────────────────────────────────── */
     .task-card {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
-      padding: 13px 14px 11px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 8px 10px 7px;
       position: relative;
       overflow: hidden;
       transition: background 0.12s;
     }
-
-    .task-card:hover { background: rgba(255, 255, 255, 0.08); }
-
+    .task-card:hover { background: rgba(255,255,255,0.08); }
     .task-card::before {
       content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
+      position: absolute; top: 0; left: 0; right: 0;
       height: 2px;
       background: var(--bar, transparent);
     }
 
     .task-title {
-      font-size: 16px;
-      font-weight: 700;
-      color: #fff;
-      line-height: 1.3;
-      margin-bottom: 9px;
+      font-size: 12px; font-weight: 700;
+      color: #fff; line-height: 1.3;
+      margin-bottom: 5px;
     }
-
     .task-meta {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
+      display: flex; align-items: center;
+      gap: 4px; flex-wrap: wrap;
     }
-
     .badge {
-      font-size: 8px;
-      font-weight: 600;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      padding: 2px 7px;
-      border-radius: 3px;
+      font-size: 7px; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 1px 5px; border-radius: 2px;
     }
 
-    /* ── Empty card ───────────────────────────────────────────────────────── */
     .empty-card {
-      border: 1px dashed rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
-      padding: 18px 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: rgba(255, 255, 255, 0.18);
-      font-size: 11px;
-      font-style: italic;
+      border: 1px dashed rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 12px;
+      display: flex; align-items: center; justify-content: center;
+      color: rgba(255,255,255,0.15);
+      font-size: 10px; font-style: italic;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="drag-bar" data-tauri-drag-region>
-      <span class="app-label" data-tauri-drag-region>Queue</span>
-      <span class="hint-label" data-tauri-drag-region>click to open →</span>
+
+    <div class="title-bar" id="titleBar">
+      <div class="title-dot"></div>
+      <span class="title-label">Queue</span>
+      <span class="title-hint">click tasks to open →</span>
     </div>
-    <div class="divider"></div>
-    <div class="content" id="content">
-      <!-- Populated by JS -->
+
+    <div class="body">
+
+      <!-- LEFT: Timeline -->
+      <div class="timeline-panel">
+        <div class="timeline-scroll" id="timelineScroll">
+          <div class="timeline-inner" id="timelineInner"></div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Task slots -->
+      <div class="tasks-panel" id="tasksPanel"></div>
+
     </div>
   </div>
 
   <script>
     const P_COLORS = ['', '#ff6b8a', '#f0800f', '#f0d060', '#4caf87'];
     const P_LABELS = ['', 'URGENT', 'HIGH', 'MEDIUM', 'LOW'];
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+
+    function esc(s) {
+      return String(s || '')
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
 
     function isScheduled(t) {
       return t.type === 'scheduled' || (!t.type && (t.startTime || t.endTime));
@@ -175,94 +258,172 @@
           const ao = a.flexOrder !== undefined ? a.flexOrder : Infinity;
           const bo = b.flexOrder !== undefined ? b.flexOrder : Infinity;
           if (ao !== bo) return ao - bo;
-          const ap = a.priority || 4, bp = b.priority || 4;
-          if (ap !== bp) return ap - bp;
+          if ((a.priority || 4) !== (b.priority || 4)) return (a.priority || 4) - (b.priority || 4);
           return (a.addedAt || 0) - (b.addedAt || 0);
         });
     }
 
+    // Convert a Date to minutes since midnight in local time
+    function dateToMins(d) { return d.getHours() * 60 + d.getMinutes(); }
+
     function fmtTime(ms) {
       const d = new Date(ms);
       const h = d.getHours(), m = d.getMinutes();
-      const ampm = h >= 12 ? 'pm' : 'am';
-      return `${h % 12 || 12}:${m.toString().padStart(2, '0')}${ampm}`;
+      return `${h % 12 || 12}:${String(m).padStart(2, '0')}${h >= 12 ? 'pm' : 'am'}`;
     }
 
     function fmtDur(mins) {
       if (!mins) return '';
-      return mins >= 60 ? `${mins / 60}h` : `${mins}m`;
+      return mins >= 60 ? (mins % 60 ? `${Math.floor(mins/60)}h${mins%60}m` : `${mins/60}h`) : `${mins}m`;
     }
 
-    function esc(s) {
-      return String(s)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-    }
+    // ── Timeline rendering ────────────────────────────────────────────────────
 
-    function renderSection(task, labelText, isNow) {
-      const labelClass = isNow ? 'slot-label now' : 'slot-label';
+    const PX_PER_MIN = 0.75; // 45px/hour — readable but compact
 
-      if (!task) {
-        return `
-          <div class="slot-section">
-            <div class="${labelClass}">${labelText}</div>
-            <div class="empty-card">—</div>
-          </div>`;
+    function renderTimeline(tasks) {
+      const calStart = parseInt(localStorage.getItem('q_calStart') || '360');
+      const calEnd   = parseInt(localStorage.getItem('q_calEnd')   || '1260');
+      const totalPx  = (calEnd - calStart) * PX_PER_MIN;
+      const nowMins  = dateToMins(new Date());
+
+      const inner = document.getElementById('timelineInner');
+      inner.style.height = totalPx + 'px';
+
+      function minsToY(m) { return (m - calStart) * PX_PER_MIN; }
+
+      let html = '';
+
+      // Hour lines + labels
+      for (let m = calStart; m <= calEnd; m += 60) {
+        const y = minsToY(m);
+        const h = Math.floor(m / 60);
+        // Show label every 2 hours to avoid crowding
+        const label = (m % 120 === 0 || m === calStart)
+          ? (h === 0 ? '12a' : h < 12 ? `${h}a` : h === 12 ? '12p' : `${h - 12}p`)
+          : '';
+        html += `<div class="tl-hour" style="top:${y}px">
+          <span class="tl-label">${label}</span>
+          <div class="tl-line"></div>
+        </div>`;
       }
 
+      // Task blocks — scheduled tasks
+      for (const task of tasks) {
+        if (task.type === 'scheduled' && task.startTime) {
+          const s = dateToMins(new Date(task.startTime));
+          const e = task.endTime ? dateToMins(new Date(task.endTime)) : s + (task.duration || 60);
+          if (e > calStart && s < calEnd) {
+            const y = minsToY(Math.max(s, calStart));
+            const h = Math.max(5, (Math.min(e, calEnd) - Math.max(s, calStart)) * PX_PER_MIN);
+            const col = '#9863f3';
+            html += `<div class="tl-block" style="top:${y}px;height:${h}px;background:${col}22;border-left:2px solid ${col}">
+              <span class="tl-block-title">${esc(task.title)}</span>
+            </div>`;
+          }
+        }
+        // Flex task with calStartTime (currently active)
+        if (!isScheduled(task) && task.calStartTime) {
+          const s = dateToMins(new Date(task.calStartTime));
+          const dur = task.duration || 60;
+          const e = s + dur;
+          if (e > calStart && s < calEnd) {
+            const y = minsToY(Math.max(s, calStart));
+            const h = Math.max(5, (Math.min(e, calEnd) - Math.max(s, calStart)) * PX_PER_MIN);
+            const col = P_COLORS[task.priority || 4];
+            html += `<div class="tl-block" style="top:${y}px;height:${h}px;background:${col}22;border-left:2px solid ${col}">
+              <span class="tl-block-title">${esc(task.title)}</span>
+            </div>`;
+          }
+        }
+      }
+
+      // Current time line
+      if (nowMins >= calStart && nowMins <= calEnd) {
+        html += `<div class="tl-now" id="tlNow" style="top:${minsToY(nowMins)}px"></div>`;
+      }
+
+      inner.innerHTML = html;
+
+      // Scroll so current time is ~1/3 from top
+      const scroll = document.getElementById('timelineScroll');
+      const nowY = minsToY(nowMins);
+      const visibleHeight = scroll.clientHeight || 368;
+      scroll.scrollTop = Math.max(0, nowY - visibleHeight * 0.33);
+    }
+
+    function updateNowLine() {
+      const calStart = parseInt(localStorage.getItem('q_calStart') || '360');
+      const calEnd   = parseInt(localStorage.getItem('q_calEnd')   || '1260');
+      const nowMins  = dateToMins(new Date());
+      const line = document.getElementById('tlNow');
+      if (line && nowMins >= calStart && nowMins <= calEnd) {
+        line.style.top = ((nowMins - calStart) * PX_PER_MIN) + 'px';
+      }
+    }
+
+    // ── Task slots rendering ──────────────────────────────────────────────────
+
+    function renderTaskSlot(task, labelText, isNow) {
+      const labelClass = isNow ? 'slot-label now' : 'slot-label';
+      if (!task) {
+        return `<div class="slot-section">
+          <div class="${labelClass}">${labelText}</div>
+          <div class="empty-card">—</div>
+        </div>`;
+      }
       const p   = task.priority || 4;
       const col = P_COLORS[p] || '#fff';
       const timeLabel = task.calStartTime ? `started ${fmtTime(task.calStartTime)}` : '';
       const durLabel  = fmtDur(task.duration);
-
-      return `
-        <div class="slot-section">
-          <div class="${labelClass}">${labelText}</div>
-          <div class="task-card" style="--bar:${col}; border-color:${col}22">
-            <div class="task-title">${esc(task.title || 'Untitled')}</div>
-            <div class="task-meta">
-              <span class="badge" style="background:${col}22; color:${col}">${P_LABELS[p]}</span>
-              ${timeLabel ? `<span class="badge" style="background:rgba(255,255,255,0.07); color:rgba(255,255,255,0.55)">${timeLabel}</span>` : ''}
-              ${durLabel  ? `<span class="badge" style="background:rgba(255,255,255,0.07); color:rgba(255,255,255,0.55)">${durLabel}</span>` : ''}
-            </div>
+      return `<div class="slot-section">
+        <div class="${labelClass}">${labelText}</div>
+        <div class="task-card" style="--bar:${col};border-color:${col}22">
+          <div class="task-title">${esc(task.title)}</div>
+          <div class="task-meta">
+            <span class="badge" style="background:${col}22;color:${col}">${P_LABELS[p]}</span>
+            ${timeLabel ? `<span class="badge" style="background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.5)">${timeLabel}</span>` : ''}
+            ${durLabel  ? `<span class="badge" style="background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.5)">${durLabel}</span>` : ''}
           </div>
-        </div>`;
+        </div>
+      </div>`;
     }
+
+    // ── Main render ───────────────────────────────────────────────────────────
 
     function render() {
       try {
-        const raw   = localStorage.getItem('q_tasks');
-        const tasks = raw ? JSON.parse(raw) : [];
+        const tasks  = JSON.parse(localStorage.getItem('q_tasks') || '[]');
         const sorted = getSorted(tasks);
-
-        document.getElementById('content').innerHTML =
-          renderSection(sorted[0], 'NOW',     true)  +
-          renderSection(sorted[1], 'UP NEXT', false) +
-          renderSection(sorted[2], 'ON DECK', false);
-      } catch (e) {
-        console.error('Overlay render error:', e);
-      }
+        renderTimeline(tasks);
+        document.getElementById('tasksPanel').innerHTML =
+          renderTaskSlot(sorted[0], 'NOW',     true)  +
+          renderTaskSlot(sorted[1], 'UP NEXT', false) +
+          renderTaskSlot(sorted[2], 'ON DECK', false);
+      } catch (e) { console.error('Overlay render error:', e); }
     }
 
-    // Initial render
     render();
-
-    // Stay in sync when main window writes to localStorage
     window.addEventListener('storage', render);
+    setInterval(render,      10000); // full re-render every 10s
+    setInterval(updateNowLine, 30000); // move now-line every 30s
 
-    // Polling fallback
-    setInterval(render, 3000);
+    // ── Drag ─────────────────────────────────────────────────────────────────
 
-    // Click anywhere on the content area → bring main window to front
-    document.getElementById('content').addEventListener('click', async () => {
-      if (window.__TAURI__) {
+    document.getElementById('titleBar').addEventListener('mousedown', async (e) => {
+      if (e.button === 0 && window.__TAURI__) {
         try {
-          await window.__TAURI__.core.invoke('focus_main_window');
-        } catch (e) {
-          console.error('focus_main_window failed:', e);
-        }
+          await window.__TAURI__.window.getCurrentWindow().startDragging();
+        } catch (err) { console.error('startDragging failed:', err); }
+      }
+    });
+
+    // ── Click tasks → focus main window ──────────────────────────────────────
+
+    document.getElementById('tasksPanel').addEventListener('click', async () => {
+      if (window.__TAURI__) {
+        try { await window.__TAURI__.core.invoke('focus_main_window'); }
+        catch (e) { console.error(e); }
       }
     });
   </script>
