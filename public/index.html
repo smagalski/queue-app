@@ -2380,8 +2380,67 @@
       });
   }
 
+  async function _signInWithGoogleTauri() {
+    // Desktop auth: system browser + local redirect server (same pattern as GCal import)
+    if (!GCAL_DESKTOP_CLIENT_ID || !GCAL_DESKTOP_CLIENT_SECRET) {
+      document.getElementById('authError').textContent =
+        'Desktop Google sign-in is not configured. Set GCAL_DESKTOP_CLIENT_ID / GCAL_DESKTOP_CLIENT_SECRET in the source.';
+      return;
+    }
+    const keepChecked = document.getElementById('keepSignedIn')?.checked ?? true;
+    document.getElementById('authError').textContent = 'Opening browser for sign-in…';
+
+    try {
+      const port = await window.__TAURI__.core.invoke('start_oauth_server');
+      const redirectUri = `http://127.0.0.1:${port}`;
+
+      const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+      authUrl.searchParams.set('client_id',     GCAL_DESKTOP_CLIENT_ID);
+      authUrl.searchParams.set('redirect_uri',  redirectUri);
+      authUrl.searchParams.set('response_type', 'code');
+      authUrl.searchParams.set('scope',         'openid email profile');
+      authUrl.searchParams.set('access_type',   'offline');
+      authUrl.searchParams.set('prompt',        'select_account');
+      await window.__TAURI__.core.invoke('open_in_browser', { url: authUrl.toString() });
+
+      const redirectUrl = await new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error('Sign-in timed out')), 120000);
+        window.__TAURI__.event.once('oauth-redirect', ev => {
+          clearTimeout(timer); resolve(ev.payload);
+        });
+      });
+
+      const code = new URL(redirectUrl).searchParams.get('code');
+      if (!code) throw new Error('No auth code received');
+
+      const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          code, redirect_uri: redirectUri, grant_type: 'authorization_code',
+          client_id: GCAL_DESKTOP_CLIENT_ID, client_secret: GCAL_DESKTOP_CLIENT_SECRET,
+        }),
+      });
+      const tokens = await tokenRes.json();
+      if (!tokens.id_token) throw new Error(tokens.error_description || 'Token exchange failed');
+
+      const credential = firebase.auth.GoogleAuthProvider.credential(tokens.id_token);
+      const persistence = keepChecked
+        ? firebase.auth.Auth.Persistence.LOCAL
+        : firebase.auth.Auth.Persistence.SESSION;
+      await _auth.setPersistence(persistence);
+      await _auth.signInWithCredential(credential);
+      if (keepChecked) localStorage.setItem('q_signin_ts', String(Date.now()));
+      else             localStorage.removeItem('q_signin_ts');
+      document.getElementById('authError').textContent = '';
+    } catch(e) {
+      document.getElementById('authError').textContent = e.message || friendlyAuthError(e.code);
+    }
+  }
+
   function signInWithGoogle() {
     if (!_auth) return;
+    if (window.__TAURI__) { _signInWithGoogleTauri(); return; }
     const keepChecked = document.getElementById('keepSignedIn')?.checked ?? true;
     const persistence = keepChecked
       ? firebase.auth.Auth.Persistence.LOCAL
@@ -2395,7 +2454,6 @@
       })
       .catch(e => {
         if (e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user') {
-          // Popup was blocked (e.g. inside an iframe/preview) — fall back to redirect
           _auth.setPersistence(persistence)
             .then(() => _auth.signInWithRedirect(provider))
             .catch(e2 => {
@@ -5748,8 +5806,8 @@
   // Used for Tauri (macOS) desktop OAuth via system browser + local redirect server (PKCE).
   // Create a "Desktop app" OAuth 2.0 client at: Google Cloud Console → APIs & Services → Credentials
   // Then paste the client ID and client secret here.
-  const GCAL_DESKTOP_CLIENT_ID     = '299707953232-tjm0te6mqa601nuhkjcq79rbel60i42o.apps.googleusercontent.com';
-  const GCAL_DESKTOP_CLIENT_SECRET = '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';
+  const GCAL_DESKTOP_CLIENT_ID     = '98725644783-r90816344btp09thpk53p4p99pqd0ts3.apps.googleusercontent.com';
+  const GCAL_DESKTOP_CLIENT_SECRET = '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';
 
   // ── PKCE helpers ──────────────────────────────────────────────────────
   function _base64urlEncode(buffer) {
