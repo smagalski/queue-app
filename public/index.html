@@ -1500,6 +1500,94 @@
     font-size: 9px; color: var(--text-dim); margin-top: -4px; font-style: italic;
   }
 
+  /* ── SETTINGS OVERLAY ────────────────────────────────────────────────── */
+  .settings-overlay {
+    display: none; position: fixed; inset: 0; z-index: 9500;
+    background: rgba(0,0,0,0.85); align-items: center; justify-content: center;
+    padding: 32px 20px;
+  }
+  .settings-overlay.active { display: flex; }
+  .settings-inner {
+    display: flex; width: 100%; max-width: 820px; max-height: calc(100vh - 64px);
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    overflow: hidden;
+  }
+  .settings-sidebar {
+    width: 180px; flex-shrink: 0; border-right: 1px solid var(--border);
+    padding: 20px 0; display: flex; flex-direction: column; gap: 2px;
+    background: var(--surface2);
+  }
+  .settings-sidebar-title {
+    font-size: 9px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--text-dim); padding: 0 16px 14px; border-bottom: 1px solid var(--border);
+    margin-bottom: 8px;
+  }
+  .settings-tab {
+    display: block; width: 100%; background: none; border: none;
+    color: var(--text-mid); font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500;
+    padding: 8px 16px; cursor: pointer; text-align: left; transition: all 0.12s; border-radius: 0;
+  }
+  .settings-tab:hover { color: #fff; background: rgba(255,255,255,0.05); }
+  .settings-tab.active { color: #fff; background: rgba(255,255,255,0.09); font-weight: 600; }
+  .settings-close-btn {
+    margin-top: auto; padding: 10px 16px; background: none; border: none; border-top: 1px solid var(--border);
+    color: var(--text-dim); font-family: 'Inter', sans-serif; font-size: 11px;
+    cursor: pointer; text-align: left; transition: color 0.12s;
+  }
+  .settings-close-btn:hover { color: #fff; }
+  .settings-content {
+    flex: 1; overflow-y: auto; padding: 32px; min-width: 0;
+  }
+  .settings-panel { display: none; }
+  .settings-panel.active { display: block; }
+  .settings-panel-title {
+    font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--text); margin-bottom: 24px;
+  }
+  /* Data panel */
+  .settings-data-section {
+    padding: 20px 0; border-bottom: 1px solid var(--border);
+  }
+  .settings-data-section:last-child { border-bottom: none; }
+  .settings-data-label { font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .settings-data-desc { font-size: 11px; color: var(--text-dim); margin-bottom: 14px; line-height: 1.5; }
+  .settings-data-btn {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+    background: rgba(255,255,255,0.06); border: 1px solid var(--border); border-radius: 6px;
+    color: var(--text-mid); cursor: pointer; padding: 7px 16px; transition: all 0.12s;
+    font-family: 'Inter', sans-serif;
+  }
+  .settings-data-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+  .settings-data-btn.danger { border-color: rgba(255,107,138,0.4); color: var(--p1); }
+  .settings-data-btn.danger:hover { background: rgba(255,107,138,0.08); }
+  .settings-data-confirm {
+    display: none; margin-top: 14px; padding: 14px 16px;
+    background: rgba(255,107,138,0.07); border: 1px solid rgba(255,107,138,0.2);
+    border-radius: 8px; flex-wrap: wrap; align-items: center; gap: 10px;
+  }
+  .settings-data-confirm.visible { display: flex; }
+  .settings-data-confirm-text {
+    font-size: 11px; color: var(--text-mid); flex: 1; line-height: 1.5; min-width: 160px;
+  }
+  .settings-data-confirm-yes {
+    font-size: 11px; font-weight: 700; background: none; border: 1px solid rgba(255,107,138,0.5);
+    border-radius: 5px; color: var(--p1); padding: 6px 14px; cursor: pointer; transition: all 0.12s;
+    font-family: 'Inter', sans-serif; letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  .settings-data-confirm-yes:hover { background: rgba(255,107,138,0.15); }
+  .settings-data-confirm-no {
+    font-size: 11px; background: none; border: 1px solid var(--border);
+    border-radius: 5px; color: var(--text-dim); padding: 6px 14px; cursor: pointer; transition: all 0.12s;
+    font-family: 'Inter', sans-serif;
+  }
+  .settings-data-confirm-no:hover { color: #fff; border-color: rgba(255,255,255,0.3); }
+  /* Account panel tweaks */
+  .settings-panel .pw-modal-actions { margin-top: 4px; }
+  /* About panel tweaks */
+  .settings-panel .app-details-masthead {
+    margin: -32px -32px 24px; border-radius: 0; border-top: none;
+  }
+
 </style>
 <!-- Firebase SDK (compat v9) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -1538,13 +1626,8 @@
       <div class="gear-menu" id="gearMenu">
         <button class="gear-menu-item" onclick="openRecurringOverlay();closeGearMenu()">Recurring Tasks</button>
         <button class="gear-menu-item" onclick="openHistoryOverlay()">Day History</button>
-        <button class="gear-menu-item" onclick="openStressWeightsModal();closeGearMenu()">Stress Score Settings</button>
-        <button class="gear-menu-item" onclick="openCategoryManager();closeGearMenu()">Manage Categories</button>
-        <button class="gear-menu-item" onclick="openClearHistoryConfirm();closeGearMenu()">Clear history older than 7 days</button>
         <div class="gear-menu-divider"></div>
-        <button class="gear-menu-item" onclick="openAppDetails();closeGearMenu()">App Details</button>
-        <div class="gear-menu-divider"></div>
-        <button class="gear-menu-item" onclick="openPasswordModal();closeGearMenu()">Change Password</button>
+        <button class="gear-menu-item" onclick="openSettings();closeGearMenu()">Settings</button>
         <div class="gear-menu-divider"></div>
         <button class="gear-menu-item" onclick="signOut()">Sign Out</button>
       </div>
@@ -1552,29 +1635,149 @@
   </div>
 </div>
 
-<!-- APP DETAILS OVERLAY -->
-<div class="app-details-overlay" id="appDetailsOverlay">
-  <div class="app-details-modal">
-    <button class="app-details-close" onclick="document.getElementById('appDetailsOverlay').classList.remove('active')">✕</button>
-    <div class="app-details-masthead">
-      <div class="app-details-masthead-name">Queue</div>
-      <div class="app-details-masthead-sub">Coded purely on vibes by Austin Smagalski</div>
-      <div class="app-details-masthead-sub">Actual code by Claude Code.</div>
+<!-- SETTINGS OVERLAY -->
+<div class="settings-overlay" id="settingsOverlay">
+  <div class="settings-inner">
+
+    <!-- Sidebar -->
+    <div class="settings-sidebar">
+      <div class="settings-sidebar-title">Settings</div>
+      <button class="settings-tab active" id="stab-categories" onclick="switchSettingsTab('categories')">Categories</button>
+      <button class="settings-tab" id="stab-stress" onclick="switchSettingsTab('stress')">Stress Score</button>
+      <button class="settings-tab" id="stab-account" onclick="switchSettingsTab('account')">Account</button>
+      <button class="settings-tab" id="stab-data" onclick="switchSettingsTab('data')">Data</button>
+      <button class="settings-tab" id="stab-about" onclick="switchSettingsTab('about')">About</button>
+      <button class="settings-close-btn" onclick="closeSettings()">✕ Close</button>
     </div>
-    <div class="app-details-row">
-      <span class="app-details-label">Version</span>
-      <span class="app-details-value" id="appDetailsVersion">—</span>
-    </div>
-    <div class="app-details-row">
-      <span class="app-details-label">Deployed</span>
-      <span class="app-details-value" id="appDetailsDeployed">—</span>
-    </div>
-    <div class="app-details-changes-header">What's new</div>
-    <div id="appDetailsChangelog"></div>
-    <div class="app-details-changes-header">Developer Note</div>
-    <div class="app-details-dev-note">This is a tool I designed for the way my brain works. I will never charge for it, and it may have errors. Would love your feedback. Cheers! - Austin</div>
-  </div>
-</div>
+
+    <!-- Content -->
+    <div class="settings-content">
+
+      <!-- Categories panel -->
+      <div class="settings-panel active" id="settingsPanel-categories">
+        <div class="settings-panel-title">Manage Categories</div>
+        <div id="catMgrBody"></div>
+        <div class="cat-mgr-new-row">
+          <input id="catMgrNewName" placeholder="New category name…" maxlength="40"
+                 onkeydown="if(event.key==='Enter')addCategory()"/>
+          <button class="cat-mgr-new-btn" onclick="addCategory()">Add Category</button>
+        </div>
+      </div>
+
+      <!-- Stress Score panel -->
+      <div class="settings-panel" id="settingsPanel-stress">
+        <div class="settings-panel-title">Stress Score Settings</div>
+        <div class="stress-modal-sub" style="margin-bottom:20px;">Adjust how much each factor contributes to your daily stress score. Changes apply immediately.</div>
+
+        <div class="stress-factor">
+          <div class="stress-factor-header">
+            <div>
+              <div class="stress-factor-name">Hours Worked</div>
+              <div class="stress-factor-desc">Total weighted time spent on tasks (heaviest factor by default)</div>
+            </div>
+            <div class="stress-factor-val" id="stressValHours">6</div>
+          </div>
+          <input type="range" class="stress-slider" id="stressSliderHours"
+            min="0" max="10" step="1" value="6"
+            oninput="onStressSlider('hours', this.value)">
+        </div>
+
+        <div class="stress-factor" style="margin-top:18px;">
+          <div class="stress-factor-header">
+            <div>
+              <div class="stress-factor-name">Task Volume</div>
+              <div class="stress-factor-desc">Number of tasks completed (weighted by category)</div>
+            </div>
+            <div class="stress-factor-val" id="stressValVolume">2</div>
+          </div>
+          <input type="range" class="stress-slider" id="stressSliderVolume"
+            min="0" max="10" step="1" value="2"
+            oninput="onStressSlider('volume', this.value)">
+        </div>
+
+        <div class="stress-factor" style="margin-top:18px;">
+          <div class="stress-factor-header">
+            <div>
+              <div class="stress-factor-name">Urgency</div>
+              <div class="stress-factor-desc">Proportion of high-priority tasks in your day</div>
+            </div>
+            <div class="stress-factor-val" id="stressValUrgency">1</div>
+          </div>
+          <input type="range" class="stress-slider" id="stressSliderUrgency"
+            min="0" max="10" step="1" value="1"
+            oninput="onStressSlider('urgency', this.value)">
+        </div>
+
+        <div class="stress-section-label" style="margin-top:24px;">Count towards score</div>
+        <div class="stress-cat-list" id="stressCatList"></div>
+
+        <div style="padding-top:20px;border-top:1px solid var(--border);margin-top:20px;">
+          <button class="stress-reset-btn" onclick="resetStressWeights()">Reset to default</button>
+        </div>
+      </div>
+
+      <!-- Account panel -->
+      <div class="settings-panel" id="settingsPanel-account">
+        <div class="settings-panel-title" id="pwModalTitle">Set Password</div>
+        <div class="pw-modal-subtitle" id="pwModalSubtitle"></div>
+        <div class="pw-modal-fields" id="pwModalFields" style="margin-top:16px;"></div>
+        <div class="pw-modal-error" id="pwModalError"></div>
+        <div class="pw-modal-actions">
+          <button class="pw-modal-submit" id="pwModalSubmit" onclick="submitPasswordModal()">Save</button>
+        </div>
+      </div>
+
+      <!-- Data panel -->
+      <div class="settings-panel" id="settingsPanel-data">
+        <div class="settings-panel-title">Data Management</div>
+
+        <div class="settings-data-section">
+          <div class="settings-data-label">Clear Old History</div>
+          <div class="settings-data-desc">Permanently delete all day history records older than 7 days.</div>
+          <button class="settings-data-btn" onclick="showConfirmClear7()">Clear history older than 7 days</button>
+          <div class="settings-data-confirm" id="confirmClear7">
+            <div class="settings-data-confirm-text">This will permanently delete all history older than 7 days. <strong style="color:#fff;">This cannot be recovered.</strong></div>
+            <button class="settings-data-confirm-yes" onclick="clearOldHistory()">Delete Forever</button>
+            <button class="settings-data-confirm-no" onclick="hideConfirmClear7()">Cancel</button>
+          </div>
+        </div>
+
+        <div class="settings-data-section">
+          <div class="settings-data-label">Clear All History</div>
+          <div class="settings-data-desc">Permanently delete your entire day history.</div>
+          <button class="settings-data-btn danger" onclick="showConfirmClearAll()">Clear all history</button>
+          <div class="settings-data-confirm" id="confirmClearAll">
+            <div class="settings-data-confirm-text">This will permanently delete <strong style="color:#fff;">all</strong> of your day history. <strong style="color:#fff;">This cannot be recovered.</strong></div>
+            <button class="settings-data-confirm-yes" onclick="clearAllHistory()">Delete Forever</button>
+            <button class="settings-data-confirm-no" onclick="hideConfirmClearAll()">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- About panel -->
+      <div class="settings-panel" id="settingsPanel-about">
+        <div class="app-details-masthead">
+          <div class="app-details-masthead-name">Queue</div>
+          <div class="app-details-masthead-sub">Coded purely on vibes by Austin Smagalski</div>
+          <div class="app-details-masthead-sub">Actual code by Claude Code.</div>
+        </div>
+        <div class="app-details-row">
+          <span class="app-details-label">Version</span>
+          <span class="app-details-value" id="appDetailsVersion">—</span>
+        </div>
+        <div class="app-details-row">
+          <span class="app-details-label">Deployed</span>
+          <span class="app-details-value" id="appDetailsDeployed">—</span>
+        </div>
+        <div class="app-details-changes-header">What's new</div>
+        <div id="appDetailsChangelog"></div>
+        <div class="app-details-changes-header">Developer Note</div>
+        <div class="app-details-dev-note">This is a tool I designed for the way my brain works. I will never charge for it, and it may have errors. Would love your feedback. Cheers! - Austin</div>
+      </div>
+
+    </div><!-- /.settings-content -->
+  </div><!-- /.settings-inner -->
+</div><!-- /#settingsOverlay -->
 
 <!-- AUTH SCREEN -->
 <div id="authScreen">
@@ -1604,19 +1807,6 @@
   </div>
 </div>
 
-<!-- PASSWORD MODAL -->
-<div class="pw-modal-overlay" id="pwModalOverlay" onclick="if(event.target===this)closePasswordModal()">
-  <div class="pw-modal">
-    <div class="pw-modal-title" id="pwModalTitle">Set Password</div>
-    <div class="pw-modal-subtitle" id="pwModalSubtitle"></div>
-    <div class="pw-modal-fields" id="pwModalFields"></div>
-    <div class="pw-modal-error" id="pwModalError"></div>
-    <div class="pw-modal-actions">
-      <button class="pw-modal-cancel" onclick="closePasswordModal()">Cancel</button>
-      <button class="pw-modal-submit" id="pwModalSubmit" onclick="submitPasswordModal()">Save</button>
-    </div>
-  </div>
-</div>
 
 <div class="main-layout">
 
@@ -1933,20 +2123,6 @@
 </div>
 
 <!-- CLEAR HISTORY CONFIRMATION MODAL -->
-<div class="end-day-overlay" id="clearHistoryConfirm" onclick="if(event.target===this)closeClearHistoryConfirm()">
-  <div class="end-day-modal" style="max-width:400px;gap:20px;">
-    <div class="edm-title">Delete Old History?</div>
-    <div style="font-size:13px;color:var(--text-mid);line-height:1.6;">
-      This will permanently delete all day history records older than 7 days.
-      <strong style="color:#fff;display:block;margin-top:10px;">This data cannot be recovered.</strong>
-    </div>
-    <div class="edm-choice-row">
-      <button class="edm-choice-btn" onclick="closeClearHistoryConfirm()">Cancel</button>
-      <button class="edm-choice-btn clear" onclick="clearOldHistory()">Delete Forever</button>
-    </div>
-  </div>
-</div>
-
 <!-- RECURRING TASKS MODAL -->
 <div class="history-overlay" id="recurringOverlay" onclick="if(event.target===this)closeRecurringOverlay()">
   <div class="history-inner">
@@ -1958,76 +2134,6 @@
   </div>
 </div>
 
-<!-- CATEGORY MANAGER MODAL -->
-<div class="cat-mgr-overlay" id="catMgrOverlay" onclick="if(event.target===this)closeCategoryManager()">
-  <div class="cat-mgr-modal">
-    <div class="cat-mgr-header">
-      <div class="cat-mgr-title">Manage Categories</div>
-      <button class="history-close" onclick="closeCategoryManager()">✕</button>
-    </div>
-    <div id="catMgrBody"></div>
-    <div class="cat-mgr-new-row">
-      <input id="catMgrNewName" placeholder="New category name…" maxlength="40"
-             onkeydown="if(event.key==='Enter')addCategory()"/>
-      <button class="cat-mgr-new-btn" onclick="addCategory()">Add Category</button>
-    </div>
-  </div>
-</div>
-
-<!-- STRESS SCORE WEIGHTS MODAL -->
-<div class="stress-overlay" id="stressWeightsOverlay" onclick="if(event.target===this)closeStressWeightsModal()">
-  <div class="stress-modal">
-    <div class="stress-modal-title">Stress Score Settings</div>
-    <div class="stress-modal-sub">Adjust how much each factor contributes to your daily stress score. Changes apply immediately.</div>
-
-    <div class="stress-factor">
-      <div class="stress-factor-header">
-        <div>
-          <div class="stress-factor-name">Hours Worked</div>
-          <div class="stress-factor-desc">Total weighted time spent on tasks (heaviest factor by default)</div>
-        </div>
-        <div class="stress-factor-val" id="stressValHours">6</div>
-      </div>
-      <input type="range" class="stress-slider" id="stressSliderHours"
-        min="0" max="10" step="1" value="6"
-        oninput="onStressSlider('hours', this.value)">
-    </div>
-
-    <div class="stress-factor">
-      <div class="stress-factor-header">
-        <div>
-          <div class="stress-factor-name">Task Volume</div>
-          <div class="stress-factor-desc">Number of tasks completed (weighted by category)</div>
-        </div>
-        <div class="stress-factor-val" id="stressValVolume">2</div>
-      </div>
-      <input type="range" class="stress-slider" id="stressSliderVolume"
-        min="0" max="10" step="1" value="2"
-        oninput="onStressSlider('volume', this.value)">
-    </div>
-
-    <div class="stress-factor">
-      <div class="stress-factor-header">
-        <div>
-          <div class="stress-factor-name">Urgency</div>
-          <div class="stress-factor-desc">Proportion of high-priority tasks in your day</div>
-        </div>
-        <div class="stress-factor-val" id="stressValUrgency">1</div>
-      </div>
-      <input type="range" class="stress-slider" id="stressSliderUrgency"
-        min="0" max="10" step="1" value="1"
-        oninput="onStressSlider('urgency', this.value)">
-    </div>
-
-    <div class="stress-section-label">Count towards score</div>
-    <div class="stress-cat-list" id="stressCatList"></div>
-
-    <div class="stress-modal-footer">
-      <button class="stress-reset-btn" onclick="resetStressWeights()">Reset to default</button>
-      <button class="stress-close-btn" onclick="closeStressWeightsModal()">Done</button>
-    </div>
-  </div>
-</div>
 
 <!-- DAILY GOOGLE CALENDAR PROMPT -->
 <div class="gcal-overlay" id="gcalDailyPrompt">
@@ -2527,6 +2633,63 @@
   }
   document.addEventListener('click', () => closeGearMenu());
 
+  function openSettings(tab) {
+    tab = tab || 'categories';
+    document.getElementById('settingsOverlay').classList.add('active');
+    switchSettingsTab(tab);
+    if (tab === 'categories') {
+      if (!categoryRules.length) categoryRules = JSON.parse(JSON.stringify(DEFAULT_CATEGORY_RULES));
+      renderCategoryManager();
+    } else if (tab === 'stress') {
+      const w = getStressWeights();
+      ['hours', 'volume', 'urgency'].forEach(k => {
+        const key = k.charAt(0).toUpperCase() + k.slice(1);
+        document.getElementById('stressSlider' + key).value = w[k];
+        document.getElementById('stressVal'    + key).textContent = w[k];
+      });
+      _renderStressCatList();
+    } else if (tab === 'account') {
+      _populatePasswordPanel();
+    } else if (tab === 'about') {
+      _populateAppDetails();
+    }
+  }
+
+  function closeSettings() {
+    document.getElementById('settingsOverlay').classList.remove('active');
+    const c7 = document.getElementById('confirmClear7');
+    const ca = document.getElementById('confirmClearAll');
+    if (c7) c7.classList.remove('visible');
+    if (ca) ca.classList.remove('visible');
+  }
+
+  function switchSettingsTab(tab) {
+    document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.settings-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('stab-' + tab).classList.add('active');
+    document.getElementById('settingsPanel-' + tab).classList.add('active');
+    if (tab === 'categories') renderCategoryManager();
+    else if (tab === 'stress') {
+      const w = getStressWeights();
+      ['hours', 'volume', 'urgency'].forEach(k => {
+        const key = k.charAt(0).toUpperCase() + k.slice(1);
+        document.getElementById('stressSlider' + key).value = w[k];
+        document.getElementById('stressVal'    + key).textContent = w[k];
+      });
+      _renderStressCatList();
+    } else if (tab === 'account') {
+      _populatePasswordPanel();
+    } else if (tab === 'about') {
+      _populateAppDetails();
+    }
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && document.getElementById('settingsOverlay').classList.contains('active')) {
+      closeSettings();
+    }
+  });
+
   const APP_VERSION  = '0.1.16';
   const APP_DEPLOYED = 'April 14, 2026';
   const APP_CHANGES  = [
@@ -2538,8 +2701,7 @@
     'New default category keywords: "work", "chores", "errands"',
   ];
 
-  async function openAppDetails() {
-    // Version: prefer live Tauri app version, fall back to JS constant
+  async function _populateAppDetails() {
     let version = APP_VERSION;
     if (window.__TAURI__) {
       try { version = await window.__TAURI__.core.invoke('get_version'); } catch(e) {}
@@ -2548,14 +2710,15 @@
     document.getElementById('appDetailsDeployed').textContent = APP_DEPLOYED;
     document.getElementById('appDetailsChangelog').innerHTML  =
       APP_CHANGES.map(c => `<div class="app-details-change">${esc(c)}</div>`).join('');
-    document.getElementById('appDetailsOverlay').classList.add('active');
   }
+
+  function openAppDetails() { openSettings('about'); }
 
   function hasPasswordProvider() {
     return !!(_currentUser && _currentUser.providerData.some(p => p.providerId === 'password'));
   }
 
-  function openPasswordModal() {
+  function _populatePasswordPanel() {
     if (!_currentUser) return;
     const hasPass = hasPasswordProvider();
     document.getElementById('pwModalTitle').textContent    = hasPass ? 'Change Password' : 'Set Password';
@@ -2569,20 +2732,14 @@
       <input class="auth-input" id="pwNew"     type="password" placeholder="New password (min 6 chars)" autocomplete="new-password"/>
       <input class="auth-input" id="pwConfirm" type="password" placeholder="Confirm new password"       autocomplete="new-password"/>
     `;
-
-    document.getElementById('pwModalOverlay').classList.add('active');
-    const first = hasPass ? document.getElementById('pwCurrent') : document.getElementById('pwNew');
-    if (first) first.focus();
-
-    // Allow Enter key to submit
     fields.querySelectorAll('input').forEach(inp => {
       inp.addEventListener('keydown', e => { if (e.key === 'Enter') submitPasswordModal(); });
     });
   }
 
-  function closePasswordModal() {
-    document.getElementById('pwModalOverlay').classList.remove('active');
-  }
+  function openPasswordModal() { openSettings('account'); }
+
+  function closePasswordModal() { closeSettings(); }
 
   function submitPasswordModal() {
     const err     = document.getElementById('pwModalError');
@@ -5363,19 +5520,8 @@
     }).join('');
   }
 
-  function openStressWeightsModal() {
-    const w = getStressWeights();
-    ['hours', 'volume', 'urgency'].forEach(k => {
-      document.getElementById('stressSlider' + k.charAt(0).toUpperCase() + k.slice(1)).value = w[k];
-      document.getElementById('stressVal'    + k.charAt(0).toUpperCase() + k.slice(1)).textContent = w[k];
-    });
-    _renderStressCatList();
-    document.getElementById('stressWeightsOverlay').classList.add('active');
-  }
-
-  function closeStressWeightsModal() {
-    document.getElementById('stressWeightsOverlay').classList.remove('active');
-  }
+  function openStressWeightsModal() { openSettings('stress'); }
+  function closeStressWeightsModal() { closeSettings(); }
 
   function onStressSlider(factor, val) {
     const key = factor.charAt(0).toUpperCase() + factor.slice(1);
@@ -5482,17 +5628,8 @@
   }
 
   // ── Category Manager ───────────────────────────────────────────────────
-  function openCategoryManager() {
-    if (!categoryRules.length) {
-      categoryRules = JSON.parse(JSON.stringify(DEFAULT_CATEGORY_RULES));
-    }
-    renderCategoryManager();
-    document.getElementById('catMgrOverlay').classList.add('active');
-  }
-
-  function closeCategoryManager() {
-    document.getElementById('catMgrOverlay').classList.remove('active');
-  }
+  function openCategoryManager() { openSettings('categories'); }
+  function closeCategoryManager() { closeSettings(); }
 
   function _saveCategoryRules() {
     save(); // persists categoryRules via the main save()
@@ -5580,16 +5717,16 @@
     renderCategoryManager();
   }
 
-  function openClearHistoryConfirm() {
-    document.getElementById('clearHistoryConfirm').classList.add('active');
-  }
+  function openClearHistoryConfirm() { openSettings('data'); }
+  function closeClearHistoryConfirm() { closeSettings(); }
 
-  function closeClearHistoryConfirm() {
-    document.getElementById('clearHistoryConfirm').classList.remove('active');
-  }
+  function showConfirmClear7()  { document.getElementById('confirmClear7').classList.add('visible'); }
+  function hideConfirmClear7()  { document.getElementById('confirmClear7').classList.remove('visible'); }
+  function showConfirmClearAll(){ document.getElementById('confirmClearAll').classList.add('visible'); }
+  function hideConfirmClearAll(){ document.getElementById('confirmClearAll').classList.remove('visible'); }
 
   function clearOldHistory() {
-    closeClearHistoryConfirm();
+    hideConfirmClear7();
     if (!_db || !_currentUser) return;
     const cutoff = new Date(getPST());
     cutoff.setDate(cutoff.getDate() - 7);
@@ -5605,6 +5742,20 @@
       })
       .then(() => { if (document.getElementById('historyOverlay').classList.contains('active')) openHistoryOverlay(); })
       .catch(err => console.error('[Queue] Clear history failed:', err));
+  }
+
+  function clearAllHistory() {
+    hideConfirmClearAll();
+    if (!_db || !_currentUser) return;
+    _db.collection('users').doc(_currentUser.uid).collection('history')
+      .get()
+      .then(snap => {
+        const batch = _db.batch();
+        snap.docs.forEach(d => batch.delete(d.ref));
+        return batch.commit();
+      })
+      .then(() => { if (document.getElementById('historyOverlay').classList.contains('active')) openHistoryOverlay(); })
+      .catch(err => console.error('[Queue] Clear all history failed:', err));
   }
 
   // ── Intervals ──────────────────────────────────────────────────────────
