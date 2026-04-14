@@ -554,6 +554,62 @@
   .gear-menu-item:hover { background: rgba(255,255,255,0.07); color: #fff; }
   .gear-menu-divider { height: 1px; background: var(--border); margin: 3px 0; }
 
+  /* ── STRESS WEIGHTS MODAL ───────────────────────────────────────────── */
+  .stress-overlay {
+    display: none; position: fixed; inset: 0; z-index: 9500;
+    background: rgba(0,0,0,0.75); align-items: center; justify-content: center;
+  }
+  .stress-overlay.active { display: flex; }
+  .stress-modal {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 28px; width: 420px; max-width: 94vw;
+    display: flex; flex-direction: column; gap: 20px;
+  }
+  .stress-modal-title {
+    font-size: 13px; font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--text);
+  }
+  .stress-modal-sub {
+    font-size: 11px; color: var(--text-dim); margin-top: -12px; line-height: 1.5;
+  }
+  .stress-factor { display: flex; flex-direction: column; gap: 6px; }
+  .stress-factor-header {
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .stress-factor-name { font-size: 12px; font-weight: 600; color: var(--text); }
+  .stress-factor-desc { font-size: 10px; color: var(--text-dim); }
+  .stress-factor-val {
+    font-size: 12px; font-weight: 700; color: var(--text-mid);
+    min-width: 24px; text-align: right;
+  }
+  .stress-slider {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 2px;
+    background: var(--border); outline: none; cursor: pointer;
+  }
+  .stress-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #fff; cursor: pointer;
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.15);
+  }
+  .stress-modal-footer {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-top: 4px; border-top: 1px solid var(--border);
+  }
+  .stress-reset-btn {
+    font-size: 11px; color: var(--text-dim); background: none; border: none;
+    cursor: pointer; padding: 0; text-decoration: underline;
+  }
+  .stress-reset-btn:hover { color: var(--text); }
+  .stress-close-btn {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; background: rgba(255,255,255,0.08);
+    border: 1px solid var(--border); border-radius: 6px;
+    color: var(--text); cursor: pointer; padding: 6px 16px;
+  }
+  .stress-close-btn:hover { background: rgba(255,255,255,0.14); }
+
   /* ── APP DETAILS OVERLAY ────────────────────────────────────────────── */
   .app-details-overlay {
     display: none; position: fixed; inset: 0; z-index: 1100;
@@ -1451,6 +1507,7 @@
       <div class="gear-menu" id="gearMenu">
         <button class="gear-menu-item" onclick="openRecurringOverlay();closeGearMenu()">Recurring Tasks</button>
         <button class="gear-menu-item" onclick="openHistoryOverlay()">Day History</button>
+        <button class="gear-menu-item" onclick="openStressWeightsModal();closeGearMenu()">Stress Score Settings</button>
         <button class="gear-menu-item" onclick="openCategoryManager();closeGearMenu()">Manage Categories</button>
         <button class="gear-menu-item" onclick="openClearHistoryConfirm();closeGearMenu()">Clear history older than 7 days</button>
         <div class="gear-menu-divider"></div>
@@ -1880,6 +1937,58 @@
       <input id="catMgrNewName" placeholder="New category name…" maxlength="40"
              onkeydown="if(event.key==='Enter')addCategory()"/>
       <button class="cat-mgr-new-btn" onclick="addCategory()">Add Category</button>
+    </div>
+  </div>
+</div>
+
+<!-- STRESS SCORE WEIGHTS MODAL -->
+<div class="stress-overlay" id="stressWeightsOverlay" onclick="if(event.target===this)closeStressWeightsModal()">
+  <div class="stress-modal">
+    <div class="stress-modal-title">Stress Score Settings</div>
+    <div class="stress-modal-sub">Adjust how much each factor contributes to your daily stress score. Changes apply immediately.</div>
+
+    <div class="stress-factor">
+      <div class="stress-factor-header">
+        <div>
+          <div class="stress-factor-name">Hours Worked</div>
+          <div class="stress-factor-desc">Total weighted time spent on tasks (heaviest factor by default)</div>
+        </div>
+        <div class="stress-factor-val" id="stressValHours">6</div>
+      </div>
+      <input type="range" class="stress-slider" id="stressSliderHours"
+        min="0" max="10" step="1" value="6"
+        oninput="onStressSlider('hours', this.value)">
+    </div>
+
+    <div class="stress-factor">
+      <div class="stress-factor-header">
+        <div>
+          <div class="stress-factor-name">Task Volume</div>
+          <div class="stress-factor-desc">Number of tasks completed (weighted by category)</div>
+        </div>
+        <div class="stress-factor-val" id="stressValVolume">2</div>
+      </div>
+      <input type="range" class="stress-slider" id="stressSliderVolume"
+        min="0" max="10" step="1" value="2"
+        oninput="onStressSlider('volume', this.value)">
+    </div>
+
+    <div class="stress-factor">
+      <div class="stress-factor-header">
+        <div>
+          <div class="stress-factor-name">Urgency</div>
+          <div class="stress-factor-desc">Proportion of high-priority tasks in your day</div>
+        </div>
+        <div class="stress-factor-val" id="stressValUrgency">1</div>
+      </div>
+      <input type="range" class="stress-slider" id="stressSliderUrgency"
+        min="0" max="10" step="1" value="1"
+        oninput="onStressSlider('urgency', this.value)">
+    </div>
+
+    <div class="stress-modal-footer">
+      <button class="stress-reset-btn" onclick="resetStressWeights()">Reset to default</button>
+      <button class="stress-close-btn" onclick="closeStressWeightsModal()">Done</button>
     </div>
   </div>
 </div>
@@ -5102,6 +5211,47 @@
     return html || '<div class="history-no-data">No recorded data</div>';
   }
 
+  // ── Stress Score Weights ────────────────────────────────────────────────
+  const STRESS_DEFAULTS = { hours: 6, volume: 2, urgency: 1 };
+
+  function getStressWeights() {
+    try {
+      const saved = JSON.parse(localStorage.getItem('q_stress_weights') || 'null');
+      if (saved && typeof saved.hours === 'number') return saved;
+    } catch(e) {}
+    return { ...STRESS_DEFAULTS };
+  }
+
+  function openStressWeightsModal() {
+    const w = getStressWeights();
+    ['hours', 'volume', 'urgency'].forEach(k => {
+      document.getElementById('stressSlider' + k.charAt(0).toUpperCase() + k.slice(1)).value = w[k];
+      document.getElementById('stressVal'    + k.charAt(0).toUpperCase() + k.slice(1)).textContent = w[k];
+    });
+    document.getElementById('stressWeightsOverlay').classList.add('active');
+  }
+
+  function closeStressWeightsModal() {
+    document.getElementById('stressWeightsOverlay').classList.remove('active');
+  }
+
+  function onStressSlider(factor, val) {
+    const key = factor.charAt(0).toUpperCase() + factor.slice(1);
+    document.getElementById('stressVal' + key).textContent = val;
+    const w = getStressWeights();
+    w[factor] = Number(val);
+    localStorage.setItem('q_stress_weights', JSON.stringify(w));
+  }
+
+  function resetStressWeights() {
+    localStorage.setItem('q_stress_weights', JSON.stringify(STRESS_DEFAULTS));
+    ['hours', 'volume', 'urgency'].forEach(k => {
+      const key = k.charAt(0).toUpperCase() + k.slice(1);
+      document.getElementById('stressSlider' + key).value = STRESS_DEFAULTS[k];
+      document.getElementById('stressVal'    + key).textContent = STRESS_DEFAULTS[k];
+    });
+  }
+
   function _recomputeStressScore(day) {
     if (!day.doneTasks || !day.doneTasks.length) return null;
     const otherCatId = categoryRules.length ? categoryRules[categoryRules.length - 1].id : 'other';
@@ -5127,7 +5277,9 @@
     const urgencyNorm = Math.min(urgencyRaw, 10) / 10;
     const volumeNorm  = (Math.min(Math.max(sTotal, 3), 20) - 3) / 17;
     const hoursNorm   = (Math.min(Math.max(workHours, 4), 12) - 4) / 8;
-    const raw = (3 * hoursNorm + volumeNorm + 0.5 * urgencyNorm) / 4.5 * 10;
+    const sw = getStressWeights();
+    const swTotal = (sw.hours + sw.volume + sw.urgency) || 1;
+    const raw = (sw.hours * hoursNorm + sw.volume * volumeNorm + sw.urgency * urgencyNorm) / swTotal * 10;
     return Math.min(Math.max(Math.round(raw), 1), 10);
   }
 
