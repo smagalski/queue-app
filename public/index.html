@@ -661,6 +661,10 @@
   .app-details-changes-header { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); margin: 16px 0 8px; }
   .app-details-change { font-size: 12px; color: var(--text-mid); padding: 4px 0; padding-left: 12px; position: relative; line-height: 1.5; }
   .app-details-change::before { content: '·'; position: absolute; left: 2px; color: var(--text-dim); }
+  .app-details-dev-note {
+    margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06);
+    font-size: 11px; color: var(--text-dim); line-height: 1.6; font-style: italic;
+  }
 
   /* ── END DAY MODAL ───────────────────────────────────────────────────── */
   .end-day-overlay {
@@ -1554,7 +1558,8 @@
     <button class="app-details-close" onclick="document.getElementById('appDetailsOverlay').classList.remove('active')">✕</button>
     <div class="app-details-masthead">
       <div class="app-details-masthead-name">Queue</div>
-      <div class="app-details-masthead-sub">Coded purely on vibes by Austin Smagalski, using Claude Code.</div>
+      <div class="app-details-masthead-sub">Coded purely on vibes by Austin Smagalski</div>
+      <div class="app-details-masthead-sub">Actual code by Claude Code.</div>
     </div>
     <div class="app-details-row">
       <span class="app-details-label">Version</span>
@@ -1566,6 +1571,7 @@
     </div>
     <div class="app-details-changes-header">What's new</div>
     <div id="appDetailsChangelog"></div>
+    <div class="app-details-dev-note">This is a tool I designed for the way my brain works. I will never charge for it, and it may have errors. Would love your feedback. Cheers!</div>
   </div>
 </div>
 
