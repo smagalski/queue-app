@@ -597,6 +597,21 @@
     display: flex; justify-content: space-between; align-items: center;
     padding-top: 4px; border-top: 1px solid var(--border);
   }
+  .stress-section-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--text-dim);
+    border-top: 1px solid var(--border); padding-top: 14px; margin-top: 2px;
+  }
+  .stress-cat-list { display: flex; flex-direction: column; gap: 8px; }
+  .stress-cat-row {
+    display: flex; align-items: center; gap: 10px; cursor: pointer;
+  }
+  .stress-cat-row input[type="checkbox"] {
+    width: 15px; height: 15px; accent-color: #fff; cursor: pointer; flex-shrink: 0;
+  }
+  .stress-cat-row label {
+    font-size: 12px; color: var(--text); cursor: pointer; user-select: none;
+  }
   .stress-reset-btn {
     font-size: 11px; color: var(--text-dim); background: none; border: none;
     cursor: pointer; padding: 0; text-decoration: underline;
@@ -1985,6 +2000,9 @@
         min="0" max="10" step="1" value="1"
         oninput="onStressSlider('urgency', this.value)">
     </div>
+
+    <div class="stress-section-label">Count towards score</div>
+    <div class="stress-cat-list" id="stressCatList"></div>
 
     <div class="stress-modal-footer">
       <button class="stress-reset-btn" onclick="resetStressWeights()">Reset to default</button>
@@ -5222,12 +5240,42 @@
     return { ...STRESS_DEFAULTS };
   }
 
+  function getStressExcludedCats() {
+    try {
+      const saved = JSON.parse(localStorage.getItem('q_stress_excluded_cats') || 'null');
+      if (Array.isArray(saved)) return new Set(saved);
+    } catch(e) {}
+    return new Set(); // default: all categories included
+  }
+
+  function onStressCatToggle(catId, checked) {
+    const excluded = getStressExcludedCats();
+    if (checked) excluded.delete(catId);
+    else excluded.add(catId);
+    localStorage.setItem('q_stress_excluded_cats', JSON.stringify([...excluded]));
+  }
+
+  function _renderStressCatList() {
+    const excluded = getStressExcludedCats();
+    const el = document.getElementById('stressCatList');
+    if (!el) return;
+    el.innerHTML = categoryRules.map(cat => {
+      const checked = !excluded.has(cat.id);
+      return `<label class="stress-cat-row">
+        <input type="checkbox" ${checked ? 'checked' : ''}
+          onchange="onStressCatToggle('${cat.id.replace(/'/g,"\\'")}', this.checked)">
+        <span>${esc(cat.name)}</span>
+      </label>`;
+    }).join('');
+  }
+
   function openStressWeightsModal() {
     const w = getStressWeights();
     ['hours', 'volume', 'urgency'].forEach(k => {
       document.getElementById('stressSlider' + k.charAt(0).toUpperCase() + k.slice(1)).value = w[k];
       document.getElementById('stressVal'    + k.charAt(0).toUpperCase() + k.slice(1)).textContent = w[k];
     });
+    _renderStressCatList();
     document.getElementById('stressWeightsOverlay').classList.add('active');
   }
 
@@ -5245,21 +5293,25 @@
 
   function resetStressWeights() {
     localStorage.setItem('q_stress_weights', JSON.stringify(STRESS_DEFAULTS));
+    localStorage.removeItem('q_stress_excluded_cats');
     ['hours', 'volume', 'urgency'].forEach(k => {
       const key = k.charAt(0).toUpperCase() + k.slice(1);
       document.getElementById('stressSlider' + key).value = STRESS_DEFAULTS[k];
       document.getElementById('stressVal'    + key).textContent = STRESS_DEFAULTS[k];
     });
+    _renderStressCatList();
   }
 
   function _recomputeStressScore(day) {
     if (!day.doneTasks || !day.doneTasks.length) return null;
-    const otherCatId = categoryRules.length ? categoryRules[categoryRules.length - 1].id : 'other';
-    const overrides  = day.taskCategoryOverrides || {};
+    const otherCatId  = categoryRules.length ? categoryRules[categoryRules.length - 1].id : 'other';
+    const overrides   = day.taskCategoryOverrides || {};
+    const excluded    = getStressExcludedCats();
     const OTHER_WEIGHT = 0.3;
-    const _stressW = t => getCategoryForTask(t.title, overrides, t.title, t.categoryOverride) === otherCatId ? OTHER_WEIGHT : 1.0;
+    const _catOf = t => getCategoryForTask(t.title, overrides, t.title, t.categoryOverride);
+    const _stressW = t => _catOf(t) === otherCatId ? OTHER_WEIGHT : 1.0;
 
-    const nonBreak = day.doneTasks.filter(t => !t.isBreak);
+    const nonBreak = day.doneTasks.filter(t => !t.isBreak && !excluded.has(_catOf(t)));
     const _stressTimeMap = {};
     let urgencyRaw = 0, sTotal = 0;
     for (const t of nonBreak) {
