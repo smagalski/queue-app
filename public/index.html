@@ -642,7 +642,19 @@
     font-size: 18px; cursor: pointer; line-height: 1; padding: 4px;
   }
   .app-details-close:hover { color: #fff; }
-  .app-details-title { font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 18px; }
+  .app-details-masthead {
+    margin: -28px -28px 20px; padding: 28px 28px 22px;
+    background: var(--surface2); border-bottom: 1px solid var(--border);
+    border-radius: 14px 14px 0 0;
+    display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center;
+  }
+  .app-details-masthead-name {
+    font-size: 22px; font-weight: 800; letter-spacing: 0.2em;
+    text-transform: uppercase; color: #fff;
+  }
+  .app-details-masthead-sub {
+    font-size: 10px; color: var(--text-dim); letter-spacing: 0.1em; text-transform: uppercase;
+  }
   .app-details-row { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 12px; }
   .app-details-label { color: var(--text-dim); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; font-size: 10px; }
   .app-details-value { color: #fff; font-weight: 600; }
@@ -1540,7 +1552,10 @@
 <div class="app-details-overlay" id="appDetailsOverlay">
   <div class="app-details-modal">
     <button class="app-details-close" onclick="document.getElementById('appDetailsOverlay').classList.remove('active')">✕</button>
-    <div class="app-details-title">App Details</div>
+    <div class="app-details-masthead">
+      <div class="app-details-masthead-name">Queue</div>
+      <div class="app-details-masthead-sub">Daily Priority Manager</div>
+    </div>
     <div class="app-details-row">
       <span class="app-details-label">Version</span>
       <span class="app-details-value">v0.1.13</span>
