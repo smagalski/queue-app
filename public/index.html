@@ -2152,12 +2152,12 @@
   // 2. Add a Web app, copy the config object here
   // 3. In Firestore → Rules, set: allow read, write: if true;  (for personal use)
   const firebaseConfig = {
-    apiKey:            "AIzaSyAHiy9-Tc8UW5BdNcMjMf5OAj7wfTyJubY",
-    authDomain:        "queue-app-13065.firebaseapp.com",
-    projectId:         "queue-app-13065",
-    storageBucket:     "queue-app-13065.firebasestorage.app",
-    messagingSenderId: "299707953232",
-    appId:             "1:299707953232:web:22ec549b0e8b37f7c76155"
+    apiKey:            "AIzaSyCRyndKjysAz6HxdZ4WF14kt2Ru9M2iqv0",
+    authDomain:        "queue-app-smagalski.firebaseapp.com",
+    projectId:         "queue-app-smagalski",
+    storageBucket:     "queue-app-smagalski.firebasestorage.app",
+    messagingSenderId: "98725644783",
+    appId:             "1:98725644783:web:24fa7a7d267c39b7728e1a"
   };
 
   // Check whether the config has been filled in
@@ -2959,16 +2959,16 @@
     return t.type === 'scheduled' || (!t.type && (t.startTime || t.endTime));
   }
 
-  // getSorted: flex tasks only, by flexOrder then priority
+  // getSorted: flex tasks only, by priority then flexOrder (manual order within same priority)
   function getSorted() {
     return [...tasks]
       .filter(t => !isScheduled(t))
       .map(t => ({ ...t, _eff: effP(t), _active: true }))
       .sort((a, b) => {
+        if (a._eff.priority !== b._eff.priority) return a._eff.priority - b._eff.priority;
         const ao = a.flexOrder !== undefined ? a.flexOrder : Infinity;
         const bo = b.flexOrder !== undefined ? b.flexOrder : Infinity;
         if (ao !== bo) return ao - bo;
-        if (a._eff.priority !== b._eff.priority) return a._eff.priority - b._eff.priority;
         return a.addedAt - b.addedAt;
       });
   }
@@ -3776,7 +3776,6 @@
     if (draggedTask && !isScheduled(draggedTask)) {
       const maxOrder = getSorted().reduce((m, t) => Math.max(m, t.flexOrder ?? 0), 0);
       draggedTask.flexOrder = maxOrder + 1;
-      draggedTask.priority  = 4;
       save();
       render();
     }
@@ -3811,10 +3810,9 @@
     const draggedTask = tasks.find(t => t.id === draggedId);
     if (!draggedTask || isScheduled(draggedTask)) return;
 
-    // Dropped past end of list → send to back with Low priority
+    // Dropped past end of list → send to back
     if (!displaced) {
       draggedTask.flexOrder = flex.length;
-      draggedTask.priority  = 4;
       save(); return;
     }
 
@@ -3840,20 +3838,6 @@
       }
     }
     draggedTask.flexOrder = targetFlexOrder;
-
-    // ── PRIORITY: one level higher if dropped at the top of a priority group ─
-    // "Top of group" = no flex task above the displaced card shares its priority
-    const displacedPriority = displaced.priority;
-    const isTopOfGroup = !flex.some(t =>
-      t.id !== draggedId &&
-      t.priority === displacedPriority &&
-      (t.flexOrder ?? 0) < targetFlexOrder
-    );
-    const newPriority = isTopOfGroup
-      ? Math.max(1, displacedPriority - 1)
-      : displacedPriority;
-    // Never downgrade priority when dragging up (lower number = higher priority)
-    draggedTask.priority = Math.min(draggedTask.priority, newPriority);
 
     save();
   }
@@ -3910,8 +3894,9 @@
     if (autoBreakAfterTask && !task.isBreak && !task._ab && !isScheduled(task)) {
       const nextFlex = tasks
         .filter(t => !isScheduled(t) && !t._ab && !t.isBreak)
-        .sort((a, b) => (a.flexOrder ?? Infinity) - (b.flexOrder ?? Infinity)
-                     || a.priority - b.priority || a.addedAt - b.addedAt);
+        .sort((a, b) => a.priority - b.priority
+                     || (a.flexOrder ?? Infinity) - (b.flexOrder ?? Infinity)
+                     || a.addedAt - b.addedAt);
       if (nextFlex.length > 0) _forceBreakBefore.add(nextFlex[0].id);
     }
 
@@ -4050,8 +4035,9 @@
   function removeAutoBreaks() {
     tasks = tasks.filter(t => !t._ab);
     const flex = tasks.filter(t => !isScheduled(t))
-      .sort((a, b) => (a.flexOrder ?? Infinity) - (b.flexOrder ?? Infinity)
-                   || a.priority - b.priority || a.addedAt - b.addedAt);
+      .sort((a, b) => a.priority - b.priority
+                   || (a.flexOrder ?? Infinity) - (b.flexOrder ?? Infinity)
+                   || a.addedAt - b.addedAt);
     flex.forEach((t, i) => { t.flexOrder = i; });
   }
 
@@ -4059,8 +4045,9 @@
     removeAutoBreaks();
     if (!autoBreakAfterTask) return;
     const flex = tasks.filter(t => !isScheduled(t))
-      .sort((a, b) => (a.flexOrder ?? Infinity) - (b.flexOrder ?? Infinity)
-                   || a.priority - b.priority || a.addedAt - b.addedAt);
+      .sort((a, b) => a.priority - b.priority
+                   || (a.flexOrder ?? Infinity) - (b.flexOrder ?? Infinity)
+                   || a.addedAt - b.addedAt);
     const newFlex = [];
     let bIdx = 0;
     for (let i = 0; i < flex.length; i++) {
