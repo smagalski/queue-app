@@ -1884,6 +1884,19 @@
   </div>
 </div>
 
+<!-- DAILY GOOGLE CALENDAR PROMPT -->
+<div class="gcal-overlay" id="gcalDailyPrompt">
+  <div class="gcal-modal" style="max-width:360px;text-align:center;gap:18px;padding:32px 28px;">
+    <div class="gcal-title" style="font-size:15px;">Import today's Google Calendar events?</div>
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:4px;">
+      <button class="gcal-action-btn" onclick="dismissGcalDailyPrompt(true)"
+        style="flex:1;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.18);">Yes</button>
+      <button class="gcal-action-btn" onclick="dismissGcalDailyPrompt(false)"
+        style="flex:1;background:transparent;border:1px solid var(--border);color:var(--text-dim);">No</button>
+    </div>
+  </div>
+</div>
+
 <!-- GOOGLE CALENDAR IMPORT LIGHTBOX -->
 <div class="gcal-overlay" id="gcalOverlay" onclick="if(event.target===this)closeGcalLightbox()">
   <div class="gcal-modal">
@@ -2416,6 +2429,7 @@
         showAuthScreen(false);
         load();
         checkDayOffFirestore();
+        maybeShowGcalDailyPrompt();
       } else {
         setUserDoc(null);
         if (_unsubscribeSnapshot) { _unsubscribeSnapshot(); _unsubscribeSnapshot = null; }
@@ -5681,6 +5695,19 @@
         }
       },
     });
+  }
+
+  function maybeShowGcalDailyPrompt() {
+    if (!GCAL_CLIENT_ID) return;
+    const today = new Date().toDateString();
+    if (localStorage.getItem('q_gcal_prompt_date') === today) return;
+    document.getElementById('gcalDailyPrompt').classList.add('active');
+  }
+
+  function dismissGcalDailyPrompt(importNow) {
+    localStorage.setItem('q_gcal_prompt_date', new Date().toDateString());
+    document.getElementById('gcalDailyPrompt').classList.remove('active');
+    if (importNow) openGcalImport();
   }
 
   function openGcalImport() {
