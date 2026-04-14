@@ -1558,18 +1558,14 @@
     </div>
     <div class="app-details-row">
       <span class="app-details-label">Version</span>
-      <span class="app-details-value">v0.1.13</span>
+      <span class="app-details-value" id="appDetailsVersion">—</span>
     </div>
     <div class="app-details-row">
       <span class="app-details-label">Deployed</span>
-      <span class="app-details-value">April 7, 2026</span>
+      <span class="app-details-value" id="appDetailsDeployed">—</span>
     </div>
     <div class="app-details-changes-header">What's new</div>
-    <div class="app-details-change">Mobile two-column layout matching desktop</div>
-    <div class="app-details-change">Category subtotals in End Day report and Day History</div>
-    <div class="app-details-change">Fixed scrollbar bar at bottom of task panel</div>
-    <div class="app-details-change">ADD buttons wrap to 2×2 grid on mobile — no horizontal scrolling</div>
-    <div class="app-details-change">Day Start / Day End repositioned to top of mobile sidebar</div>
+    <div id="appDetailsChangelog"></div>
   </div>
 </div>
 
@@ -2524,7 +2520,27 @@
   }
   document.addEventListener('click', () => closeGearMenu());
 
-  function openAppDetails() {
+  const APP_VERSION  = '0.1.16';
+  const APP_DEPLOYED = 'April 14, 2026';
+  const APP_CHANGES  = [
+    'Priority sorting: higher-priority tasks now always appear above lower-priority ones',
+    'Stress score customization — adjust factor weights and exclude categories via gear menu',
+    'Daily Google Calendar import prompt on first open each day',
+    'App Details masthead',
+    'Firebase project migration and desktop Google sign-in via system browser',
+    'New default category keywords: "work", "chores", "errands"',
+  ];
+
+  async function openAppDetails() {
+    // Version: prefer live Tauri app version, fall back to JS constant
+    let version = APP_VERSION;
+    if (window.__TAURI__) {
+      try { version = await window.__TAURI__.core.invoke('get_version'); } catch(e) {}
+    }
+    document.getElementById('appDetailsVersion').textContent  = 'v' + version;
+    document.getElementById('appDetailsDeployed').textContent = APP_DEPLOYED;
+    document.getElementById('appDetailsChangelog').innerHTML  =
+      APP_CHANGES.map(c => `<div class="app-details-change">${esc(c)}</div>`).join('');
     document.getElementById('appDetailsOverlay').classList.add('active');
   }
 
