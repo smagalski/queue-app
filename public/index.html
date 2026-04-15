@@ -2487,11 +2487,7 @@
     if (!email) { err.textContent = 'Enter your email address above first.'; return; }
     if (!_auth) return;
     err.textContent = '';
-    const actionCodeSettings = {
-      url: window.location.origin + window.location.pathname,
-      handleCodeInApp: true
-    };
-    _auth.sendPasswordResetEmail(email, actionCodeSettings)
+    _auth.sendPasswordResetEmail(email)
       .then(() => { err.style.color = 'var(--done-color)'; err.textContent = 'Reset email sent — check your inbox.'; })
       .catch(e  => { err.style.color = ''; err.textContent = friendlyAuthError(e.code); });
   }
