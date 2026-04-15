@@ -1636,7 +1636,7 @@
 </div>
 
 <!-- SETTINGS OVERLAY -->
-<div class="settings-overlay" id="settingsOverlay">
+<div class="settings-overlay" id="settingsOverlay" onclick="if(event.target===this)closeSettings()">
   <div class="settings-inner">
 
     <!-- Sidebar -->
@@ -1807,6 +1807,24 @@
   </div>
 </div>
 
+
+<!-- RESET PASSWORD MODAL (handles ?mode=resetPassword&oobCode=… links) -->
+<div class="pw-modal-overlay" id="resetPwOverlay">
+  <div class="pw-modal">
+    <div class="pw-modal-title">Set New Password</div>
+    <div class="pw-modal-subtitle">Enter a new password for your account.</div>
+    <div class="pw-modal-fields">
+      <input class="auth-input" id="resetPwNew"     type="password" placeholder="New password (min 6 chars)" autocomplete="new-password"
+             onkeydown="if(event.key==='Enter')submitResetPassword()"/>
+      <input class="auth-input" id="resetPwConfirm" type="password" placeholder="Confirm new password"       autocomplete="new-password"
+             onkeydown="if(event.key==='Enter')submitResetPassword()"/>
+    </div>
+    <div class="pw-modal-error" id="resetPwError"></div>
+    <div class="pw-modal-actions">
+      <button class="pw-modal-submit" id="resetPwSubmit" onclick="submitResetPassword()">Set Password</button>
+    </div>
+  </div>
+</div>
 
 <div class="main-layout">
 
@@ -2095,7 +2113,7 @@
 </div>
 
 <!-- END DAY MODAL -->
-<div class="end-day-overlay" id="endDayOverlay">
+<div class="end-day-overlay" id="endDayOverlay" onclick="if(event.target===this)document.getElementById('endDayOverlay').classList.remove('active')">
   <div class="end-day-modal">
     <div class="edm-title">End of Day Report</div>
     <div id="edmBody"></div>
@@ -2112,7 +2130,7 @@
 </div>
 
 <!-- HISTORY OVERLAY -->
-<div class="history-overlay" id="historyOverlay">
+<div class="history-overlay" id="historyOverlay" onclick="if(event.target===this)closeHistoryOverlay()">
   <div class="history-inner">
     <div class="history-header">
       <div class="history-title">Day History</div>
@@ -2469,9 +2487,38 @@
     if (!email) { err.textContent = 'Enter your email address above first.'; return; }
     if (!_auth) return;
     err.textContent = '';
-    _auth.sendPasswordResetEmail(email)
+    const actionCodeSettings = {
+      url: window.location.origin + window.location.pathname,
+      handleCodeInApp: true
+    };
+    _auth.sendPasswordResetEmail(email, actionCodeSettings)
       .then(() => { err.style.color = 'var(--done-color)'; err.textContent = 'Reset email sent — check your inbox.'; })
       .catch(e  => { err.style.color = ''; err.textContent = friendlyAuthError(e.code); });
+  }
+
+  function submitResetPassword() {
+    const overlay = document.getElementById('resetPwOverlay');
+    const oobCode = overlay._oobCode;
+    const newPw   = document.getElementById('resetPwNew').value;
+    const confirm = document.getElementById('resetPwConfirm').value;
+    const err     = document.getElementById('resetPwError');
+    const submit  = document.getElementById('resetPwSubmit');
+    err.textContent = '';
+    if (newPw.length < 6)  { err.textContent = 'Password must be at least 6 characters.'; return; }
+    if (newPw !== confirm)  { err.textContent = 'Passwords do not match.'; return; }
+    submit.disabled = true;
+    _auth.confirmPasswordReset(oobCode, newPw)
+      .then(() => {
+        overlay.classList.remove('active');
+        const authErr = document.getElementById('authError');
+        authErr.style.color   = 'var(--done-color)';
+        authErr.textContent   = 'Password set! You can now sign in.';
+      })
+      .catch(e => {
+        submit.disabled = false;
+        console.error('[Queue] confirmPasswordReset error:', e.code, e);
+        err.textContent = friendlyAuthError(e.code) || 'Failed to set password.';
+      });
   }
 
   function submitAuth() {
@@ -2601,16 +2648,22 @@
 
   function friendlyAuthError(code) {
     const map = {
-      'auth/invalid-email':          'Invalid email address.',
-      'auth/user-not-found':         'No account found with that email.',
-      'auth/wrong-password':         'Incorrect password.',
-      'auth/email-already-in-use':   'An account with that email already exists.',
-      'auth/weak-password':          'Password must be at least 6 characters.',
-      'auth/too-many-requests':      'Too many attempts. Please try again later.',
-      'auth/popup-closed-by-user':    '',
-      'auth/invalid-credential':      'Current password is incorrect.',
-      'auth/requires-recent-login':   'Please sign out and sign back in, then try again.',
-      'auth/provider-already-linked': 'A password is already linked to this account.',
+      'auth/invalid-email':            'Invalid email address.',
+      'auth/user-not-found':           'No account found with that email.',
+      'auth/wrong-password':           'Incorrect password.',
+      'auth/email-already-in-use':     'An account with that email already exists.',
+      'auth/weak-password':            'Password must be at least 6 characters.',
+      'auth/too-many-requests':        'Too many attempts. Please try again later.',
+      'auth/popup-closed-by-user':     '',
+      'auth/invalid-credential':       'Current password is incorrect.',
+      'auth/requires-recent-login':    'Please sign out and sign back in, then try again.',
+      'auth/provider-already-linked':  'A password is already linked to this account.',
+      'auth/expired-action-code':      'This reset link has expired. Please request a new one.',
+      'auth/invalid-action-code':      'This reset link is invalid or has already been used.',
+      'auth/network-request-failed':   'Network error — check your connection and try again.',
+      'auth/internal-error':           'An internal error occurred. Please try again.',
+      'auth/user-token-expired':       'Session expired. Please sign out and sign back in.',
+      'auth/operation-not-allowed':    'This sign-in method is not enabled.',
     };
     return map[code] || 'Something went wrong. Please try again.';
   }
@@ -2763,6 +2816,7 @@
         .then(() => { closePasswordModal(); })
         .catch(e => {
           submit.disabled = false;
+          console.error('[Queue] updatePassword error:', e.code, e);
           err.textContent = friendlyAuthError(e.code) || 'Failed to update password.';
         });
     } else {
@@ -2772,6 +2826,7 @@
         .then(() => { closePasswordModal(); })
         .catch(e => {
           submit.disabled = false;
+          console.error('[Queue] linkWithCredential error:', e.code, e);
           err.textContent = friendlyAuthError(e.code) || 'Failed to set password.';
         });
     }
@@ -2822,6 +2877,20 @@
     // No config — run in local-only mode without auth
     showAuthScreen(false);
   }
+
+  // ── Handle password reset link (mode=resetPassword&oobCode=…) ──────────
+  (function handleResetLink() {
+    if (!_auth) return;
+    const params  = new URLSearchParams(window.location.search);
+    const mode    = params.get('mode');
+    const oobCode = params.get('oobCode');
+    if (mode === 'resetPassword' && oobCode) {
+      history.replaceState({}, '', window.location.pathname);
+      const overlay  = document.getElementById('resetPwOverlay');
+      overlay._oobCode = oobCode;
+      overlay.classList.add('active');
+    }
+  })();
 
   // ── Sync status ────────────────────────────────────────────────────────
   function setSyncStatus(status) {
