@@ -664,6 +664,15 @@
     margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06);
     font-size: 11px; color: var(--text-dim); line-height: 1.6; font-style: italic;
   }
+  .app-details-update-btn {
+    background: none; border: 1px solid var(--border); border-radius: 5px;
+    color: var(--text-mid); font-family: 'Inter', sans-serif; font-size: 10px;
+    font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase;
+    padding: 4px 10px; cursor: pointer; transition: all 0.12s; white-space: nowrap;
+  }
+  .app-details-update-btn:hover:not(:disabled) { border-color: #fff; color: #fff; }
+  .app-details-update-btn:disabled { opacity: 0.4; cursor: default; }
+  .app-details-update-status { font-size: 11px; color: var(--text-dim); flex: 1; text-align: right; padding-right: 10px; }
 
   /* ── END DAY MODAL ───────────────────────────────────────────────────── */
   .end-day-overlay {
@@ -1774,6 +1783,11 @@
           <span class="app-details-label">Deployed</span>
           <span class="app-details-value" id="appDetailsDeployed">—</span>
         </div>
+        <div class="app-details-row" id="updateCheckRow" style="display:none">
+          <span class="app-details-label">Updates</span>
+          <span class="app-details-update-status" id="updateCheckStatus"></span>
+          <button class="app-details-update-btn" id="updateCheckBtn" onclick="checkForUpdates()">Check for Updates</button>
+        </div>
         <div class="app-details-changes-header">What's new</div>
         <div id="appDetailsChangelog"></div>
         <div class="app-details-changes-header">Developer Note</div>
@@ -2756,26 +2770,43 @@
     }
   });
 
-  const APP_VERSION  = '0.1.16';
-  const APP_DEPLOYED = 'April 14, 2026';
+  const APP_VERSION  = '0.1.17';
+  const APP_DEPLOYED = 'April 15, 2026';
   const APP_CHANGES  = [
-    'Priority sorting: higher-priority tasks now always appear above lower-priority ones',
-    'Stress score customization — adjust factor weights and exclude categories via gear menu',
-    'Daily Google Calendar import prompt on first open each day',
-    'App Details masthead',
-    'Firebase project migration and desktop Google sign-in via system browser',
-    'New default category keywords: "work", "chores", "errands"',
+    'Continuous footer: day bounds, category tally, break budget, and auto-breaks in one row',
+    'Centered "More" dropdown with divider lines, matching Completed',
+    'About moved back into the gear menu',
+    'Overlay timeline now shows all queued tasks sequentially',
+    'Fixed silent Google sign-in failure on desktop',
   ];
 
   async function _populateAppDetails() {
     let version = APP_VERSION;
     if (window.__TAURI__) {
       try { version = await window.__TAURI__.core.invoke('get_version'); } catch(e) {}
+      document.getElementById('updateCheckRow').style.display = '';
+      document.getElementById('updateCheckStatus').textContent = '';
+      document.getElementById('updateCheckBtn').disabled = false;
     }
     document.getElementById('appDetailsVersion').textContent  = 'v' + version;
     document.getElementById('appDetailsDeployed').textContent = APP_DEPLOYED;
     document.getElementById('appDetailsChangelog').innerHTML  =
       APP_CHANGES.map(c => `<div class="app-details-change">${esc(c)}</div>`).join('');
+  }
+
+  async function checkForUpdates() {
+    if (!window.__TAURI__) return;
+    const btn    = document.getElementById('updateCheckBtn');
+    const status = document.getElementById('updateCheckStatus');
+    btn.disabled = true;
+    status.textContent = 'Checking…';
+    try {
+      const result = await window.__TAURI__.core.invoke('manual_check_for_updates');
+      status.textContent = result === 'up_to_date' ? 'You\'re up to date' : 'Update available';
+    } catch(e) {
+      status.textContent = 'Check failed';
+    }
+    btn.disabled = false;
   }
 
   function openAppDetails() { openSettings('about'); }

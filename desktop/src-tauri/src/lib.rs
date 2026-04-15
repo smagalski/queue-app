@@ -157,6 +157,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             get_version,
+            manual_check_for_updates,
             start_oauth_server,
             open_in_browser,
             show_overlay,
@@ -198,6 +199,33 @@ pub fn run() {
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+#[tauri::command]
+async fn manual_check_for_updates(app: tauri::AppHandle) -> Result<String, String> {
+    let updater = app.updater().map_err(|e| e.to_string())?;
+    let update = updater.check().await.map_err(|e| e.to_string())?;
+    let Some(update) = update else {
+        return Ok("up_to_date".into());
+    };
+    let version = update.version.clone();
+    let notes = update.body.clone().unwrap_or_else(|| "No release notes.".to_string());
+    use tauri_plugin_dialog::{DialogExt, MessageDialogButtons};
+    let (tx, rx) = std::sync::mpsc::channel();
+    app.dialog()
+        .message(format!("{}\n\nInstall and restart now?", notes))
+        .title(format!("Queue {} Available", version))
+        .buttons(MessageDialogButtons::OkCancelCustom(
+            "Install & Restart".into(),
+            "Later".into(),
+        ))
+        .show(move |answer| { let _ = tx.send(answer); });
+    let confirmed = rx.recv().unwrap_or(false);
+    if confirmed {
+        let _ = update.download_and_install(|_, _| {}, || {}).await;
+        app.restart();
+    }
+    Ok("declined".into())
 }
 
 async fn check_for_updates(app: tauri::AppHandle) {
