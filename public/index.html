@@ -3382,13 +3382,45 @@
       .sort((a, b) => (a._stMins ?? 9999) - (b._stMins ?? 9999));
   }
 
-  // getAllSorted: merged queue order — active scheduled → flex → future scheduled
+  // getAllSorted: active scheduled → interleaved flex + future scheduled
+  // A flex task is placed before a future scheduled task only when its
+  // duration fits in the gap. Otherwise it's pushed past (ripples through
+  // back-to-back scheduled tasks until a gap is large enough).
   function getAllSorted(flex) {
     if (!flex) flex = getSorted();
     const scheduled = getScheduled();
     const active    = scheduled.filter(t => t._active);
     const future    = scheduled.filter(t => !t._active);
-    return [...active, ...flex, ...future];
+
+    // Cursor starts after any currently-running scheduled tasks
+    const pst  = getPST();
+    let cursor = pst.getHours() * 60 + pst.getMinutes();
+    for (const t of active) {
+      if (t._etMins != null && t._etMins > cursor) cursor = t._etMins;
+    }
+
+    const flexQueue = [...flex];
+    const result    = [];
+
+    for (const sched of future) {
+      // Place leading flex tasks that fit in the gap before this scheduled task
+      while (flexQueue.length > 0) {
+        const gap = (sched._stMins ?? cursor) - cursor;
+        const dur = flexQueue[0].duration ?? DEFAULT_DUR;
+        if (dur > gap) break;
+        const task = flexQueue.shift();
+        result.push(task);
+        cursor += dur;
+      }
+      // Place the scheduled task and advance cursor past it
+      result.push(sched);
+      if (sched._etMins != null && sched._etMins > cursor) cursor = sched._etMins;
+    }
+
+    // Any remaining flex tasks go after all scheduled tasks
+    result.push(...flexQueue);
+
+    return [...active, ...result];
   }
   function taskTimeLabel(task) {
     if (task.startTime && task.endTime) return `${fmtTimePST(task.startTime)} – ${fmtTimePST(task.endTime)}`;
