@@ -1,7 +1,7 @@
 {
-  "version": "0.1.16",
-  "notes": "App Details masthead, stress score customization, daily Google Calendar import prompt, priority sorting fix, desktop Google sign-in via system browser, Firebase migration, and various polish.\n\n⚠️ This app is a work in progress and may experience errors.",
-  "pub_date": "2026-04-14T00:00:00Z",
+  "version": "0.1.17",
+  "notes": "Continuous footer, centered More dropdown, About in gear menu, overlay timeline shows all tasks, Google sign-in fix.\n\n⚠️ This app is a work in progress and may experience errors.",
+  "pub_date": "2026-04-15T00:00:00Z",
   "platforms": {
     "darwin-x86_64": {
       "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUZnpsRGtodXF6dUdSNHZ4MEllZ1ZZK3BuT3RwRGdTdzJPS09RRE1GWFZ4dGkxM3ZyY0IyZXJuM1VRYzlVWXBIbVBZRjBDaFZRbzdPWEF1OGhpbFJvR0h6VllQSHM3VGdBPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc2MjA0NDAzCWZpbGU6UXVldWVfMC4xLjE2X3g2NC5kbWcKVnlJcFpFMSt0N0JYRHIrYS85WjV2L1NUQ1A2MXhTSHFBYmE4eFRDMVM2Mnp5MzFON3krdXdRQkhtaVI4YjhhdURYVGxBRTMvMGRWQzV2Q3BzTjJDQXc9PQo=",

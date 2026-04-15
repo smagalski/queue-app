@@ -423,8 +423,7 @@
   .sched-error-msg { display: none; position: absolute; inset: 0; align-items: center; justify-content: center; background: rgba(11,10,15,0.88); font-size: 10px; color: var(--text-mid); text-align: center; padding: 16px; border-radius: 10px; line-height: 1.6; font-weight: 500; z-index: 10; pointer-events: none; }
 
   /* ── MORE SECTION ────────────────────────────────────────────────────── */
-  .more-header { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 2px; user-select: none; transition: opacity 0.15s; }
-  .more-header:hover { opacity: 0.7; }
+  .more-header { padding: 4px 0; }
   .more-arrow { font-size: 8px; transition: transform 0.2s; display: inline-block; }
   .more-arrow.open { transform: rotate(90deg); }
   .more-count { font-size: 10px; color: var(--text-dim); }
@@ -1043,12 +1042,8 @@
   body.mobile-view .end-btns-row { flex-direction: column; gap: 6px; }
   body.mobile-view .end-btns-row .end-day-btn { width: 100%; }
 
-  /* Break controls: fix negative margin for narrower padding */
-  body.mobile-view .break-controls-row {
-    margin-left: -10px; margin-right: -10px;
-    width: calc(100% + 20px);
-    padding-left: 10px; padding-right: 10px;
-  }
+  /* Footer: narrow day-bounds to match mobile left panel */
+  body.mobile-view .footer-daybounds { width: 130px; }
 
   /* 16px prevents iOS auto-zoom on input focus */
   body.mobile-view .task-input,
@@ -1062,19 +1057,9 @@
   /* More section touch target */
   body.mobile-view .more-header { padding: 10px 2px; }
 
-  /* Compact day-bounds: stick to bottom of sidebar, below timeline */
+  /* Left panel column order */
   body.mobile-view .clock-section  { order: 1; }
   body.mobile-view .calendar-section { order: 2; }
-  body.mobile-view .cal-bounds-section {
-    padding: 8px 8px;
-    order: 3;
-    flex-shrink: 0;
-    position: sticky;
-    bottom: 0;
-    background: var(--bg);
-    border-top: 1px solid var(--border);
-    z-index: 1;
-  }
 
   /* ── AUTH SCREEN ──────────────────────────────────────────────────────── */
   #authScreen {
@@ -1153,17 +1138,6 @@
     transition: all 0.2s;
   }
   .end-day-btn:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.25); color: rgba(255,255,255,0.75); }
-  .day-ended-msg {
-    width: 100%; margin-top: 6px; padding: 9px 14px; box-sizing: border-box;
-    text-align: center; font-family: 'Inter', sans-serif; font-weight: 700;
-    font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
-    color: rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 8px; display: none;
-  }
-  body.day-ended .day-ended-msg  { display: block; }
-  body.day-ended .end-day-btn    { display: none; }
-  body.day-ended #resumeDayBtn   { display: block !important; }
-
   /* ── DAY ENDED GREY STATE ─────────────────────────────────────────────── */
   body.day-ended .right-panel { opacity: 0.35; pointer-events: none; }
   body.day-ended .add-btns-row,
@@ -1285,6 +1259,30 @@
   .end-break-btn:hover { opacity: 0.85; }
   .end-break-btn.over { background: var(--p1); color: #fff; }
 
+  /* ── DAY ENDED OVERLAY ────────────────────────────────────────────────── */
+  .day-ended-overlay {
+    position: fixed; inset: 0; z-index: 10001;
+    background: rgba(11,10,15,0.92); backdrop-filter: blur(6px);
+    display: none; flex-direction: column; align-items: center; justify-content: center; gap: 24px;
+  }
+  .day-ended-overlay.active { display: flex; }
+  .deo-label {
+    font-size: 11px; font-weight: 800; letter-spacing: 0.35em; text-transform: uppercase; color: var(--text-dim);
+  }
+  .deo-heading {
+    font-size: 72px; font-weight: 800; letter-spacing: -0.03em; color: #fff; line-height: 1;
+  }
+  .deo-sub {
+    font-size: 11px; color: var(--text-dim); letter-spacing: 0.06em;
+  }
+  .deo-resume-btn {
+    background: #fff; border: none; border-radius: 6px; color: #0b0a0f;
+    font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase; padding: 13px 36px;
+    cursor: pointer; transition: opacity 0.15s;
+  }
+  .deo-resume-btn:hover { opacity: 0.85; }
+
   /* ── SIDEQUEST OVERLAY ────────────────────────────────────────────────── */
   .sidequest-overlay {
     position: fixed; inset: 0; z-index: 9000;
@@ -1342,18 +1340,7 @@
   /* ── ADD TASK BUTTONS ─────────────────────────────────────────────────── */
   .add-btns-row { margin-top: 0; }
 
-  /* ── HORIZONTAL BREAK CONTROLS (right column, sticky bottom) ─────────── */
-  .break-controls-row {
-    display: flex; align-items: flex-start; flex-wrap: wrap; gap: 0;
-    position: sticky; bottom: 0; z-index: 2; margin-top: auto;
-    background: var(--bg); border-top: 1px solid var(--border);
-    margin-left: -20px; margin-right: -20px;
-    padding: 10px 20px; box-sizing: border-box;
-    max-width: none; width: calc(100% + 40px);
-  }
   .bcr-section { flex: 1; display: flex; flex-direction: column; gap: 4px; }
-  .bcr-section:first-child { padding-right: 10px; }
-  .bcr-section:last-child  { padding-left: 10px; border-left: 1px solid rgba(255,255,255,0.07); }
   .bcr-hd { display: flex; justify-content: space-between; align-items: center; gap: 4px; }
   .bcr-label {
     font-size: 9px; font-weight: 700; letter-spacing: 0.1em;
@@ -1366,10 +1353,27 @@
     color: var(--text-dim); background: rgba(255,255,255,0.06); border-radius: 20px; padding: 4px 10px;
   }
 
-  /* ── CATEGORY TALLY PANEL (left panel, below day start/end) ──────────── */
+  /* ── APP FOOTER (day bounds + category tally + break controls) ────────── */
+  .app-footer {
+    display: flex; flex-shrink: 0;
+    border-top: 1px solid var(--border); background: var(--bg);
+    position: sticky; bottom: 0; z-index: 2;
+  }
+  .footer-daybounds {
+    width: 200px; flex-shrink: 0;
+    border-right: 1px solid var(--border);
+    padding: 10px 12px; display: flex; flex-direction: column; gap: 7px;
+  }
+  .footer-section {
+    flex: 1; display: flex; flex-direction: column; gap: 4px;
+    padding: 10px 12px;
+  }
+  .footer-section + .footer-section { border-left: 1px solid rgba(255,255,255,0.07); }
+
+  /* ── CATEGORY TALLY PANEL ─────────────────────────────────────────────── */
   .cat-tally-panel {
-    flex-shrink: 0; border-top: 1px solid var(--border);
-    padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 5px;
+    flex-shrink: 0;
+    display: flex; flex-direction: column; gap: 5px;
   }
   .cat-tally-label {
     font-size: 8px; font-weight: 700; letter-spacing: 0.14em;
@@ -1628,6 +1632,7 @@
         <button class="gear-menu-item" onclick="openHistoryOverlay()">Day History</button>
         <div class="gear-menu-divider"></div>
         <button class="gear-menu-item" onclick="openSettings();closeGearMenu()">Settings</button>
+        <button class="gear-menu-item" onclick="openSettings('about');closeGearMenu()">About</button>
         <div class="gear-menu-divider"></div>
         <button class="gear-menu-item" onclick="signOut()">Sign Out</button>
       </div>
@@ -1646,7 +1651,7 @@
       <button class="settings-tab" id="stab-stress" onclick="switchSettingsTab('stress')">Stress Score</button>
       <button class="settings-tab" id="stab-account" onclick="switchSettingsTab('account')">Account</button>
       <button class="settings-tab" id="stab-data" onclick="switchSettingsTab('data')">Data</button>
-      <button class="settings-tab" id="stab-about" onclick="switchSettingsTab('about')">About</button>
+      <button class="settings-tab" id="stab-about" onclick="switchSettingsTab('about')" style="display:none">About</button>
       <button class="settings-close-btn" onclick="closeSettings()">✕ Close</button>
     </div>
 
@@ -1843,34 +1848,6 @@
       <div class="cal-drawer-label">Timeline</div>
 <div class="cal-container" id="calContainer"></div>
     </div>
-    <div class="cal-bounds-section">
-      <div class="bbp-header">
-        <span class="bbp-label">Day Start</span>
-        <select class="bbp-select" id="calStartSelect" onchange="setCalBounds()">
-          <option value="240">4 AM</option>
-          <option value="300">5 AM</option>
-          <option value="360">6 AM</option>
-          <option value="420">7 AM</option>
-          <option value="480">8 AM</option>
-          <option value="540">9 AM</option>
-        </select>
-      </div>
-      <div class="bbp-header">
-        <span class="bbp-label">Day End</span>
-        <select class="bbp-select" id="calEndSelect" onchange="setCalBounds()">
-          <option value="1080">6 PM</option>
-          <option value="1140">7 PM</option>
-          <option value="1200">8 PM</option>
-          <option value="1260">9 PM</option>
-          <option value="1320">10 PM</option>
-          <option value="1380">11 PM</option>
-        </select>
-      </div>
-    </div>
-    <div class="cat-tally-panel" id="catTallyPanel">
-      <div class="cat-tally-label">Today by Category</div>
-      <div id="catTallyRows"></div>
-    </div>
   </div>
 
 <!-- Mobile calendar drawer -->
@@ -1897,10 +1874,12 @@
          ondragover="slotDragOver(event,2)" ondragleave="slotDragLeave(event,2)" ondrop="slotDrop(event,2)"></div>
 
     <!-- MORE -->
-    <div class="more-header" id="moreHeader" onclick="toggleMore(event)" style="display:none">
-      <span class="more-arrow" id="moreArrow">▶</span>
-      <span class="sec-hdr">More</span>
-      <span class="more-count" id="moreCount"></span>
+    <div class="divider-row more-header" id="moreHeader" style="display:none">
+      <button class="done-toggle" onclick="toggleMore(event)">
+        <span class="more-arrow" id="moreArrow">▶</span>
+        More
+        <span class="more-count" id="moreCount"></span>
+      </button>
     </div>
     <div class="more-cards" id="moreCards"
          ondragover="moreDragOver(event)" ondragleave="moreDragLeave(event)" ondrop="moreDrop(event)"></div>
@@ -1939,46 +1918,76 @@
         <button class="end-day-btn" id="dayOffBtn" onclick="enterDayOff()">Day Off</button>
       </div>
     </div>
-    <div class="bottom-section break-controls-row" id="breakControlsRow">
-      <div class="bottom-section-label" style="width:100%;margin-bottom:8px">Breaks</div>
-      <div class="bcr-section">
-        <div class="bcr-hd">
-          <span class="bcr-label">Break Budget</span>
-          <select class="bbp-select" id="breakBudgetSelect" onchange="setBreakBudget(this.value)">
-            <option value="15">15 min</option><option value="30">30 min</option>
-            <option value="45">45 min</option><option value="60" selected>1 hr</option>
-            <option value="90">1.5 hr</option><option value="120">2 hr</option>
-          </select>
-        </div>
-        <div class="bbp-bar-wrap"><div class="bbp-bar-fill" id="breakBarFill"></div></div>
-        <div class="bbp-tally" id="breakTally">0 min used</div>
-      </div>
-      <div class="bcr-section">
-        <div class="bcr-hd">
-          <span class="bcr-label">Auto-Breaks</span>
-          <div style="display:flex;align-items:center;gap:5px">
-            <select class="bbp-select" id="autoBreakMinsSelect" onchange="setAutoBreakMins(this.value)">
-              <option value="5" selected>5 min</option>
-              <option value="10">10 min</option>
-              <option value="15">15 min</option>
-              <option value="20">20 min</option>
-              <option value="30">30 min</option>
-            </select>
-            <label class="ab-toggle" title="Auto-add a break after each task">
-              <input type="checkbox" id="autoBreakToggle" onchange="setAutoBreakAfterTask(this.checked)">
-              <span class="ab-track"></span>
-              <span class="ab-thumb"></span>
-            </label>
-          </div>
-        </div>
+
+  </div><!-- /.task-panel -->
+</div><!-- /.main-layout -->
+
+<!-- APP FOOTER -->
+<div class="app-footer" id="appFooter">
+  <!-- Day Start / Day End — width matches left panel -->
+  <div class="footer-daybounds">
+    <div class="bbp-header">
+      <span class="bbp-label">Day Start</span>
+      <select class="bbp-select" id="calStartSelect" onchange="setCalBounds()">
+        <option value="240">4 AM</option>
+        <option value="300">5 AM</option>
+        <option value="360">6 AM</option>
+        <option value="420">7 AM</option>
+        <option value="480">8 AM</option>
+        <option value="540">9 AM</option>
+      </select>
+    </div>
+    <div class="bbp-header">
+      <span class="bbp-label">Day End</span>
+      <select class="bbp-select" id="calEndSelect" onchange="setCalBounds()">
+        <option value="1080">6 PM</option>
+        <option value="1140">7 PM</option>
+        <option value="1200">8 PM</option>
+        <option value="1260">9 PM</option>
+        <option value="1320">10 PM</option>
+        <option value="1380">11 PM</option>
+      </select>
+    </div>
+  </div>
+  <!-- Today by Category -->
+  <div class="cat-tally-panel footer-section" id="catTallyPanel">
+    <div class="bcr-hd"><span class="bcr-label">Today by Category</span></div>
+    <div id="catTallyRows"></div>
+  </div>
+  <!-- Break Budget -->
+  <div class="footer-section" id="breakControlsRow">
+    <div class="bcr-hd">
+      <span class="bcr-label">Break Budget</span>
+      <select class="bbp-select" id="breakBudgetSelect" onchange="setBreakBudget(this.value)">
+        <option value="15">15 min</option><option value="30">30 min</option>
+        <option value="45">45 min</option><option value="60" selected>1 hr</option>
+        <option value="90">1.5 hr</option><option value="120">2 hr</option>
+      </select>
+    </div>
+    <div class="bbp-bar-wrap"><div class="bbp-bar-fill" id="breakBarFill"></div></div>
+    <div class="bbp-tally" id="breakTally">0 min used</div>
+  </div>
+  <!-- Auto-Breaks -->
+  <div class="footer-section">
+    <div class="bcr-hd">
+      <span class="bcr-label">Auto-Breaks</span>
+      <div style="display:flex;align-items:center;gap:5px">
+        <select class="bbp-select" id="autoBreakMinsSelect" onchange="setAutoBreakMins(this.value)">
+          <option value="5" selected>5 min</option>
+          <option value="10">10 min</option>
+          <option value="15">15 min</option>
+          <option value="20">20 min</option>
+          <option value="30">30 min</option>
+        </select>
+        <label class="ab-toggle" title="Auto-add a break after each task">
+          <input type="checkbox" id="autoBreakToggle" onchange="setAutoBreakAfterTask(this.checked)">
+          <span class="ab-track"></span>
+          <span class="ab-thumb"></span>
+        </label>
       </div>
     </div>
-    <div class="day-ended-msg" id="dayEndedMsg">Day Ended — See You Tomorrow</div>
-    <button class="end-day-btn" id="resumeDayBtn" onclick="resumeDay()" style="display:none">Resume Day</button>
-
-
-
   </div>
+</div><!-- /.app-footer -->
 
 <!-- FLEX TASK LIGHTBOX -->
 <div class="add-form-overlay" id="addFormOverlay" onclick="if(event.target===this)closeAddForm()">
@@ -2110,6 +2119,14 @@
   <div class="dob-heading">Day Off</div>
   <div class="dob-sub">Rest up — see you tomorrow</div>
   <button class="dob-cancel-btn" onclick="cancelDayOff()">Cancel</button>
+</div>
+
+<!-- DAY ENDED OVERLAY -->
+<div class="day-ended-overlay" id="dayEndedOverlay">
+  <div class="deo-label">Day Ended</div>
+  <div class="deo-heading">See You Tomorrow</div>
+  <div class="deo-sub">Rest up — you've earned it</div>
+  <button class="deo-resume-btn" onclick="resumeDay()">Resume Day</button>
 </div>
 
 <!-- END DAY MODAL -->
@@ -2603,9 +2620,9 @@
     }
   }
 
-  function signInWithGoogle() {
+  async function signInWithGoogle() {
     if (!_auth) return;
-    if (window.__TAURI__) { _signInWithGoogleTauri(); return; }
+    if (window.__TAURI__) { await _signInWithGoogleTauri(); return; }
     const keepChecked = document.getElementById('keepSignedIn')?.checked ?? true;
     const persistence = keepChecked
       ? firebase.auth.Auth.Persistence.LOCAL
@@ -2870,6 +2887,7 @@
         showAuthScreen(false);
         load();
         checkDayOffFirestore();
+        checkDayEndedFirestore();
         maybeShowGcalDailyPrompt();
       } else {
         setUserDoc(null);
@@ -5341,6 +5359,7 @@
       doneTasks:        dayDone,
       incompleteTasks:  incomplete.map(t => ({ id: t.id, title: t.title, priority: t.priority, duration: t.duration })),
       choice,
+      dayEnded:         true,
       savedAt:          Date.now(),
     };
     if (taskCategoryOverrides && Object.keys(taskCategoryOverrides).length) {
@@ -5361,6 +5380,7 @@
   }
 
   function setDayEndedState(ended) {
+    document.getElementById('dayEndedOverlay').classList.toggle('active', ended);
     if (ended) {
       document.body.classList.add('day-ended');
       localStorage.setItem('q_dayEnded', todayPstDateStr());
@@ -5373,7 +5393,29 @@
 
   function resumeDay() {
     setDayEndedState(false);
+    if (_db && _currentUser) {
+      const today = todayPstDateStr();
+      _db.collection('users').doc(_currentUser.uid).collection('history').doc(today)
+        .update({ dayEnded: firebase.firestore.FieldValue.delete() })
+        .catch(() => {});
+    }
     render();
+  }
+
+  // Check Firestore for a day-ended entry written from another browser/device
+  function checkDayEndedFirestore() {
+    if (!_db || !_currentUser) return;
+    const today = todayPstDateStr();
+    _db.collection('users').doc(_currentUser.uid).collection('history').doc(today)
+      .get()
+      .then(doc => {
+        if (doc.exists && doc.data().dayEnded) {
+          localStorage.setItem('q_dayEnded', today);
+          localStorage.setItem('q_dayEndedChoice', doc.data().choice || 'carry');
+          setDayEndedState(true);
+        }
+      })
+      .catch(err => console.error('[Queue] Day ended check failed:', err));
   }
 
   function checkDayEndedReset() {

@@ -2976,9 +2976,9 @@
     }
   }
 
-  function signInWithGoogle() {
+  async function signInWithGoogle() {
     if (!_auth) return;
-    if (window.__TAURI__) { _signInWithGoogleTauri(); return; }
+    if (window.__TAURI__) { await _signInWithGoogleTauri(); return; }
     const keepChecked = document.getElementById('keepSignedIn')?.checked ?? true;
     const persistence = keepChecked
       ? firebase.auth.Auth.Persistence.LOCAL

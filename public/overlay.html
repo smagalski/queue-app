@@ -280,18 +280,38 @@
         html += addBlock(t.title, s, e, col, true);
       }
 
-      // Active scheduled tasks
+      // All scheduled tasks
       for(const t of tasks){
         if(t.type==='scheduled' && t.startTime){
           const s = isoToMins(t.startTime);
           const e = t.endTime ? isoToMins(t.endTime) : s+(t.duration||60);
           if (s !== null && e !== null) html += addBlock(t.title, s, e, SCHED_COL, false);
         }
-        // Currently running flex task
-        if(!isScheduled(t) && t.calStartTime && t.duration){
-          const s = dateToMins(new Date(t.calStartTime));
-          html += addBlock(t.title, s, s + t.duration, P_COLORS[t.priority||4], false);
+      }
+
+      // All queued flex tasks — position sequentially from now
+      const flexTasks = tasks
+        .filter(t => !isScheduled(t) && !t.isBreak)
+        .sort((a,b) => {
+          const ao=a.flexOrder??Infinity, bo=b.flexOrder??Infinity;
+          if(ao!==bo) return ao-bo;
+          if((a.priority||4)!==(b.priority||4)) return (a.priority||4)-(b.priority||4);
+          return (a.addedAt||0)-(b.addedAt||0);
+        });
+      let flexCursor = nowMins;
+      for(const t of flexTasks){
+        if(!t.duration) continue;
+        let s, e;
+        if(t.calStartTime){
+          s = dateToMins(new Date(t.calStartTime));
+          e = s + t.duration;
+          flexCursor = Math.max(flexCursor, e);
+        } else {
+          s = flexCursor;
+          e = s + t.duration;
+          flexCursor = e;
         }
+        html += addBlock(t.title, s, e, P_COLORS[t.priority||4], false);
       }
 
       // Now line
