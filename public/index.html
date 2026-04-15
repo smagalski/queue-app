@@ -2820,14 +2820,26 @@
           err.textContent = friendlyAuthError(e.code) || 'Failed to update password.';
         });
     } else {
-      // Link email/password to Google account
+      // Link email/password to Google account.
+      // Firebase requires a recent login before linking a new credential.
+      // Attempt the link; if it fails with requires-recent-login, sign the
+      // user out so they can sign back in and try again with a fresh session.
       const cred = firebase.auth.EmailAuthProvider.credential(user.email, newPw);
       user.linkWithCredential(cred)
         .then(() => { closePasswordModal(); })
         .catch(e => {
           submit.disabled = false;
           console.error('[Queue] linkWithCredential error:', e.code, e);
-          err.textContent = friendlyAuthError(e.code) || 'Failed to set password.';
+          if (e.code === 'auth/requires-recent-login') {
+            closeSettings();
+            _auth.signOut().then(() => {
+              const authErr = document.getElementById('authError');
+              authErr.style.color  = '';
+              authErr.textContent  = 'Please sign back in with Google, then set your password in Settings.';
+            });
+          } else {
+            err.textContent = friendlyAuthError(e.code) || 'Failed to set password.';
+          }
         });
     }
   }
