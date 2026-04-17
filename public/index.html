@@ -1109,6 +1109,65 @@
   /* Hide the desktop footer on mobile — replaced by bottom nav */
   body.mobile-view .app-footer { display: none; }
 
+  /* Hide the ADD / DAY button rows on mobile — replaced by FAB */
+  body.mobile-view .bottom-section { display: none; }
+
+  /* ── MOBILE FAB ─────────────────────────────────────────────────────────── */
+  .mobile-add-fab-row { display: none; }
+  body.mobile-view .mobile-add-fab-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 0 12px;
+  }
+  .mobile-add-fab {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #fff; font-size: 28px; font-weight: 300; line-height: 1;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s, transform 0.12s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mobile-add-fab:active { background: rgba(255,255,255,0.15); transform: scale(0.92); }
+
+  /* ── MOBILE ACTION SHEET ────────────────────────────────────────────────── */
+  .mobile-action-sheet-overlay {
+    display: none; position: fixed; inset: 0; z-index: 9200;
+    background: rgba(0,0,0,0.55); align-items: flex-end;
+  }
+  .mobile-action-sheet-overlay.open { display: flex; }
+  .mobile-action-sheet {
+    width: 100%; background: var(--surface);
+    border-radius: 14px 14px 0 0; border-top: 1px solid var(--border);
+    padding: 8px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+    animation: masSlideUp 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  @keyframes masSlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .mas-handle {
+    width: 32px; height: 3px; background: var(--border);
+    border-radius: 2px; margin: 6px auto 14px;
+  }
+  .mas-title {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.15em;
+    text-transform: uppercase; color: var(--text-dim);
+    margin-bottom: 12px; text-align: center;
+  }
+  .mas-options { display: flex; flex-direction: column; gap: 8px; }
+  .mas-btn {
+    width: 100%; padding: 14px 16px; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--surface2); color: #fff;
+    font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600;
+    text-align: left; cursor: pointer; display: flex; align-items: center; gap: 10px;
+    transition: background 0.12s; -webkit-tap-highlight-color: transparent;
+  }
+  .mas-btn:active { background: rgba(255,255,255,0.08); }
+  .mas-btn:disabled { opacity: 0.35; pointer-events: none; }
+  .mas-btn-icon { font-size: 18px; width: 24px; text-align: center; flex-shrink: 0; }
+  .mas-btn.mas-sched { border-color: rgba(126,200,227,0.3); color: var(--sched); }
+  .mas-btn.mas-break { border-color: rgba(152,99,243,0.3); color: var(--break); }
+  .mas-btn.mas-quest { border-color: rgba(255,107,138,0.3); color: var(--p1); }
+
   /* 16px prevents iOS auto-zoom on input focus */
   body.mobile-view .task-input,
   body.mobile-view .time-input,
@@ -2058,6 +2117,11 @@
       </div>
     </div>
 
+    <!-- MOBILE FAB (replaces button rows on mobile) -->
+    <div class="mobile-add-fab-row">
+      <button class="mobile-add-fab" onclick="openMobileAddSheet()" aria-label="Add">+</button>
+    </div>
+
   </div><!-- /.task-panel -->
 </div><!-- /.main-layout -->
 
@@ -2073,6 +2137,32 @@
     <span>Queue</span>
   </button>
 </nav>
+
+<!-- MOBILE ACTION SHEET -->
+<div class="mobile-action-sheet-overlay" id="mobileActionSheetOverlay"
+     onclick="if(event.target===this)closeMobileAddSheet()">
+  <div class="mobile-action-sheet">
+    <div class="mas-handle"></div>
+    <div class="mas-title">Add</div>
+    <div class="mas-options">
+      <button class="mas-btn" onclick="openAddForm();closeMobileAddSheet()">
+        <span class="mas-btn-icon">+</span> Flex Task
+      </button>
+      <button class="mas-btn mas-sched" onclick="openSchedForm();closeMobileAddSheet()">
+        <span class="mas-btn-icon">⏰</span> Schedule
+      </button>
+      <button class="mas-btn" onclick="openGcalImport();closeMobileAddSheet()">
+        <span class="mas-btn-icon">📅</span> Import from Google Calendar
+      </button>
+      <button class="mas-btn mas-break" id="masBreakBtn" onclick="takeBreak();closeMobileAddSheet()">
+        <span class="mas-btn-icon">☕</span> Take a Break
+      </button>
+      <button class="mas-btn mas-quest" onclick="openSidequest();closeMobileAddSheet()">
+        <span class="mas-btn-icon">⚡</span> Sidequest
+      </button>
+    </div>
+  </div>
+</div>
 
 <!-- APP FOOTER -->
 <div class="app-footer" id="appFooter">
@@ -6326,6 +6416,21 @@
       btnQ.classList.add('active');
       btnTl.classList.remove('active');
     }
+  }
+
+  // ── Mobile FAB / Action Sheet ──────────────────────────────────────────
+  function openMobileAddSheet() {
+    // Mirror disabled state of the main Take a Break button
+    const src = document.getElementById('takeBreakBtn');
+    const mas = document.getElementById('masBreakBtn');
+    if (src && mas) {
+      mas.disabled = src.disabled;
+    }
+    document.getElementById('mobileActionSheetOverlay').classList.add('open');
+  }
+
+  function closeMobileAddSheet() {
+    document.getElementById('mobileActionSheetOverlay').classList.remove('open');
   }
 
   // Swipe left/right to switch panels
