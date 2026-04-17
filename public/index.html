@@ -3244,9 +3244,12 @@
       }
       screen.classList.remove('hidden');
       showAuthScreen(false);
+      // Keep gear hidden — user isn't in the app yet
+      const gw = document.getElementById('gearWrap');
+      if (gw) gw.style.display = 'none';
     }
 
-    async function requestAccess() {
+    window.requestAccess = async function requestAccess() {
       const user = _auth.currentUser;
       if (!user) return;
       const btn = document.getElementById('approvalRequestBtn');
@@ -3274,7 +3277,7 @@
         btn.textContent = 'Request Access';
         document.getElementById('approvalBody').textContent = 'Something went wrong. Please try again.';
       }
-    }
+    };
 
     _auth.onAuthStateChanged(async user => {
       if (user) {
