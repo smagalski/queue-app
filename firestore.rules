@@ -1,9 +1,25 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Each user can read/write their own document and all subcollections
-    match /users/{userId}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+    // Users can read their own approval request (to check pending/approved/declined status)
+    match /user_requests/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false; // only Cloud Functions write here
     }
+
+    // Task data: only accessible to approved users
+    match /users/{userId}/{document=**} {
+      allow read, write: if request.auth != null
+        && request.auth.uid == userId
+        && isApproved(userId);
+    }
+  }
+
+  // Approved = user_requests/{userId} doc exists with status == 'approved'
+  // No doc (or any other status) = denied. Approve manually in the Firebase Console.
+  function isApproved(userId) {
+    return exists(/databases/$(database)/documents/user_requests/$(userId))
+      && get(/databases/$(database)/documents/user_requests/$(userId)).data.status == 'approved';
   }
 }
