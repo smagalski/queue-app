@@ -6612,7 +6612,11 @@
   (function initViewMode() {
     const mobile = isMobileDevice();
     applyViewMode(mobile);
-    if (mobile) showMobilePanel('queue');
+    if (mobile) {
+      showMobilePanel('queue');
+      const vs = document.getElementById('viewSegment');
+      if (vs) vs.style.display = 'none';
+    }
   })();
 
   // ── Tauri overlay mode ────────────────────────────────────────────────────
