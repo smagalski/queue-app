@@ -2858,13 +2858,10 @@
         else             localStorage.removeItem('q_signin_ts');
       })
       .catch(e => {
-        if (e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user') {
-          _auth.setPersistence(persistence)
-            .then(() => _auth.signInWithRedirect(provider))
-            .catch(e2 => {
-              document.getElementById('authError').textContent = friendlyAuthError(e2.code);
-            });
-        } else {
+        if (e.code === 'auth/popup-blocked') {
+          document.getElementById('authError').textContent =
+            'Pop-up blocked — allow pop-ups for this site in your browser, then try again.';
+        } else if (e.code !== 'auth/popup-closed-by-user') {
           document.getElementById('authError').textContent = friendlyAuthError(e.code);
         }
       });
