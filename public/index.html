@@ -1227,10 +1227,10 @@
   body.mobile-view #bottomSectionDay { border-top: none; padding-top: 0; }
   body.mobile-view #bottomSectionDay .bottom-section-label { display: none; }
 
-  /* Undo button: match desktop size/style */
+  /* Undo button: rotate glyph to correct orientation on mobile */
   body.mobile-view .titlebar-undo-btn {
     font-size: 15px;
-    transform: none;
+    transform: rotate(-90deg);
     width: 28px; height: 26px;
   }
 
