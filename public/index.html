@@ -1237,6 +1237,16 @@
     width: 28px; height: 26px;
   }
 
+  /* Day Ended / Day Off overlay headings — scale down for mobile */
+  body.mobile-view .deo-heading {
+    font-size: clamp(28px, 9vw, 44px);
+    text-align: center; padding: 0 20px;
+  }
+  body.mobile-view .dob-heading {
+    font-size: clamp(44px, 14vw, 64px);
+    text-align: center;
+  }
+
   /* ── AUTH SCREEN ──────────────────────────────────────────────────────── */
   #authScreen {
     position: fixed; inset: 0; z-index: 9000;
@@ -6620,6 +6630,7 @@
   let _gcalAccessToken  = null;
   let _gcalTokenExpiry  = 0;
   let _gcalPendingEvents = null;
+  let _gcalPromptShownThisSession = false;
 
   let _gcalAuthTimeout = null;
 
@@ -6663,8 +6674,10 @@
 
   function maybeShowGcalDailyPrompt() {
     if (!GCAL_CLIENT_ID) return;
+    if (_gcalPromptShownThisSession) return;   // already shown this session
     const today = new Date().toDateString();
     if (localStorage.getItem('q_gcal_prompt_date') === today) return;
+    _gcalPromptShownThisSession = true;
     document.getElementById('gcalDailyPrompt').classList.add('active');
   }
 
