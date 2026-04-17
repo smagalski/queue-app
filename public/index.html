@@ -1109,26 +1109,22 @@
   /* Hide the desktop footer on mobile — replaced by bottom nav */
   body.mobile-view .app-footer { display: none; }
 
-  /* Hide the ADD / DAY button rows on mobile — replaced by FAB */
-  body.mobile-view .bottom-section { display: none; }
+  /* Hide ADD button row on mobile — replaced by FAB in nav bar */
+  body.mobile-view #bottomSectionAdd { display: none; }
 
-  /* ── MOBILE FAB ─────────────────────────────────────────────────────────── */
-  .mobile-add-fab-row { display: none; }
-  body.mobile-view .mobile-add-fab-row {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px 0 12px;
-  }
+  /* ── MOBILE FAB (lives in the bottom nav bar) ───────────────────────────── */
   .mobile-add-fab {
-    width: 52px; height: 52px; border-radius: 50%;
+    display: none;
+    width: 42px; height: 42px; border-radius: 50%;
     background: rgba(255,255,255,0.08);
     border: 1px solid rgba(255,255,255,0.2);
-    color: #fff; font-size: 28px; font-weight: 300; line-height: 1;
-    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 24px; font-weight: 300; line-height: 1;
+    cursor: pointer; align-items: center; justify-content: center;
+    flex-shrink: 0;
     transition: background 0.15s, transform 0.12s;
     -webkit-tap-highlight-color: transparent;
   }
+  body.mobile-view .mobile-add-fab { display: flex; }
   .mobile-add-fab:active { background: rgba(255,255,255,0.15); transform: scale(0.92); }
 
   /* ── MOBILE ACTION SHEET ────────────────────────────────────────────────── */
@@ -1227,18 +1223,15 @@
   .mobile-nav-btn.active { color: #fff; }
   .mobile-nav-btn.active::after { opacity: 1; }
   .mobile-nav-icon { font-size: 19px; line-height: 1; }
-  .mobile-nav-clock {
+  /* Day section: keep visible on mobile, no label, full-width stacked buttons */
+  body.mobile-view #bottomSectionDay { border-top: none; padding-top: 0; }
+  body.mobile-view #bottomSectionDay .bottom-section-label { display: none; }
+
+  /* Undo button: match desktop size/style */
+  body.mobile-view .titlebar-undo-btn {
     font-size: 15px;
-    font-weight: 700;
-    color: var(--text-mid);
-    letter-spacing: -0.01em;
-    display: flex;
-    align-items: center;
-    padding: 0 6px;
-    white-space: nowrap;
-    font-variant-numeric: tabular-nums;
-    flex-shrink: 0;
-    pointer-events: none;
+    transform: none;
+    width: 28px; height: 26px;
   }
 
   /* ── AUTH SCREEN ──────────────────────────────────────────────────────── */
@@ -2093,7 +2086,7 @@
 
 
     <!-- BOTTOM SECTIONS -->
-    <div class="bottom-section">
+    <div class="bottom-section" id="bottomSectionAdd">
       <div class="bottom-section-label">Add</div>
       <div class="add-btns-row">
         <button class="add-toggle-btn" id="addToggleBtn" onclick="openAddForm()">
@@ -2109,17 +2102,12 @@
         <button class="sidequest-btn" id="sidequestBtn" onclick="openSidequest()">Sidequest</button>
       </div>
     </div>
-    <div class="bottom-section">
+    <div class="bottom-section" id="bottomSectionDay">
       <div class="bottom-section-label">Day</div>
       <div class="end-btns-row">
         <button class="end-day-btn" id="endDayBtn" onclick="openEndDayModal()">End Day</button>
         <button class="end-day-btn" id="dayOffBtn" onclick="enterDayOff()">Day Off</button>
       </div>
-    </div>
-
-    <!-- MOBILE FAB (replaces button rows on mobile) -->
-    <div class="mobile-add-fab-row">
-      <button class="mobile-add-fab" onclick="openMobileAddSheet()" aria-label="Add">+</button>
     </div>
 
   </div><!-- /.task-panel -->
@@ -2131,7 +2119,7 @@
     <span class="mobile-nav-icon">🗓</span>
     <span>Timeline</span>
   </button>
-  <div class="mobile-nav-clock" id="mobileNavClock"></div>
+  <button class="mobile-add-fab" onclick="openMobileAddSheet()" aria-label="Add">+</button>
   <button class="mobile-nav-btn active" id="mobileNavQueue" onclick="showMobilePanel('queue')">
     <span class="mobile-nav-icon">≡</span>
     <span>Queue</span>
@@ -6399,12 +6387,20 @@
     const leftPanel = document.querySelector('.left-panel');
 
     if (panel === 'timeline') {
+      // Ensure calContainer is in calendarSection, not the hidden drawer panel
+      const container = document.getElementById('calContainer');
+      const calSec    = document.getElementById('calendarSection');
+      if (container && calSec && !calSec.contains(container)) {
+        calSec.appendChild(container);
+        document.body.classList.remove('cal-drawer-open');
+        renderCalendar();
+      }
       layout.classList.add('show-timeline');
       btnTl.classList.add('active');
       btnQ.classList.remove('active');
       // Scroll timeline to centre the now-line
       if (leftPanel) {
-        const nowLine = leftPanel.querySelector('.cal-now-line');
+        const nowLine = document.querySelector('.cal-now-line');
         if (nowLine) {
           const nowTop = nowLine.offsetTop;
           const viewH  = leftPanel.clientHeight;
@@ -6454,18 +6450,6 @@
       }
     }, { passive: true });
   })();
-
-  // Keep the bottom-nav clock in sync with the main clock
-  function updateMobileNavClock() {
-    const navClock  = document.getElementById('mobileNavClock');
-    const mainClock = document.getElementById('clockTime');
-    const mainAmpm  = document.getElementById('clockAmpm');
-    if (navClock && mainClock && mainAmpm) {
-      navClock.textContent = mainClock.textContent + ' ' + mainAmpm.textContent;
-    }
-  }
-  setInterval(updateMobileNavClock, 1000);
-  updateMobileNavClock();
 
   // ── Init view mode ─────────────────────────────────────────────────────
   (function initViewMode() {
