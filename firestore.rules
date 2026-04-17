@@ -3,9 +3,14 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // Users can read their own approval request (to check pending/approved/declined status)
+    // Users can create their own request doc, but only with status == 'pending'
     match /user_requests/{userId} {
       allow read: if request.auth != null && request.auth.uid == userId;
-      allow write: if false; // only Cloud Functions write here
+      allow create: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.data.status == 'pending'
+        && request.resource.data.keys().hasOnly(['status', 'email', 'createdAt']);
+      allow update, delete: if false;
     }
 
     // Task data: only accessible to approved users

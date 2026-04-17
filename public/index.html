@@ -695,6 +695,14 @@
   .approval-logo { font-weight: 800; font-size: 18px; letter-spacing: 0.2em; text-transform: uppercase; }
   .approval-title { font-size: 15px; font-weight: 700; color: #fff; }
   .approval-body  { font-size: 12px; color: var(--text-mid); line-height: 1.6; }
+  .approval-request-btn {
+    width: 100%; padding: 13px; border-radius: 8px;
+    background: #fff; border: none; color: #0b0a0f;
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer;
+    transition: opacity 0.12s;
+  }
+  .approval-request-btn:disabled { opacity: 0.5; cursor: default; }
   .approval-cancel {
     background: none; border: 1px solid var(--border); border-radius: 6px;
     color: var(--text-dim); font-family: 'Inter', sans-serif; font-size: 10px;
@@ -2034,7 +2042,8 @@
     <div class="approval-body" id="approvalBody">
       Your request to join Queue has been sent.<br>You'll be let in as soon as it's approved.
     </div>
-    <button class="approval-cancel" onclick="signOut()">Cancel</button>
+    <button class="approval-request-btn" id="approvalRequestBtn" onclick="requestAccess()" style="display:none">Request Access</button>
+    <button class="approval-cancel" onclick="signOut()">Sign out</button>
   </div>
 </div>
 
@@ -3212,21 +3221,59 @@
     }
 
     function _showApprovalScreen(status) {
-      const screen = document.getElementById('approvalScreen');
-      const title  = document.getElementById('approvalTitle');
-      const body   = document.getElementById('approvalBody');
-      const spin   = document.getElementById('approvalSpinner');
+      const screen  = document.getElementById('approvalScreen');
+      const title   = document.getElementById('approvalTitle');
+      const body    = document.getElementById('approvalBody');
+      const spin    = document.getElementById('approvalSpinner');
+      const reqBtn  = document.getElementById('approvalRequestBtn');
+      spin.style.display   = 'none';
+      reqBtn.style.display = 'none';
       if (status === 'declined') {
         title.textContent = 'Access declined';
-        body.textContent  = 'Your request to join Queue was declined.';
-        spin.style.display = 'none';
-      } else {
-        title.textContent  = 'Waiting for approval';
+        body.textContent  = 'Your request to join Queue was declined. Contact the owner to appeal.';
+      } else if (status === 'request') {
+        title.textContent    = 'Access required';
+        body.textContent     = 'Queue is invite-only. Request access and you\'ll be let in once approved.';
+        reqBtn.style.display = '';
+        reqBtn.disabled      = false;
+        reqBtn.textContent   = 'Request Access';
+      } else { // pending
+        title.textContent  = 'Request sent';
         body.innerHTML     = 'Your request to join Queue has been sent.<br>You\'ll be let in as soon as it\'s approved.';
         spin.style.display = '';
       }
       screen.classList.remove('hidden');
       showAuthScreen(false);
+    }
+
+    async function requestAccess() {
+      const user = _auth.currentUser;
+      if (!user) return;
+      const btn = document.getElementById('approvalRequestBtn');
+      btn.disabled    = true;
+      btn.textContent = 'Sending…';
+      try {
+        await _db.collection('user_requests').doc(user.uid).set({
+          status:    'pending',
+          email:     user.email || '',
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        });
+        _showApprovalScreen('pending');
+        // Real-time listener: auto-enter app when approved
+        if (!_approvalUnsub) {
+          const reqRef = _db.collection('user_requests').doc(user.uid);
+          _approvalUnsub = reqRef.onSnapshot(snap => {
+            if (snap.data()?.status === 'approved') {
+              if (_approvalUnsub) { _approvalUnsub(); _approvalUnsub = null; }
+              _enterApp(user);
+            }
+          });
+        }
+      } catch(e) {
+        btn.disabled    = false;
+        btn.textContent = 'Request Access';
+        document.getElementById('approvalBody').textContent = 'Something went wrong. Please try again.';
+      }
     }
 
     _auth.onAuthStateChanged(async user => {
@@ -3245,7 +3292,9 @@
           const reqSnap = await reqRef.get();
           if (reqSnap.exists) {
             const status = reqSnap.data().status;
-            if (status === 'pending' || status === 'declined') {
+            if (status === 'approved') {
+              // fall through to _enterApp below
+            } else if (status === 'pending' || status === 'declined') {
               _showApprovalScreen(status);
               // Real-time listener: auto-enter app when approved
               if (status === 'pending' && !_approvalUnsub) {
@@ -3257,9 +3306,21 @@
                 });
               }
               return;
+            } else {
+              // Unknown status — show request screen
+              _showApprovalScreen('request');
+              return;
             }
+          } else {
+            // No request doc — new user, show request screen
+            _showApprovalScreen('request');
+            return;
           }
-        } catch(e) { /* no user_requests doc or no permission — treat as approved */ }
+        } catch(e) {
+          // Permission denied means no approved doc — show request screen
+          // Network errors: fall through and try to enter app
+          if (e.code === 'permission-denied') { _showApprovalScreen('request'); return; }
+        }
 
         _enterApp(user);
       } else {
