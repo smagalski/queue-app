@@ -1159,7 +1159,6 @@
   }
   .mas-btn:active { background: rgba(255,255,255,0.08); }
   .mas-btn:disabled { opacity: 0.35; pointer-events: none; }
-  .mas-btn-icon { font-size: 18px; width: 24px; text-align: center; flex-shrink: 0; }
   .mas-btn.mas-sched { border-color: rgba(126,200,227,0.3); color: var(--sched); }
   .mas-btn.mas-break { border-color: rgba(152,99,243,0.3); color: var(--break); }
   .mas-btn.mas-quest { border-color: rgba(255,75,180,0.35); color: #ff4bb4; }
@@ -2133,21 +2132,11 @@
     <div class="mas-handle"></div>
     <div class="mas-title">Add</div>
     <div class="mas-options">
-      <button class="mas-btn" onclick="openAddForm();closeMobileAddSheet()">
-        <span class="mas-btn-icon">+</span> Flex Task
-      </button>
-      <button class="mas-btn mas-sched" onclick="openSchedForm();closeMobileAddSheet()">
-        <span class="mas-btn-icon">⏰</span> Schedule
-      </button>
-      <button class="mas-btn" onclick="openGcalImport();closeMobileAddSheet()">
-        <span class="mas-btn-icon">📅</span> Import from Google Calendar
-      </button>
-      <button class="mas-btn mas-break" id="masBreakBtn" onclick="takeBreak();closeMobileAddSheet()">
-        <span class="mas-btn-icon">☕</span> Take a Break
-      </button>
-      <button class="mas-btn mas-quest" onclick="openSidequest();closeMobileAddSheet()">
-        <span class="mas-btn-icon">⚡</span> Sidequest
-      </button>
+      <button class="mas-btn" onclick="openAddForm();closeMobileAddSheet()">Flex Task</button>
+      <button class="mas-btn mas-sched" onclick="openSchedForm();closeMobileAddSheet()">Schedule</button>
+      <button class="mas-btn" onclick="openGcalImport();closeMobileAddSheet()">Import from Google Calendar</button>
+      <button class="mas-btn mas-break" id="masBreakBtn" onclick="takeBreak();closeMobileAddSheet()">Take a Break</button>
+      <button class="mas-btn mas-quest" onclick="openSidequest();closeMobileAddSheet()">Sidequest</button>
     </div>
   </div>
 </div>
