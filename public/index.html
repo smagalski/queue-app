@@ -3,6 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+  // Redirect temp Firebase URLs to the canonical domain.
+  // .firebaseapp.com is intentionally excluded — it's needed for OAuth authDomain.
+  if (location.hostname.endsWith('.web.app')) {
+    location.replace('https://queuetaskmanagement.com' + location.pathname + location.search + location.hash);
+  }
+</script>
 <meta name="google-site-verification" content="Nk2o5X7j-2znrSAfHymKdVVKJKoTifUpvFxUTJI4c9s" />
 <title>Queue</title>
 <style>
