@@ -1167,6 +1167,56 @@
   .mas-btn.mas-break { border-color: rgba(152,99,243,0.3); color: var(--break); }
   .mas-btn.mas-quest { border-color: rgba(255,75,180,0.35); color: #ff4bb4; }
 
+  /* ── Mobile task-edit bottom sheet ─────────────────────────────────── */
+  .mobile-task-edit-overlay {
+    display: none; position: fixed; inset: 0; z-index: 9300;
+    background: rgba(0,0,0,0.55); align-items: flex-end;
+  }
+  .mobile-task-edit-overlay.open { display: flex; }
+  .mobile-task-edit-sheet {
+    width: 100%; background: var(--surface); border-radius: 14px 14px 0 0;
+    border-top: 1px solid var(--border);
+    padding: 8px 16px calc(28px + env(safe-area-inset-bottom, 0px));
+    animation: slideUp 0.28s cubic-bezier(0.4,0,0.2,1);
+  }
+  .mte-handle { width: 32px; height: 3px; background: var(--border); border-radius: 2px; margin: 6px auto 18px; }
+  .mte-field-label {
+    font-size: 9px; font-weight: 700; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--text-dim); margin-bottom: 7px;
+  }
+  .mte-input {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 13px 14px; color: #fff;
+    font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 500;
+    outline: none; margin-bottom: 16px; box-sizing: border-box;
+  }
+  .mte-input:focus { border-color: rgba(255,255,255,0.28); }
+  .mte-priority-row { display: flex; gap: 6px; margin-bottom: 18px; }
+  .mte-p-btn {
+    flex: 1; padding: 10px 4px; border-radius: 7px;
+    border: 1px solid var(--border); background: var(--surface2);
+    color: var(--text-mid); font-family: 'Inter', sans-serif;
+    font-size: 9px; font-weight: 700; letter-spacing: 0.09em;
+    text-transform: uppercase; cursor: pointer; transition: background 0.12s;
+  }
+  .mte-p-btn.mte-active-1 { border-color: var(--p1); color: var(--p1); background: rgba(255,107,138,0.12); }
+  .mte-p-btn.mte-active-2 { border-color: var(--p2); color: var(--p2); background: rgba(255,170,96,0.12); }
+  .mte-p-btn.mte-active-3 { border-color: var(--p3); color: var(--p3); background: rgba(240,208,96,0.12); }
+  .mte-p-btn.mte-active-4 { border-color: var(--p4); color: var(--p4); background: rgba(127,212,168,0.12); }
+  .mte-actions { display: flex; gap: 8px; margin-top: 6px; }
+  .mte-save-btn {
+    flex: 1; padding: 15px; border-radius: 10px;
+    background: #fff; border: none; color: #0b0a0f;
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer;
+  }
+  .mte-delete-btn {
+    padding: 15px 20px; border-radius: 10px;
+    border: 1px solid rgba(255,107,138,0.35); background: transparent;
+    color: var(--p1); font-family: 'Inter', sans-serif;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+
   /* 16px prevents iOS auto-zoom on input focus */
   body.mobile-view .task-input,
   body.mobile-view .time-input,
@@ -2334,6 +2384,34 @@
   </div>
   <div class="break-status" id="breakStatus"></div>
   <button class="end-break-btn" id="endBreakBtn" onclick="endBreak()">End Break</button>
+</div>
+
+<!-- MOBILE TASK EDIT SHEET -->
+<div class="mobile-task-edit-overlay" id="mobileTaskEditOverlay" onclick="if(event.target===this)closeMobileTaskEdit()">
+  <div class="mobile-task-edit-sheet">
+    <div class="mte-handle"></div>
+    <div id="mteTitleSection">
+      <div class="mte-field-label">Task Name</div>
+      <input class="mte-input" id="mteTitle" type="text" placeholder="Task name" onkeydown="if(event.key==='Enter')saveMobileTaskEdit()"/>
+    </div>
+    <div id="mtePrioritySection">
+      <div class="mte-field-label">Priority</div>
+      <div class="mte-priority-row">
+        <button class="mte-p-btn" data-p="1" onclick="mteSelectPriority(1)">Urgent</button>
+        <button class="mte-p-btn" data-p="2" onclick="mteSelectPriority(2)">High</button>
+        <button class="mte-p-btn" data-p="3" onclick="mteSelectPriority(3)">Medium</button>
+        <button class="mte-p-btn" data-p="4" onclick="mteSelectPriority(4)">Low</button>
+      </div>
+    </div>
+    <div id="mteDurSection">
+      <div class="mte-field-label">Duration</div>
+      <input class="mte-input" id="mteDuration" type="text" placeholder="e.g. 1h, 30m, 1h 30m" onkeydown="if(event.key==='Enter')saveMobileTaskEdit()"/>
+    </div>
+    <div class="mte-actions">
+      <button class="mte-save-btn" onclick="saveMobileTaskEdit()">Save</button>
+      <button class="mte-delete-btn" onclick="deleteMobileTask()">Delete</button>
+    </div>
+  </div>
 </div>
 
 <!-- SIDEQUEST OVERLAY -->
@@ -3895,7 +3973,7 @@
     const slotDropAttrs = (!taskSched && slotIdx !== undefined)
       ? ` ondragover="slotDragOver(event,${slotIdx})" ondrop="slotDrop(event,${slotIdx})"`
       : '';
-    return `<div class="task-card ${taskSched ? 'sched-card' : 'flex-card'}" data-id="${task.id}" ${dragAttrs}${moreAttrs}${slotDropAttrs} style="--card-bar:${col};border-color:${col}">
+    return `<div class="task-card ${taskSched ? 'sched-card' : 'flex-card'}" data-id="${task.id}" ${dragAttrs}${moreAttrs}${slotDropAttrs} style="--card-bar:${col};border-color:${col}" onclick="if(document.body.classList.contains('mobile-view')&&!event.target.closest('button'))openMobileTaskEdit(${task.id})">
       <button class="delete-btn" onclick="deleteTaskById(${task.id})" title="Delete">✕</button>
       <div class="card-task-title" ondblclick="startTitleEdit(${task.id},this)" style="cursor:text">${esc(task.title)}</div>
       <div class="task-meta" style="display:flex">${badgeHtml}${catBadgeHtml}${escHtml}${carriedHtml}${timeHtml}${durHtml}<button class="done-btn" onclick="markDoneById(${task.id})">✓ Done</button></div>
@@ -6427,6 +6505,85 @@
 
   function closeMobileAddSheet() {
     document.getElementById('mobileActionSheetOverlay').classList.remove('open');
+  }
+
+  // ── Mobile task-edit sheet ──────────────────────────────────────────────
+  let _mobileEditTaskId = null;
+
+  function openMobileTaskEdit(taskId) {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+    _mobileEditTaskId = taskId;
+
+    const isBreak = !!task.isBreak;
+    const isSched = isScheduled(task);
+
+    // Show/hide sections based on task type
+    document.getElementById('mteTitleSection').style.display    = isBreak ? 'none' : '';
+    document.getElementById('mtePrioritySection').style.display = (isBreak || isSched) ? 'none' : '';
+    document.getElementById('mteDurSection').style.display      = isBreak ? 'none' : '';
+
+    if (!isBreak) {
+      document.getElementById('mteTitle').value    = task.title;
+      document.getElementById('mteDuration').value = task.duration ? fmtDuration(task.duration) : '';
+    }
+    if (!isBreak && !isSched) {
+      mteSelectPriority(task.priority || 3);
+    }
+    document.getElementById('mobileTaskEditOverlay').classList.add('open');
+    if (!isBreak) setTimeout(() => document.getElementById('mteTitle').focus(), 320);
+  }
+
+  function closeMobileTaskEdit() {
+    document.getElementById('mobileTaskEditOverlay').classList.remove('open');
+    _mobileEditTaskId = null;
+  }
+
+  function mteSelectPriority(p) {
+    document.querySelectorAll('.mte-p-btn').forEach(btn => {
+      const bp = parseInt(btn.dataset.p);
+      btn.className = 'mte-p-btn' + (bp === p ? ` mte-active-${p}` : '');
+    });
+  }
+
+  function saveMobileTaskEdit() {
+    const task = tasks.find(t => t.id === _mobileEditTaskId);
+    if (!task) { closeMobileTaskEdit(); return; }
+
+    const title = document.getElementById('mteTitle').value.trim();
+    if (title && title !== task.title) {
+      task.title = title;
+      delete task.categoryOverride;
+    }
+
+    const activeBtn = document.querySelector('.mte-p-btn[class*="mte-active-"]');
+    if (activeBtn) task.priority = parseInt(activeBtn.dataset.p);
+
+    const durStr = document.getElementById('mteDuration').value.trim();
+    if (durStr) {
+      const parsed = _parseMteDuration(durStr);
+      if (parsed > 0) task.duration = parsed;
+    }
+
+    save(); render(); closeMobileTaskEdit();
+  }
+
+  function deleteMobileTask() {
+    if (_mobileEditTaskId !== null) {
+      deleteTaskById(_mobileEditTaskId);
+      closeMobileTaskEdit();
+    }
+  }
+
+  function _parseMteDuration(s) {
+    s = s.toLowerCase().replace(/\s+/g, '');
+    let total = 0;
+    const hm = s.match(/(\d+(?:\.\d+)?)[h]/);
+    const mm = s.match(/(\d+)[m]/);
+    if (hm) total += Math.round(parseFloat(hm[1]) * 60);
+    if (mm) total += parseInt(mm[1]);
+    if (!hm && !mm) { const n = parseInt(s); if (n > 0) total = n; }
+    return total;
   }
 
   // Swipe left/right to switch panels
