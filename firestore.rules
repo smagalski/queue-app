@@ -19,12 +19,12 @@ service cloud.firestore {
         && request.auth.uid == userId
         && isApproved(userId);
     }
-  }
 
-  // Approved = user_requests/{userId} doc exists with status == 'approved'
-  // No doc (or any other status) = denied. Approve manually in the Firebase Console.
-  function isApproved(userId) {
-    return exists(/databases/$(database)/documents/user_requests/$(userId))
-      && get(/databases/$(database)/documents/user_requests/$(userId)).data.status == 'approved';
+    // Approved = user_requests/{userId} doc exists with status == 'approved'
+    // No doc (or any other status) = denied. Approve manually in the Firebase Console.
+    function isApproved(userId) {
+      return exists(/databases/$(database)/documents/user_requests/$(userId))
+        && get(/databases/$(database)/documents/user_requests/$(userId)).data.status == 'approved';
+    }
   }
 }
