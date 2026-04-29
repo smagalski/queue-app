@@ -513,6 +513,36 @@
     white-space: nowrap; flex-shrink: 0;
   }
   .recur-delete-btn:hover { border-color: #ff6b8a; color: #ff6b8a; }
+  .recur-task-actions { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+  .recur-edit-btn {
+    background: none; border: 1px solid var(--border); border-radius: 5px;
+    color: var(--text-dim); font-size: 10px; font-weight: 600; letter-spacing: 0.06em;
+    text-transform: uppercase; padding: 4px 9px; cursor: pointer; transition: all 0.12s;
+    white-space: nowrap;
+  }
+  .recur-edit-btn:hover { border-color: var(--sched); color: var(--sched); }
+  .recur-edit-card { gap: 12px; }
+  .recur-edit-row { display: flex; flex-direction: column; gap: 5px; }
+  .recur-edit-label {
+    font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .recur-edit-actions { display: flex; gap: 8px; margin-top: 2px; }
+  .recur-save-btn {
+    padding: 8px 18px; border-radius: 7px; border: 1px solid rgba(126,200,227,0.4);
+    background: rgba(126,200,227,0.08); color: var(--sched); font-family: 'Inter', sans-serif;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .recur-save-btn:hover { background: rgba(126,200,227,0.16); }
+  .recur-cancel-btn {
+    padding: 8px 14px; border-radius: 7px; border: none;
+    background: none; color: var(--text-dim); font-family: 'Inter', sans-serif;
+    font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+    cursor: pointer; transition: color 0.15s;
+  }
+  .recur-cancel-btn:hover { color: var(--text-mid); }
+  .recur-edit-days-error .recur-day-btn { border-color: rgba(255,107,138,0.5) !important; }
   .recur-empty {
     color: var(--text-dim); font-size: 13px; text-align: center; padding: 40px 0;
   }
@@ -2922,6 +2952,11 @@
   let _edmOverrides  = {};  // { taskId -> categoryId } — live during modal session
   let _edmReport     = null;
 
+  // Recurring task inline edit state
+  let _recurEditId     = null;
+  let _recurEditDays   = new Set();
+  let _recurEditAnchor = 'start';
+
   // UI panel state
   let doneOpen  = false;
   let addOpen   = false;
@@ -3705,12 +3740,20 @@
   }
 
   function deleteRecurring(id) {
+    if (_recurEditId === id) _recurEditId = null;
     recurringTasks = recurringTasks.filter(rt => rt.id !== id);
     save();
     renderRecurringList();
   }
 
   function fmtTime12(hhmm) { return fmtTimePST('T' + hhmm); }
+
+  function _recurDurOptionsHtml(selected) {
+    return [[15,'15 min'],[30,'30 min'],[45,'45 min'],[60,'1 hr'],[90,'1 hr 30 min'],
+            [120,'2 hr'],[150,'2 hr 30 min'],[180,'3 hr'],[240,'4 hr'],[300,'5 hr'],
+            [360,'6 hr'],[480,'8 hr']]
+      .map(([v,l]) => `<option value="${v}"${v===selected?' selected':''}>${l}</option>`).join('');
+  }
 
   function renderRecurringList() {
     const body = document.getElementById('recurringBody');
@@ -3719,20 +3762,128 @@
       return;
     }
     body.innerHTML = recurringTasks.map(rt => {
+      if (_recurEditId === rt.id) {
+        const dayBtns = RECUR_DAY_NAMES.map((d, i) =>
+          `<button class="recur-day-btn${_recurEditDays.has(i) ? ' active' : ''}" onclick="toggleRecurEditDay(${i})">${d}</button>`
+        ).join('');
+        return `<div class="recur-task-card recur-edit-card">
+          <div class="recur-edit-row">
+            <label class="recur-edit-label">Task Name</label>
+            <input class="task-input" id="recurEditTitle" value="${esc(rt.title)}" maxlength="120"
+                   onkeydown="if(event.key==='Enter')saveRecurringEdit();if(event.key==='Escape')cancelRecurringEdit()" />
+          </div>
+          <div class="recur-edit-row">
+            <label class="recur-edit-label">Anchor</label>
+            <div style="display:flex;gap:6px;">
+              <button class="p-btn${_recurEditAnchor==='start'?' sel-sched':''}" id="recurEditAnchorStart" onclick="setRecurEditAnchor('start')" style="flex:1;font-size:10px;">Start time</button>
+              <button class="p-btn${_recurEditAnchor==='end'?' sel-sched':''}" id="recurEditAnchorEnd"   onclick="setRecurEditAnchor('end')"   style="flex:1;font-size:10px;">End time</button>
+            </div>
+            <div class="smart-time" id="recurEditTime" data-onchange="" style="margin-top:6px;">
+              <input class="st-hour" type="text" inputmode="numeric" maxlength="2" placeholder="hh">
+              <span class="st-sep">:</span>
+              <input class="st-min" type="text" inputmode="numeric" maxlength="2" placeholder="mm">
+              <button class="st-ampm" type="button">AM</button>
+            </div>
+          </div>
+          <div class="recur-edit-row">
+            <label class="recur-edit-label">Duration</label>
+            <select class="duration-select" id="recurEditDur">${_recurDurOptionsHtml(rt.duration)}</select>
+          </div>
+          <div class="recur-edit-row">
+            <label class="recur-edit-label">Days</label>
+            <div class="recur-day-picker visible" id="recurEditDayPicker">${dayBtns}</div>
+          </div>
+          <div class="recur-edit-actions">
+            <button class="recur-save-btn" onclick="saveRecurringEdit()">Save</button>
+            <button class="recur-cancel-btn" onclick="cancelRecurringEdit()">Cancel</button>
+          </div>
+        </div>`;
+      }
       const timeLabel = `${rt.anchor === 'start' ? 'Starts' : 'Ends'} at ${fmtTime12(rt.time)}`;
       const durLabel  = fmtTaskMins(rt.duration);
-      const dayChips = RECUR_DAY_NAMES.map((d, i) =>
+      const dayChips  = RECUR_DAY_NAMES.map((d, i) =>
         `<span class="recur-day-chip${rt.days.includes(i) ? ' on' : ''}">${d}</span>`
       ).join('');
       return `<div class="recur-task-card">
         <div class="recur-task-header">
-          <div class="recur-task-title">${rt.title}</div>
-          <button class="recur-delete-btn" onclick="deleteRecurring(${rt.id})">Delete</button>
+          <div class="recur-task-title">${esc(rt.title)}</div>
+          <div class="recur-task-actions">
+            <button class="recur-edit-btn" onclick="openRecurringEdit(${rt.id})">Edit</button>
+            <button class="recur-delete-btn" onclick="deleteRecurring(${rt.id})">Delete</button>
+          </div>
         </div>
         <div class="recur-task-meta">${timeLabel} · ${durLabel}</div>
         <div class="recur-task-days">${dayChips}</div>
       </div>`;
     }).join('');
+
+    // Init smart-time for edit form if active
+    if (_recurEditId !== null) {
+      setTimeout(() => {
+        initSmartTime('recurEditTime');
+        const rt = recurringTasks.find(r => r.id === _recurEditId);
+        if (rt) setSmartTime('recurEditTime', rt.time);
+        document.getElementById('recurEditTitle')?.focus();
+      }, 0);
+    }
+  }
+
+  function openRecurringEdit(id) {
+    const rt = recurringTasks.find(r => r.id === id);
+    if (!rt) return;
+    _recurEditId     = id;
+    _recurEditDays   = new Set(rt.days);
+    _recurEditAnchor = rt.anchor || 'start';
+    renderRecurringList();
+  }
+
+  function cancelRecurringEdit() {
+    _recurEditId = null;
+    renderRecurringList();
+  }
+
+  function setRecurEditAnchor(which) {
+    _recurEditAnchor = which;
+    document.getElementById('recurEditAnchorStart')?.classList.toggle('sel-sched', which === 'start');
+    document.getElementById('recurEditAnchorEnd')?.classList.toggle('sel-sched',   which === 'end');
+  }
+
+  function toggleRecurEditDay(day) {
+    if (_recurEditDays.has(day)) _recurEditDays.delete(day);
+    else _recurEditDays.add(day);
+    document.querySelectorAll('#recurEditDayPicker .recur-day-btn').forEach(b => {
+      b.classList.toggle('active', _recurEditDays.has(parseInt(b.textContent === 'Sun' ? 0 :
+        RECUR_DAY_NAMES.indexOf(b.textContent))));
+    });
+    // Re-render just the buttons for accuracy
+    const picker = document.getElementById('recurEditDayPicker');
+    if (picker) {
+      picker.innerHTML = RECUR_DAY_NAMES.map((d, i) =>
+        `<button class="recur-day-btn${_recurEditDays.has(i) ? ' active' : ''}" onclick="toggleRecurEditDay(${i})">${d}</button>`
+      ).join('');
+    }
+  }
+
+  function saveRecurringEdit() {
+    const rt = recurringTasks.find(r => r.id === _recurEditId);
+    if (!rt) return;
+    const title   = document.getElementById('recurEditTitle')?.value.trim();
+    const timeVal = getSmartTime('recurEditTime');
+    const dur     = parseInt(document.getElementById('recurEditDur')?.value) || DEFAULT_DUR;
+    if (!title || !timeVal || _recurEditDays.size === 0) {
+      if (!title)               document.getElementById('recurEditTitle')?.classList.add('wup-input-error');
+      if (!timeVal)             document.getElementById('recurEditTime')?.classList.add('wup-input-error');
+      if (_recurEditDays.size === 0) document.getElementById('recurEditDayPicker')?.classList.add('recur-edit-days-error');
+      return;
+    }
+    rt.title  = title;
+    rt.time   = timeVal;
+    rt.anchor = _recurEditAnchor;
+    rt.duration = dur;
+    rt.days   = [..._recurEditDays].sort((a, b) => a - b);
+    _recurEditId = null;
+    save();
+    renderRecurringList();
   }
 
   function purgeDone() {
