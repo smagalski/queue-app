@@ -859,6 +859,31 @@
   .hdc-priority-row { display: flex; gap: 6px; flex-wrap: wrap; }
   .hdc-priority-chip { padding: 2px 8px; border-radius: 20px; font-size: 9px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
   .history-empty { text-align: center; color: var(--text-dim); font-size: 13px; padding: 60px 0; }
+  .history-hdr-actions { display: flex; align-items: center; gap: 8px; }
+  .history-hdr-btn {
+    background: none; border: 1px solid var(--border); border-radius: 6px;
+    color: var(--text-dim); font-family: 'Inter', sans-serif; font-size: 9px;
+    font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase;
+    padding: 0 10px; height: 28px; cursor: pointer; transition: all 0.15s; white-space: nowrap;
+  }
+  .history-hdr-btn:hover { color: #fff; border-color: rgba(255,255,255,0.3); }
+  .hist-import-confirm-overlay {
+    display: none; position: fixed; inset: 0; z-index: 10200;
+    background: rgba(0,0,0,0.75); align-items: center; justify-content: center;
+  }
+  .hist-import-confirm-overlay.active { display: flex; }
+  .hist-import-confirm-modal {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 28px 24px; width: 340px; display: flex; flex-direction: column; gap: 14px;
+  }
+  .hist-import-title { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+  .hist-import-sub { font-size: 11px; color: var(--text-dim); line-height: 1.55; }
+  .hist-import-stats { font-size: 11px; color: var(--text-mid); background: var(--surface2); border-radius: 8px; padding: 10px 12px; }
+  .hist-import-actions { display: flex; gap: 8px; }
+  .hist-import-actions button { flex: 1; height: 36px; border-radius: 6px; border: none; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; transition: opacity 0.15s; }
+  .hist-import-actions button:hover { opacity: 0.85; }
+  .hist-import-cancel { background: var(--surface2); color: var(--text-mid); border: 1px solid var(--border) !important; }
+  .hist-import-submit { background: #fff; color: #0b0a0f; }
 
   /* ── GOOGLE CALENDAR IMPORT ─────────────────────────────────────────── */
   .gcal-import-btn {
@@ -2678,9 +2703,27 @@
   <div class="history-inner">
     <div class="history-header">
       <div class="history-title">Day History</div>
-      <button class="history-close" onclick="closeHistoryOverlay()">✕</button>
+      <div class="history-hdr-actions">
+        <button class="history-hdr-btn" onclick="exportHistory()">Export</button>
+        <button class="history-hdr-btn" onclick="triggerHistoryImport()">Import</button>
+        <button class="history-close" onclick="closeHistoryOverlay()">✕</button>
+      </div>
     </div>
     <div id="historyBody"></div>
+  </div>
+</div>
+<input type="file" id="historyImportInput" accept=".json" style="display:none" onchange="handleHistoryImportFile(event)">
+
+<!-- HISTORY IMPORT CONFIRMATION -->
+<div class="hist-import-confirm-overlay" id="histImportConfirmOverlay">
+  <div class="hist-import-confirm-modal">
+    <div class="hist-import-title">Import History</div>
+    <div class="hist-import-sub" id="histImportSub"></div>
+    <div class="hist-import-stats" id="histImportStats"></div>
+    <div class="hist-import-actions">
+      <button class="hist-import-cancel" onclick="cancelHistoryImport()">Cancel</button>
+      <button class="hist-import-submit" id="histImportSubmitBtn" onclick="confirmHistoryImport()">Import</button>
+    </div>
   </div>
 </div>
 
@@ -2705,6 +2748,10 @@
       <button class="gcal-confirm-btn" onclick="dismissGcalDailyPrompt(true)">Yes</button>
       <button class="gcal-cancel-btn" onclick="dismissGcalDailyPrompt(false)">No</button>
     </div>
+    <label style="display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;margin-top:4px;">
+      <input type="checkbox" id="gcalDontAskAgain" style="accent-color:var(--text-dim);cursor:pointer;" />
+      <span style="font-size:11px;color:var(--text-dim);letter-spacing:0.03em;">Don't ask again</span>
+    </label>
   </div>
 </div>
 
@@ -4704,7 +4751,16 @@
       if (task.calStartTime && task.id === flexTasks[0].id) {
         const elapsedMins = (Date.now() - task.calStartTime) / 60000;
         const calStart = msMinsToCalMins(task.calStartTime);
-        if (elapsedMins >= dur) {
+        // If a scheduled (anchored) block occupies the calStartTime position,
+        // the flex task isn't truly active there — fall back to findGap so it
+        // lands after the scheduled task instead of overlapping it.
+        const schedConflict = blocks.some(
+          b => b.anchored && b.startMins < calStart + dur && b.endMins > calStart
+        );
+        if (schedConflict) {
+          start = findGap(cursor, dur);
+          end   = start + dur;
+        } else if (elapsedMins >= dur) {
           start = findGap(Math.max(CAL_START, nowMins - dur), dur);
           end   = start + dur;
         } else {
@@ -6895,6 +6951,86 @@
     document.getElementById('historyOverlay').classList.remove('active');
   }
 
+  // ── History export / import ───────────────────────────────────────────
+  function exportHistory() {
+    if (!_db || !_currentUser) return;
+    _db.collection('users').doc(_currentUser.uid).collection('history')
+      .orderBy('date', 'desc')
+      .get()
+      .then(snap => {
+        if (snap.empty) { alert('No history to export.'); return; }
+        const docs = snap.docs.map(d => d.data());
+        const json = JSON.stringify(docs, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href     = url;
+        a.download = `queue-history-${todayPstDateStr()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      })
+      .catch(err => { console.error('[Queue] Export failed:', err); alert('Export failed. See console.'); });
+  }
+
+  function triggerHistoryImport() {
+    document.getElementById('historyImportInput').value = '';
+    document.getElementById('historyImportInput').click();
+  }
+
+  let _importDocs = null;
+
+  function handleHistoryImportFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      let docs;
+      try {
+        docs = JSON.parse(e.target.result);
+        if (!Array.isArray(docs)) throw new Error('Not an array');
+      } catch {
+        alert('Invalid file. Please select a JSON file exported from Queue.');
+        return;
+      }
+      const valid = docs.filter(d => d && typeof d.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d.date));
+      if (!valid.length) { alert('No valid history records found in file.'); return; }
+      _importDocs = valid;
+      const dates = valid.map(d => d.date).sort();
+      document.getElementById('histImportSub').textContent =
+        'This will merge the imported records into your history. Existing records for the same dates will be overwritten.';
+      document.getElementById('histImportStats').innerHTML =
+        `<strong>${valid.length}</strong> day${valid.length === 1 ? '' : 's'} found &nbsp;·&nbsp; ` +
+        `${dates[0]} – ${dates[dates.length - 1]}`;
+      document.getElementById('histImportConfirmOverlay').classList.add('active');
+    };
+    reader.readAsText(file);
+  }
+
+  function cancelHistoryImport() {
+    _importDocs = null;
+    document.getElementById('histImportConfirmOverlay').classList.remove('active');
+  }
+
+  async function confirmHistoryImport() {
+    if (!_importDocs || !_db || !_currentUser) return;
+    const btn = document.getElementById('histImportSubmitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Importing…';
+    try {
+      const histRef = _db.collection('users').doc(_currentUser.uid).collection('history');
+      for (const doc of _importDocs) {
+        await histRef.doc(doc.date).set(doc, { merge: true });
+      }
+      cancelHistoryImport();
+      openHistoryOverlay();
+    } catch (err) {
+      console.error('[Queue] Import failed:', err);
+      alert('Import failed. See console for details.');
+      btn.disabled = false;
+      btn.textContent = 'Import';
+    }
+  }
+
   // ── Day History drag-to-recategorize ──────────────────────────────────
   let _hdcDragTitle = null;
   let _hdcDragDate  = null;
@@ -7845,7 +7981,8 @@
 
   function maybeShowGcalDailyPrompt() {
     if (!GCAL_CLIENT_ID) return;
-    if (_gcalPromptShownThisSession) return;   // already shown this session
+    if (_gcalPromptShownThisSession) return;
+    if (localStorage.getItem('q_gcal_prompt_never') === '1') return;
     const today = new Date().toDateString();
     if (localStorage.getItem('q_gcal_prompt_date') === today) return;
     _gcalPromptShownThisSession = true;
@@ -7853,6 +7990,9 @@
   }
 
   function dismissGcalDailyPrompt(importNow) {
+    if (document.getElementById('gcalDontAskAgain')?.checked) {
+      localStorage.setItem('q_gcal_prompt_never', '1');
+    }
     localStorage.setItem('q_gcal_prompt_date', new Date().toDateString());
     document.getElementById('gcalDailyPrompt').classList.remove('active');
     if (importNow) openGcalImport();
