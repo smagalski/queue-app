@@ -2017,4 +2017,10 @@
     cursor: pointer; transition: color 0.15s;
   }
   .wup-btn-ghost:hover { color: var(--text-mid); }
+  .wup-streak-note {
+    font-size: 12px; color: var(--text-mid); margin: 0 0 8px;
+    padding: 7px 10px; background: rgba(127,212,168,0.08);
+    border: 1px solid rgba(127,212,168,0.2); border-radius: 6px;
+  }
+  .wup-streak-note strong { color: var(--p4); }
   .wup-nav-back { flex: none; margin-right: auto; }

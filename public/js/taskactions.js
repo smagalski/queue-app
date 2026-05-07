@@ -71,8 +71,7 @@ export function changeTaskCategory(catId) {
   const task = state.tasks.find(t => t.id === state.cdTargetId) || state.doneTasks.find(t => t.id === state.cdTargetId);
   if (task) { task.categoryOverride = catId; save(); }
   hideCategoryDropdown();
-  if (inDone) render();
-  else render();
+  render();
 }
 
 function hideCategoryDropdown() {

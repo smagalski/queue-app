@@ -1,6 +1,6 @@
 import { state } from './state.js';
 import { DONE_TTL, DEFAULT_CATEGORY_RULES, RECUR_DAY_NAMES } from './constants.js';
-import { todayPstDateStr, getPST, fmtMins, parseDateLocalMins, fmtTimePST, fmtTaskMins } from './utils.js';
+import { todayPstDateStr, getPST, fmtMins, parseDateLocalMins, fmtTimePST, fmtTaskMins, esc } from './utils.js';
 
 // Hooks registered by main.js to break circular deps with render/breaks/endday
 const _hooks = {
@@ -141,7 +141,7 @@ export function injectRecurringTasks() {
         startTime = `${today}T${fmtMins(parseDateLocalMins(anchorDT) - dur)}`;
       }
       state.tasks.push({
-        id: Date.now() + i,
+        id: Date.now() + i * 1000 + Math.floor(Math.random() * 1000),
         type: 'scheduled',
         title: rt.title,
         addedAt: Date.now(),
@@ -237,9 +237,8 @@ export function openEditRecurring(id) {
         <div class="recur-edit-col">
           <label class="form-label">Anchor</label>
           <div style="display:flex;gap:5px">
-            <button type="button" class="p-btn${rt.anchor === 'start' ? ' sel-sched' : ''}" data-anchor="start"
-              onclick="document.querySelectorAll('.rte-anchor-btn').forEach(b=>b.classList.remove('sel-sched'));this.classList.add('sel-sched')"
-              id="rteAnchorStart" class="p-btn rte-anchor-btn${rt.anchor === 'start' ? ' sel-sched' : ''}">Start</button>
+            <button type="button" id="rteAnchorStart" class="p-btn rte-anchor-btn${rt.anchor === 'start' ? ' sel-sched' : ''}" data-anchor="start"
+              onclick="document.querySelectorAll('.rte-anchor-btn').forEach(b=>b.classList.remove('sel-sched'));this.classList.add('sel-sched')">Start</button>
             <button type="button" id="rteAnchorEnd" class="p-btn rte-anchor-btn${rt.anchor === 'end' ? ' sel-sched' : ''}"
               onclick="document.querySelectorAll('.rte-anchor-btn').forEach(b=>b.classList.remove('sel-sched'));this.classList.add('sel-sched')"
               data-anchor="end">End</button>

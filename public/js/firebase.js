@@ -7,6 +7,7 @@ import { renderCategoryManager, getStressWeights, _renderStressCatList } from '.
 import { checkDayOffFirestore, checkDayEndedFirestore } from './endday.js';
 import { maybeShowGcalDailyPrompt } from './gcal.js';
 import { checkPreviousDayWrapUp } from './wrapup.js';
+import { refreshStreak } from './streak.js';
 
 // ── Firebase init ──────────────────────────────────────────────────────────
 
@@ -407,6 +408,7 @@ export function initAuth() {
     load();
     checkDayOffFirestore();
     checkDayEndedFirestore();
+    refreshStreak();
     maybeShowGcalDailyPrompt();
     checkPreviousDayWrapUp();
   }

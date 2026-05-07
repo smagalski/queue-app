@@ -48,8 +48,9 @@ export function initSmartTime(id) {
   const minEl  = el.querySelector('.st-min');
   const ampmEl = el.querySelector('.st-ampm');
   const onchange = el.dataset.onchange;
+  const _onchangeFn = onchange ? new Function(onchange) : null;
 
-  function fireChange() { if (onchange) (new Function(onchange))(); }
+  function fireChange() { if (_onchangeFn) _onchangeFn(); }
 
   hourEl.addEventListener('input', () => {
     const val = hourEl.value.replace(/\D/g,'');

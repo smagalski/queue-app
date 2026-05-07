@@ -4,6 +4,7 @@ import { getPST, todayPstDateStr, parseDateLocalMins, fmtMins, pad2, fmtTaskMins
 import { save, injectRecurringTasks } from './persistence.js';
 import { render, isScheduled } from './render.js';
 import { getCategoryForTask, getStressWeights, getStressExcludedCats, _recomputeStressScore } from './categories.js';
+import { refreshStreak } from './streak.js';
 
 // Module-local state
 let _edmDragTaskId = null;
@@ -278,6 +279,7 @@ export function commitEndDay(choice) {
   document.getElementById('endDayOverlay').classList.remove('active');
   localStorage.setItem('q_dayEndedChoice', choice);
   setDayEndedState(true);
+  refreshStreak();
   save(); render();
 }
 
@@ -324,6 +326,7 @@ export function setDayEndedState(ended) {
 
 export function resumeDay() {
   setDayEndedState(false);
+  refreshStreak();
   if (state.db && state.currentUser) {
     const today = todayPstDateStr();
     state.db.collection('users').doc(state.currentUser.uid).collection('history').doc(today)
@@ -372,7 +375,7 @@ export function enterDayOff() {
   if (state.db && state.currentUser) {
     state.db.collection('users').doc(state.currentUser.uid).collection('history').doc(today).set({
       date: today, dayOff: true, savedAt: Date.now(),
-    }).catch(err => console.error('[Queue] Day off save failed:', err));
+    }).then(() => refreshStreak()).catch(err => console.error('[Queue] Day off save failed:', err));
   }
 }
 

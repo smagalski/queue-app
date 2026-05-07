@@ -82,6 +82,9 @@ import {
   _wupOpenAddForm, _wupCancelAddForm, _wupSubmitAddTask, _wupRemoveAdded, _wupMaybeLater,
 } from './wrapup.js';
 
+// streak
+import { refreshStreak } from './streak.js';
+
 // mobile
 import {
   applyViewMode, toggleCalDrawer, showMobilePanel,
@@ -166,6 +169,9 @@ Object.assign(window, {
   toggleAuthMode, submitAuth, signInWithGoogle, signOut,
   toggleGearMenu, closeGearMenu, openSettings, closeSettings, switchSettingsTab,
   checkForUpdates, closePasswordModal, submitPasswordModal, submitResetPassword,
+
+  // streak
+  refreshStreak,
 
   // wrapup
   closeWrapUpPrompt, markDayResolvedFromPrompt, openWrapUpWizard, commitWrapUp,

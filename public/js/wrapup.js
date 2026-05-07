@@ -3,15 +3,9 @@ import { DEFAULT_CATEGORY_RULES } from './constants.js';
 import { todayPstDateStr, getPST, parseDateLocalMins, fmtTimePST, fmtMins, pad2, esc } from './utils.js';
 import { save } from './persistence.js';
 import { getCategoryForTask } from './categories.js';
+import { prevDateStr, computeStreak, renderStreak, getStreakCount, refreshStreak } from './streak.js';
 
 let _wup = null;
-
-function _wupPrevDateStr(dateStr) {
-  const [y, m, d] = dateStr.split('-').map(Number);
-  const dt = new Date(y, m - 1, d);
-  dt.setDate(dt.getDate() - 1);
-  return `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())}`;
-}
 
 function _wupFmtDate(dateStr) {
   const [y, m, d] = dateStr.split('-').map(Number);
@@ -22,7 +16,11 @@ export async function checkPreviousDayWrapUp() {
   if (!state.db || !state.currentUser) return;
   const today = todayPstDateStr();
   if (localStorage.getItem('q_wrapup_prompt_date') === today) return;
-  const incomplete = await getIncompletePastDays();
+  // Run in parallel so streak cache is warm before openWrapUpPrompt calls getStreakCount()
+  const [incomplete] = await Promise.all([
+    getIncompletePastDays(),
+    computeStreak().then(renderStreak),
+  ]);
   if (!incomplete.length) return;
   openWrapUpPrompt(incomplete);
 }
@@ -46,7 +44,7 @@ async function getIncompletePastDays() {
       if (data.dayEnded || data.dayOff || data.dayNotTracked || data.wrapUpCompleted) continue;
       incomplete.push({ date: data.date, doc: data });
     }
-    const yesterday = _wupPrevDateStr(today);
+    const yesterday = prevDateStr(today);
     if (snap.docs.length > 0 && yesterday >= cutoff && !seenDates.has(yesterday)) {
       incomplete.unshift({ date: yesterday, doc: null });
     }
@@ -64,7 +62,12 @@ function openWrapUpPrompt(incompleteDays) {
   const eyebrow = document.getElementById('wupPromptEyebrow');
   const actions = document.getElementById('wupPromptActions');
   eyebrow.textContent = _wupFmtDate(newest.date).toUpperCase();
+  const streak = getStreakCount();
+  const streakLine = streak > 0
+    ? `<p class="wup-streak-note">You have a <strong>${streak}-day streak</strong> — finishing this day keeps it going.</p>`
+    : '';
   actions.innerHTML = `
+    ${streakLine}
     ${hasDoc ? `<button class="wup-btn-primary" onclick="openWrapUpWizard()">Yes, let's wrap up</button>` : ''}
     <button class="wup-btn-secondary" onclick="markDayResolvedFromPrompt('dayOff')">Mark as Day Off</button>
     <button class="wup-btn-secondary" onclick="markDayResolvedFromPrompt('dayNotTracked')">Workday (not tracked)</button>
@@ -551,6 +554,7 @@ export async function commitWrapUp() {
 
   document.getElementById('wupOverlay').classList.remove('active');
   _wup = null;
+  refreshStreak();
 }
 
 function _recomputeWrapUpReport(doneTasks, catOverrides) {
