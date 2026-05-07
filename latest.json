@@ -1,11 +1,11 @@
 {
-  "version": "0.1.18",
-  "notes": "Consecutive-day streak counter in the clock section, plus a wrap-up wizard for retroactively resolving past days. Days off count toward the streak. The wizard prompt shows your current streak to encourage completion.\n\n⚠️ This app is a work in progress and may experience errors.",
+  "version": "0.1.19",
+  "notes": "Streak counter now updates correctly after ending, resuming, or wrapping up a day. Wrap-up prompt shows your current streak as motivation. Also includes codebase refactor into shared modules and several bug fixes.\n\n⚠️ This app is a work in progress and may experience errors.",
   "pub_date": "2026-05-07T00:00:00Z",
   "platforms": {
     "darwin-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUZnpsRGtodXF6dUNWNUFCM0JieWxScUxFVVhNUzV5bW44cjFCSGZjREl4dXA0RjFBUFY5dlFPWFg1NndIVXZZNmN6Qis2S3dOVTJiN0QyaXhhZWhUTlhQWVFCd3ZobEFJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc4MTg5MjYwCWZpbGU6UXVldWVfMC4xLjE4X3g2NC5kbWcKL1BxTkxTeVVyNWp2Y2JreXZDYjQ4NE9LNm1taFAxKzlTdVFjNVJmYWI3SCt5MjNsT3VEaFVFazV3SXNmempKK3lEdldySWJOTzFrK1BwMEpoUkpVQlE9PQo=",
-      "url": "https://github.com/smagalski/Queue-App/releases/download/v0.1.18/Queue_0.1.18_x64.dmg"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUZnpsRGtodXF6dUVkZit3WndtSnI4Yy84djA1TzNwbTR0T3JsYkEreGZrdEczZEVwakt0Vm94bVVNd3g4ZE5kMmtBNDc4TnQ2ampmSzZ4MnVtU3NEcit2YXdTYlZ5S2dFPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc4MTk0NTg3CWZpbGU6UXVldWVfMC4xLjE5X3g2NC5kbWcKeW1WVVRCNlBmSnpCNFVlSFh1ajlTYllVa3c4YkhabWVRZmpqTENzVnRDWlFNd2xDR1FIOVdVYkhrNlAwTE9MdklGRXJraFBWakYxYUVtZkRYbmZxRGc9PQo=",
+      "url": "https://github.com/smagalski/Queue-App/releases/download/v0.1.19/Queue_0.1.19_x64.dmg"
     }
   }
 }
