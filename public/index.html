@@ -80,6 +80,17 @@
     font-size: 12px; font-weight: 600; letter-spacing: 0.1em; color: #c0c0d0;
     text-align: center; margin-top: 10px; text-transform: uppercase;
   }
+  .streak-widget {
+    display: flex; align-items: baseline; justify-content: center; gap: 5px;
+    margin-top: 8px;
+  }
+  .streak-count {
+    font-size: 18px; font-weight: 800; color: #fff; font-variant-numeric: tabular-nums;
+  }
+  .streak-label {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.12em;
+    color: var(--text-dim); text-transform: uppercase;
+  }
 
   /* ── CALENDAR ─────────────────────────────────────────────────────────── */
   .calendar-section { flex: 1; overflow-y: auto; overflow-x: hidden; }
@@ -1038,8 +1049,10 @@
   }
   body.mobile-view .clock-time { font-size: 32px; }
   body.mobile-view .clock-ampm { font-size: 11px; }
-  body.mobile-view .clock-tz   { font-size: 8px; }
-  body.mobile-view .clock-date { font-size: 10px; margin-top: 0; }
+  body.mobile-view .clock-tz     { font-size: 8px; }
+  body.mobile-view .clock-date   { font-size: 10px; margin-top: 0; }
+  body.mobile-view .streak-widget { margin-top: 4px; }
+  body.mobile-view .streak-count  { font-size: 14px; }
 
   /* Calendar fills the timeline slide */
   body.mobile-view .calendar-section {
@@ -2106,6 +2119,10 @@
         </div>
       </div>
       <div class="clock-date" id="clockDate">---</div>
+      <div class="streak-widget" id="streakWidget" style="display:none">
+        <span class="streak-count" id="streakCount">0</span>
+        <span class="streak-label">day streak</span>
+      </div>
     </div>
     <div class="calendar-section" id="calendarSection" onclick="toggleCalDrawer(event)">
       <div class="cal-drawer-label">Timeline</div>
@@ -3217,6 +3234,7 @@
       load();
       checkDayOffFirestore();
       checkDayEndedFirestore();
+      refreshStreak();
       maybeShowGcalDailyPrompt();
     }
 
@@ -5787,6 +5805,7 @@
     document.getElementById('endDayOverlay').classList.remove('active');
     localStorage.setItem('q_dayEndedChoice', choice);
     setDayEndedState(true);
+    refreshStreak();
     save();   // triggers updateTodayHistory() which writes to Firestore
     render();
   }
@@ -5832,6 +5851,7 @@
 
   function resumeDay() {
     setDayEndedState(false);
+    refreshStreak();
     if (_db && _currentUser) {
       const today = todayPstDateStr();
       _db.collection('users').doc(_currentUser.uid).collection('history').doc(today)
@@ -5881,7 +5901,7 @@
     if (_db && _currentUser) {
       _db.collection('users').doc(_currentUser.uid).collection('history').doc(today).set({
         date: today, dayOff: true, savedAt: Date.now(),
-      }).catch(err => console.error('[Queue] Day off save failed:', err));
+      }).then(() => refreshStreak()).catch(err => console.error('[Queue] Day off save failed:', err));
     }
   }
 
@@ -5892,6 +5912,7 @@
     if (_db && _currentUser) {
       _db.collection('users').doc(_currentUser.uid).collection('history').doc(today)
         .delete()
+        .then(() => refreshStreak())
         .catch(err => console.error('[Queue] Day off cancel failed:', err));
     }
   }
@@ -5920,6 +5941,52 @@
       })
       .catch(() => {}); // silent — offline is fine
   }
+
+  // ── Streak ─────────────────────────────────────────────────────────────
+  let _streakCount = 0;
+
+  function prevDateStr(dateStr) {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    dt.setDate(dt.getDate() - 1);
+    return `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())}`;
+  }
+
+  async function computeStreak() {
+    if (!_db || !_currentUser) return 0;
+    const snap = await _db.collection('users').doc(_currentUser.uid)
+      .collection('history').orderBy('date', 'desc').limit(90).get();
+    const histMap = {};
+    for (const doc of snap.docs) histMap[doc.data().date] = doc.data();
+    const today = todayPstDateStr();
+    const todayEnded = localStorage.getItem('q_dayEnded') === today;
+    const todayDayOff = localStorage.getItem('q_dayOff') === today;
+    let count = 0;
+    let cursor = (todayEnded || todayDayOff) ? today : prevDateStr(today);
+    while (true) {
+      const day = histMap[cursor];
+      if (!day) break;
+      if (!day.dayEnded && !day.dayOff && !day.dayNotTracked) break;
+      count++;
+      cursor = prevDateStr(cursor);
+    }
+    return count;
+  }
+
+  function renderStreak(count) {
+    _streakCount = count;
+    const widget = document.getElementById('streakWidget');
+    if (!widget) return;
+    if (count < 1) { widget.style.display = 'none'; return; }
+    widget.style.display = '';
+    document.getElementById('streakCount').textContent = count;
+  }
+
+  function refreshStreak() {
+    computeStreak().then(renderStreak).catch(() => {});
+  }
+
+  function getStreakCount() { return _streakCount; }
 
   // ── History overlay ────────────────────────────────────────────────────
   function openHistoryOverlay() {
