@@ -1,11 +1,11 @@
 {
-  "version": "0.1.17",
-  "notes": "Continuous footer, centered More dropdown, About in gear menu, overlay timeline shows all tasks, Google sign-in fix.\n\n⚠️ This app is a work in progress and may experience errors.",
-  "pub_date": "2026-04-15T00:00:00Z",
+  "version": "0.1.18",
+  "notes": "Consecutive-day streak counter in the clock section, plus a wrap-up wizard for retroactively resolving past days. Days off count toward the streak. The wizard prompt shows your current streak to encourage completion.\n\n⚠️ This app is a work in progress and may experience errors.",
+  "pub_date": "2026-05-07T00:00:00Z",
   "platforms": {
     "darwin-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUZnpsRGtodXF6dUpMdzJqRyt1UFp6OGp6T3l6cElzSVBUWXhXeEJrazgxREdPY3ZNcHAvZDNQdFYzU2podFN1ZDJxWmU1a2c1MTNiSXlwQlI5ay9wRnQzN3dhRUVuV0F3PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc2Mjc5NzU3CWZpbGU6UXVldWVfMC4xLjE3X3g2NC5kbWcKWGJDQmloN2k0MnZyUW9mQS9KSmhZTXhDVW15REo5VUlNcDM2dXJEUTQzVmdXQWVQOWtDWU0vcDZseTY2Yi80eWhjSXR5bUdIaDJ2YUxFQ0dMeTN2RHc9PQo=",
-      "url": "https://github.com/smagalski/Queue-App/releases/download/v0.1.17/Queue_0.1.17_x64.dmg"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUZnpsRGtodXF6dUNWNUFCM0JieWxScUxFVVhNUzV5bW44cjFCSGZjREl4dXA0RjFBUFY5dlFPWFg1NndIVXZZNmN6Qis2S3dOVTJiN0QyaXhhZWhUTlhQWVFCd3ZobEFJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc4MTg5MjYwCWZpbGU6UXVldWVfMC4xLjE4X3g2NC5kbWcKL1BxTkxTeVVyNWp2Y2JreXZDYjQ4NE9LNm1taFAxKzlTdVFjNVJmYWI3SCt5MjNsT3VEaFVFazV3SXNmempKK3lEdldySWJOTzFrK1BwMEpoUkpVQlE9PQo=",
+      "url": "https://github.com/smagalski/Queue-App/releases/download/v0.1.18/Queue_0.1.18_x64.dmg"
     }
   }
 }
