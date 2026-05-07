@@ -1070,6 +1070,12 @@
     cursor: pointer; transition: color 0.15s;
   }
   .wup-btn-ghost:hover { color: var(--text-mid); }
+  .wup-streak-note {
+    font-size: 12px; color: var(--text-mid); margin: 0 0 8px;
+    padding: 7px 10px; background: rgba(127,212,168,0.08);
+    border: 1px solid rgba(127,212,168,0.2); border-radius: 6px;
+  }
+  .wup-streak-note strong { color: var(--p4); }
   .wup-nav-back { flex: none; margin-right: auto; }
 
   /* ── BLOCK DETAIL MODAL ──────────────────────────────────────────────── */
@@ -6206,7 +6212,10 @@
     if (!_db || !_currentUser) return;
     const today = todayPstDateStr();
     if (localStorage.getItem('q_wrapup_prompt_date') === today) return;
-    const incomplete = await getIncompletePastDays();
+    const [incomplete] = await Promise.all([
+      getIncompletePastDays(),
+      computeStreak().then(renderStreak),
+    ]);
     if (!incomplete.length) return;
     openWrapUpPrompt(incomplete);
   }
@@ -6231,7 +6240,7 @@
         incomplete.push({ date: data.date, doc: data });
       }
       // If user has prior history but no record at all for yesterday, surface it
-      const yesterday = _wupPrevDateStr(today);
+      const yesterday = prevDateStr(today);
       if (snap.docs.length > 0 && yesterday >= cutoff && !seenDates.has(yesterday)) {
         incomplete.unshift({ date: yesterday, doc: null });
       }
@@ -6249,7 +6258,12 @@
     const eyebrow  = document.getElementById('wupPromptEyebrow');
     const actions  = document.getElementById('wupPromptActions');
     eyebrow.textContent = _wupFmtDate(newest.date).toUpperCase();
+    const streak = getStreakCount();
+    const streakLine = streak > 0
+      ? `<p class="wup-streak-note">You have a <strong>${streak}-day streak</strong> — finishing this day keeps it going.</p>`
+      : '';
     actions.innerHTML = `
+      ${streakLine}
       ${hasDoc ? `<button class="wup-btn-primary" onclick="openWrapUpWizard()">Yes, let's wrap up</button>` : ''}
       <button class="wup-btn-secondary" onclick="markDayResolvedFromPrompt('dayOff')">Mark as Day Off</button>
       <button class="wup-btn-secondary" onclick="markDayResolvedFromPrompt('dayNotTracked')">Workday (not tracked)</button>
@@ -6747,6 +6761,7 @@
 
     document.getElementById('wupOverlay').classList.remove('active');
     _wup = null;
+    refreshStreak();
   }
 
   function _recomputeWrapUpReport(doneTasks, catOverrides) {
