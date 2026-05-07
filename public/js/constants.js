@@ -17,15 +17,14 @@ export const CAT_TALLY_COLORS = ['#7ec8e3','#9863f3','#f0d060','#7fd4a8','#ffaa6
 
 export const STRESS_DEFAULTS = { hours: 6, volume: 2, urgency: 1 };
 
-export const APP_VERSION  = '0.1.18';
+export const APP_VERSION  = '0.1.19';
 export const APP_DEPLOYED = 'May 7, 2026';
 export const APP_CHANGES  = [
-  'Consecutive-day streak counter in the clock section',
-  'Wrap-up wizard for retroactively resolving past days',
-  'Centered "More" dropdown with divider lines, matching Completed',
-  'About moved back into the gear menu',
-  'Overlay timeline now shows all queued tasks sequentially',
-  'Fixed silent Google sign-in failure on desktop',
+  'Streak counter now updates correctly after ending, resuming, or wrapping up a day',
+  'Wrap-up prompt shows your current streak as motivation to finish',
+  'Refactored codebase into shared CSS and JS modules',
+  'Fixed recurring task edit anchor button losing its selected state',
+  'Fixed category dropdown calling render() twice on change',
 ];
 
 export const GCAL_CLIENT_ID = '98725644783-jrc447s324kbmc1060c8ic5f7crm75js.apps.googleusercontent.com';
