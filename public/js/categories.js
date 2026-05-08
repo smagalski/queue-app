@@ -171,6 +171,7 @@ export function _recomputeStressScore(day) {
 
 function _saveCategoryRules() {
   save(); // persists categoryRules via the main save()
+  _renderStressCatList(); // keep "Count Towards Score" in sync
 }
 
 export function renderCategoryManager() {

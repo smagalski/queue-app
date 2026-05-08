@@ -48,7 +48,7 @@ import {
   commitEndDay, updateTodayHistory, resumeDay,
   checkDayEndedReset, checkDayEndedFirestore,
   showDayOffOverlay, enterDayOff, cancelDayOff, checkDayOffState, checkDayOffFirestore,
-  openHistoryOverlay, closeHistoryOverlay,
+  openHistoryOverlay, closeHistoryOverlay, markHistoryDay,
   hdcDragStart, hdcDragEnd, hdcDragOver, hdcDragLeave, hdcDrop,
 } from './endday.js';
 
@@ -72,6 +72,7 @@ import {
   initAuth, toggleAuthMode, submitAuth, signInWithGoogle, signOut,
   toggleGearMenu, closeGearMenu, openSettings, closeSettings, switchSettingsTab,
   checkForUpdates, closePasswordModal, submitPasswordModal, submitResetPassword,
+  toggleSync,
 } from './firebase.js';
 
 // wrapup
@@ -147,7 +148,7 @@ Object.assign(window, {
   edmDragStart, edmDragEnd, edmDragOver, edmDragLeave, edmDrop,
   commitEndDay, resumeDay,
   showDayOffOverlay, enterDayOff, cancelDayOff,
-  openHistoryOverlay, closeHistoryOverlay,
+  openHistoryOverlay, closeHistoryOverlay, markHistoryDay,
   hdcDragStart, hdcDragEnd, hdcDragOver, hdcDragLeave, hdcDrop,
 
   // categories
@@ -169,6 +170,7 @@ Object.assign(window, {
   toggleAuthMode, submitAuth, signInWithGoogle, signOut,
   toggleGearMenu, closeGearMenu, openSettings, closeSettings, switchSettingsTab,
   checkForUpdates, closePasswordModal, submitPasswordModal, submitResetPassword,
+  toggleSync,
 
   // streak
   refreshStreak,
@@ -194,6 +196,16 @@ document.addEventListener('click', e => {
   const btn  = document.getElementById('gearBtn');
   if (gear && gear.classList.contains('open') && !gear.contains(e.target) && e.target !== btn) {
     closeGearMenu();
+  }
+});
+
+// Ctrl/Cmd+Z: undo last action (un-complete most recent done task)
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+    const tag = (e.target.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || e.target.isContentEditable) return;
+    e.preventDefault();
+    undoLastAction();
   }
 });
 
@@ -236,11 +248,8 @@ window.addEventListener('resize', () => {
 
 // ── Init sequence ──────────────────────────────────────────────────────────
 
-// Wire Firebase auth (sets state.auth, calls load() on sign-in)
+// Wire Firebase auth; handles sign-in, local mode, and no-Firebase cases
 initAuth();
-
-// If Firebase auth is unavailable (offline / no auth configured), load locally
-if (!state.auth) { load(); }
 
 // Break state from localStorage
 loadBreakState();

@@ -4,8 +4,8 @@
   "pub_date": "2026-05-07T00:00:00Z",
   "platforms": {
     "darwin-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUZnpsRGtodXF6dUlLU1MwaXFoTjFHQi9HTXpxUS9TSVRBK0RBd1BDTmxzUWpZUUN6RW9lME01VlpVTUNiQkpLVEZHeW5wdVc3M3UzakhWSTJ1WC90S2xiL3J2cHZTZmdJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc4MjA5NDQ5CWZpbGU6UXVldWVfMC4xLjIwX3g2NC5kbWcKWGs1NHVWaGtJQThmNGxkb05SWVJLMUlXMmxKR2VtTUFvOXBlZGlwTDRLR05oQWtGV3NhMVJoWUNIVVgwSTlKek9USFJGWUdnQWJCZnZYN2ZFVis1RGc9PQo=",
-      "url": "https://github.com/smagalski/Queue-App/releases/download/v0.1.20/Queue_0.1.20_x64.dmg"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUZnpsRGtodXF6dUk4dGdSRWthZ25xWWZVc3pxN3VRMUYvdDZ2S3ZvS01nOWJxc3FiZCtyam1HemJaeTAvdEtpYzRVcFNsa3RrK1BTdmNjVmpxV1labS9jMkRqb0hwZ0FvPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc4MjExODI5CWZpbGU6UXVldWVfMC4xLjIwX3g2NC5hcHAudGFyLmd6ClRhd0N0VjZ4b28vUUtOUEdTdUg2UTkvcWcwSy92b2dIeHpNODRLTlJyWFdPWTlROTVVdUErcEZyYkRXYWhJa2dSa21UZEI3ZE0xcXRNV1Y0UytrWEJ3PT0K",
+      "url": "https://github.com/smagalski/Queue-App/releases/download/v0.1.20/Queue_0.1.20_x64.app.tar.gz"
     }
   }
 }

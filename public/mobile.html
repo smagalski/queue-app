@@ -46,7 +46,7 @@
         <div class="gear-menu-divider"></div>
         <button class="gear-menu-item" onclick="openSettings();closeGearMenu()">Settings</button>
         <div class="gear-menu-divider"></div>
-        <button class="gear-menu-item" onclick="signOut()">Sign Out</button>
+        <button class="gear-menu-item" id="gearSignOutBtn" onclick="signOut()">Sign Out</button>
       </div>
     </div>
   </div>
@@ -133,16 +133,8 @@
         </div>
       </div>
 
-      <!-- Account panel -->
-      <div class="settings-panel" id="settingsPanel-account">
-        <div class="settings-panel-title" id="pwModalTitle">Set Password</div>
-        <div class="pw-modal-subtitle" id="pwModalSubtitle"></div>
-        <div class="pw-modal-fields" id="pwModalFields" style="margin-top:16px;"></div>
-        <div class="pw-modal-error" id="pwModalError"></div>
-        <div class="pw-modal-actions">
-          <button class="pw-modal-submit" id="pwModalSubmit" onclick="submitPasswordModal()">Save</button>
-        </div>
-      </div>
+      <!-- Account panel (populated dynamically by _populateAccountPanel in firebase.js) -->
+      <div class="settings-panel" id="settingsPanel-account"></div>
 
       <!-- Data panel -->
       <div class="settings-panel" id="settingsPanel-data">

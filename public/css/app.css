@@ -167,6 +167,7 @@
   .sync-dot.syncing { background: var(--p3); animation: syncPulse 1s ease-in-out infinite; }
   .sync-dot.error   { background: var(--p1); }
   .sync-dot.offline { background: var(--text-dim); }
+  .sync-dot.off     { background: rgba(255,255,255,0.25); }
   @keyframes syncPulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
   .sync-label { font-size: 10px; color: var(--text-dim); letter-spacing: 0.05em; }
 
@@ -616,15 +617,29 @@
     text-transform: uppercase; color: var(--text-dim);
     border-top: 1px solid var(--border); padding-top: 14px; margin-top: 2px;
   }
-  .stress-cat-list { display: flex; flex-direction: column; gap: 8px; }
+  .stress-cat-list { display: flex; flex-direction: column; gap: 5px; }
   .stress-cat-row {
-    display: flex; align-items: center; gap: 10px; cursor: pointer;
+    display: flex; align-items: center; gap: 8px; cursor: pointer;
+    padding: 5px 0;
   }
   .stress-cat-row input[type="checkbox"] {
-    width: 15px; height: 15px; accent-color: #fff; cursor: pointer; flex-shrink: 0;
+    appearance: none; -webkit-appearance: none;
+    width: 14px; height: 14px; flex-shrink: 0; cursor: pointer;
+    border: 1.5px solid rgba(255,255,255,0.25); border-radius: 3px;
+    background: transparent; transition: all 0.15s; position: relative;
   }
-  .stress-cat-row label {
-    font-size: 12px; color: var(--text); cursor: pointer; user-select: none;
+  .stress-cat-row input[type="checkbox"]:checked {
+    background: var(--done-color); border-color: var(--done-color);
+  }
+  .stress-cat-row input[type="checkbox"]:checked::after {
+    content: ''; position: absolute;
+    left: 3px; top: 0px; width: 5px; height: 9px;
+    border: 2px solid #000; border-top: none; border-left: none;
+    transform: rotate(40deg);
+  }
+  .stress-cat-row span {
+    font-size: 13px; font-weight: 500; color: var(--text-main);
+    cursor: pointer; user-select: none; line-height: 1;
   }
   .stress-reset-btn {
     font-size: 11px; color: var(--text-dim); background: none; border: none;
@@ -948,6 +963,30 @@
   .pw-modal-fields { display: flex; flex-direction: column; gap: 8px; }
   .pw-modal-error { font-size: 10px; color: var(--p1); min-height: 14px; }
   .pw-modal-actions { display: flex; gap: 8px; }
+
+  /* ── ACCOUNT PANEL ─────────────────────────────────────────────────────── */
+  .account-email-row { margin-bottom: 4px; }
+  .account-email-label { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 4px; }
+  .account-email-value { font-size: 13px; color: var(--text-main); font-weight: 500; word-break: break-all; }
+  .account-section-divider { height: 1px; background: rgba(255,255,255,0.07); margin: 16px 0; }
+  .account-sync-row { display: flex; align-items: center; gap: 12px; }
+  .account-sync-info { flex: 1; }
+  .account-sync-label { font-size: 13px; color: var(--text-main); font-weight: 500; margin-bottom: 2px; }
+  .account-sync-desc { font-size: 11px; color: var(--text-mid); line-height: 1.4; }
+
+  /* Toggle switch */
+  .toggle-switch { position: relative; display: inline-block; width: 40px; height: 22px; flex-shrink: 0; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider {
+    position: absolute; cursor: pointer; inset: 0;
+    background: rgba(255,255,255,0.12); border-radius: 22px; transition: background 0.2s;
+  }
+  .toggle-slider::before {
+    content: ''; position: absolute; height: 16px; width: 16px;
+    left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: transform 0.2s;
+  }
+  .toggle-switch input:checked + .toggle-slider { background: var(--done-color); }
+  .toggle-switch input:checked + .toggle-slider::before { transform: translateX(18px); }
   .pw-modal-actions button { flex: 1; height: 36px; border-radius: 6px; border: none; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; transition: opacity 0.15s; }
   .pw-modal-actions button:hover { opacity: 0.85; }
   .pw-modal-actions button:disabled { opacity: 0.25; cursor: default; }
@@ -1356,6 +1395,21 @@
   .auth-keep { font-size: 10px; color: var(--text-dim); }
   .auth-keep label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
 
+  /* ── STREAK WIDGET ────────────────────────────────────────────────────── */
+  .streak-widget {
+    display: flex; align-items: baseline; justify-content: center; gap: 5px;
+    margin-top: 8px;
+  }
+  .streak-count {
+    font-size: 18px; font-weight: 800; color: #fff; font-variant-numeric: tabular-nums;
+  }
+  .streak-label {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.12em;
+    color: var(--text-dim); text-transform: uppercase;
+  }
+  body.mobile-view .streak-widget { margin-top: 4px; }
+  body.mobile-view .streak-count  { font-size: 14px; }
+
   /* ── BREAK BUTTON / CONTROLS ──────────────────────────────────────────── */
   .slot-label-row { padding: 2px 2px 5px; }
   .break-toggle-btn {
@@ -1599,11 +1653,27 @@
     text-transform: uppercase; color: var(--text-dim); white-space: nowrap;
   }
 
-  /* ── DAY OFF history badge ────────────────────────────────────────────── */
-  .hdc-day-off-badge {
+  /* ── DAY OFF / NOT TRACKED history badges ────────────────────────────── */
+  .hdc-day-off-badge, .hdc-not-tracked-badge {
     font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
     color: var(--text-dim); background: rgba(255,255,255,0.06); border-radius: 20px; padding: 4px 10px;
   }
+
+  /* ── HISTORY GAP CARD (days with no record) ──────────────────────────── */
+  .hdc-gap-card {
+    border-style: dashed !important;
+    border-color: rgba(255,255,255,0.08) !important;
+    opacity: 0.75;
+  }
+  .hdc-gap-actions { display: flex; gap: 6px; }
+  .hdc-gap-btn {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.04em;
+    padding: 4px 10px; border-radius: 5px;
+    border: 1px solid rgba(255,255,255,0.14);
+    background: rgba(255,255,255,0.05);
+    color: var(--text-mid); cursor: pointer; transition: all 0.15s;
+  }
+  .hdc-gap-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
 
   /* ── APP FOOTER (day bounds + category tally + break controls) ────────── */
   .app-footer {

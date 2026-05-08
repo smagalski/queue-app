@@ -275,7 +275,7 @@ export function switchSettingsTab(tab) {
     });
     _renderStressCatList();
   } else if (tab === 'account') {
-    _populatePasswordPanel();
+    _populateAccountPanel();
   } else if (tab === 'about') {
     _populateAppDetails();
   }
@@ -314,16 +314,10 @@ function hasPasswordProvider() {
   return !!(state.currentUser && state.currentUser.providerData.some(p => p.providerId === 'password'));
 }
 
-function _populatePasswordPanel() {
-  if (!state.currentUser) return;
+function _populatePasswordFields() {
   const hasPass = hasPasswordProvider();
-  document.getElementById('pwModalTitle').textContent    = hasPass ? 'Change Password' : 'Set Password';
-  document.getElementById('pwModalSubtitle').textContent = hasPass
-    ? 'Enter your current password to verify, then choose a new one.'
-    : 'Add a password to your account so you can sign in without Google.';
-  document.getElementById('pwModalError').textContent = '';
-
   const fields = document.getElementById('pwModalFields');
+  if (!fields) return;
   fields.innerHTML = (hasPass ? `<input class="auth-input" id="pwCurrent" type="password" placeholder="Current password" autocomplete="current-password"/>` : '') + `
     <input class="auth-input" id="pwNew"     type="password" placeholder="New password (min 6 chars)" autocomplete="new-password"/>
     <input class="auth-input" id="pwConfirm" type="password" placeholder="Confirm new password"       autocomplete="new-password"/>
@@ -331,6 +325,46 @@ function _populatePasswordPanel() {
   fields.querySelectorAll('input').forEach(inp => {
     inp.addEventListener('keydown', e => { if (e.key === 'Enter') submitPasswordModal(); });
   });
+}
+
+function _populateAccountPanel() {
+  if (!state.currentUser) return;
+  const email   = state.currentUser.email || '(no email)';
+  const syncOn  = state.syncEnabled;
+  const hasPass = hasPasswordProvider();
+
+  document.getElementById('settingsPanel-account').innerHTML = `
+    <div class="account-email-row">
+      <div class="account-email-label">Signed in as</div>
+      <div class="account-email-value">${esc(email)}</div>
+    </div>
+
+    <div class="account-section-divider"></div>
+
+    <div class="account-sync-row">
+      <div class="account-sync-info">
+        <div class="account-sync-label">Sync across devices</div>
+        <div class="account-sync-desc">Save tasks to the cloud and access them anywhere</div>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="syncToggleInput" ${syncOn ? 'checked' : ''} onchange="toggleSync(this.checked)">
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <div class="account-section-divider"></div>
+
+    <div class="settings-panel-title" style="font-size:13px;margin-bottom:4px">${hasPass ? 'Change Password' : 'Set Password'}</div>
+    <div class="pw-modal-subtitle" id="pwModalSubtitle">${hasPass
+      ? 'Enter your current password to verify, then choose a new one.'
+      : 'Add a password so you can sign in without Google.'}</div>
+    <div class="pw-modal-fields" id="pwModalFields" style="margin-top:12px;"></div>
+    <div class="pw-modal-error" id="pwModalError"></div>
+    <div class="pw-modal-actions">
+      <button class="pw-modal-submit" id="pwModalSubmit" onclick="submitPasswordModal()">Save</button>
+    </div>
+  `;
+  _populatePasswordFields();
 }
 
 export function closePasswordModal() { closeSettings(); }
@@ -378,6 +412,34 @@ export function submitPasswordModal() {
   }
 }
 
+// ── No-Firebase fallback (local only when Firebase is not configured) ─────
+
+function _enterLocalMode() {
+  showAuthScreen(false);
+  document.getElementById('approvalScreen').classList.add('hidden');
+  load();
+  refreshStreak();
+}
+
+// ── Sync toggle (for authenticated users) ─────────────────────────────────
+
+export function toggleSync(enabled) {
+  const uid = state.currentUser?.uid;
+  if (!uid) return;
+  state.syncEnabled = !!enabled;
+  if (enabled) {
+    localStorage.removeItem(`q_sync_off_${uid}`);
+    load(); // (re-)establish Firestore listener
+  } else {
+    localStorage.setItem(`q_sync_off_${uid}`, '1');
+    if (state.unsubscribeSnapshot) { state.unsubscribeSnapshot(); state.unsubscribeSnapshot = null; }
+    setSyncStatus('off');
+  }
+  // Refresh the toggle label inside the open panel (if still open)
+  const input = document.getElementById('syncToggleInput');
+  if (input) input.checked = !!enabled;
+}
+
 function setUserDoc(user) {
   state.currentUser = user;
   state.stateDoc = user ? state.db.collection('users').doc(user.uid).collection('queue').doc('state') : null;
@@ -387,7 +449,8 @@ function setUserDoc(user) {
 
 export function initAuth() {
   if (!state.auth) {
-    showAuthScreen(false);
+    // Firebase not configured — local-only mode automatically
+    _enterLocalMode();
     return;
   }
 
@@ -403,6 +466,8 @@ export function initAuth() {
 
   function _enterApp(user) {
     setUserDoc(user);
+    // Restore sync preference for this user
+    state.syncEnabled = localStorage.getItem(`q_sync_off_${user.uid}`) !== '1';
     showAuthScreen(false);
     document.getElementById('approvalScreen').classList.add('hidden');
     load();

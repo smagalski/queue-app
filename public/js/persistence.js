@@ -18,7 +18,7 @@ export function setSyncStatus(status) {
   const lbl = document.getElementById('syncLabel');
   if (!dot) return;
   dot.className = 'sync-dot ' + status;
-  lbl.textContent = { synced: 'Synced', syncing: 'Saving…', error: 'Error', offline: 'Offline', connecting: 'Connecting…' }[status] || '';
+  lbl.textContent = { synced: 'Synced', syncing: 'Saving…', error: 'Error', offline: 'Offline', connecting: 'Connecting…', off: 'Sync off' }[status] || '';
 }
 
 // ── Persistence ────────────────────────────────────────────────────────────
@@ -28,13 +28,20 @@ export function save() {
   const saveTasks = state.tasks.filter(t => !t._ab);
   const uid = state.currentUser?.uid;
   if (uid) {
+    // Always cache locally per-user (fast restore + offline fallback)
     try {
       localStorage.setItem(`q_tasks_${uid}`, JSON.stringify(saveTasks));
       localStorage.setItem(`q_done_${uid}`,  JSON.stringify(state.doneTasks));
     } catch(e) {}
+  } else if (!state.auth) {
+    // No Firebase configured at all — unkeyed local storage
+    try {
+      localStorage.setItem('q_tasks', JSON.stringify(saveTasks));
+      localStorage.setItem('q_done',  JSON.stringify(state.doneTasks));
+    } catch(e) {}
   }
   _hooks.updateTodayHistory();
-  if (state.stateDoc) {
+  if (state.syncEnabled && state.stateDoc) {
     setSyncStatus('syncing');
     state.stateDoc.set({
       tasks: saveTasks,
@@ -60,9 +67,9 @@ export function load() {
   purgeDone();
   _hooks.render();
 
-  if (!state.stateDoc) {
-    setSyncStatus('offline');
-    document.getElementById('syncLabel').textContent = 'Local only';
+  if (!state.stateDoc || !state.syncEnabled) {
+    const status = !state.auth ? 'offline' : 'off';
+    setSyncStatus(status);
     return;
   }
   setSyncStatus('connecting');

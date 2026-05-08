@@ -54,7 +54,7 @@
         <button class="gear-menu-item" onclick="openSettings();closeGearMenu()">Settings</button>
         <button class="gear-menu-item" onclick="openSettings('about');closeGearMenu()">About</button>
         <div class="gear-menu-divider"></div>
-        <button class="gear-menu-item" onclick="signOut()">Sign Out</button>
+        <button class="gear-menu-item" id="gearSignOutBtn" onclick="signOut()">Sign Out</button>
       </div>
     </div>
   </div>
@@ -71,7 +71,7 @@
       <button class="settings-tab" id="stab-stress" onclick="switchSettingsTab('stress')">Stress Score</button>
       <button class="settings-tab" id="stab-account" onclick="switchSettingsTab('account')">Account</button>
       <button class="settings-tab" id="stab-data" onclick="switchSettingsTab('data')">Data</button>
-      <button class="settings-tab" id="stab-about" onclick="switchSettingsTab('about')" style="display:none">About</button>
+      <button class="settings-tab" id="stab-about" onclick="switchSettingsTab('about')">About</button>
       <button class="settings-close-btn" onclick="closeSettings()">✕ Close</button>
     </div>
 
@@ -141,16 +141,8 @@
         </div>
       </div>
 
-      <!-- Account panel -->
-      <div class="settings-panel" id="settingsPanel-account">
-        <div class="settings-panel-title" id="pwModalTitle">Set Password</div>
-        <div class="pw-modal-subtitle" id="pwModalSubtitle"></div>
-        <div class="pw-modal-fields" id="pwModalFields" style="margin-top:16px;"></div>
-        <div class="pw-modal-error" id="pwModalError"></div>
-        <div class="pw-modal-actions">
-          <button class="pw-modal-submit" id="pwModalSubmit" onclick="submitPasswordModal()">Save</button>
-        </div>
-      </div>
+      <!-- Account panel (populated dynamically by _populateAccountPanel in firebase.js) -->
+      <div class="settings-panel" id="settingsPanel-account"></div>
 
       <!-- Data panel -->
       <div class="settings-panel" id="settingsPanel-data">

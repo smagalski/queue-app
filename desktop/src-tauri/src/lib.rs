@@ -225,8 +225,18 @@ async fn manual_check_for_updates(app: tauri::AppHandle) -> Result<String, Strin
         .show(move |answer| { let _ = tx.send(answer); });
     let confirmed = rx.recv().unwrap_or(false);
     if confirmed {
-        let _ = update.download_and_install(|_, _| {}, || {}).await;
-        app.restart();
+        match update.download_and_install(|_, _| {}, || {}).await {
+            Ok(_) => { app.restart(); }
+            Err(e) => {
+                eprintln!("[Queue] Update install failed: {e}");
+                use tauri_plugin_dialog::DialogExt;
+                app.dialog()
+                    .message(format!("Update failed to install: {e}\n\nYou can download the latest version manually from the Queue GitHub releases page."))
+                    .title("Update Failed")
+                    .blocking_show();
+                return Err(e.to_string());
+            }
+        }
     }
     Ok("declined".into())
 }
@@ -250,7 +260,16 @@ async fn check_for_updates(app: tauri::AppHandle) {
         });
     let confirmed = rx.recv().unwrap_or(false);
     if confirmed {
-        let _ = update.download_and_install(|_, _| {}, || {}).await;
-        app.restart();
+        match update.download_and_install(|_, _| {}, || {}).await {
+            Ok(_) => app.restart(),
+            Err(e) => {
+                eprintln!("[Queue] Update install failed: {e}");
+                use tauri_plugin_dialog::DialogExt;
+                app.dialog()
+                    .message(format!("Update failed to install: {e}\n\nYou can download the latest version manually from the Queue GitHub releases page."))
+                    .title("Update Failed")
+                    .blocking_show();
+            }
+        }
     }
 }

@@ -424,16 +424,87 @@ export function openHistoryOverlay() {
     .orderBy('date', 'desc')
     .get()
     .then(snap => {
-      if (snap.empty) {
+      // Build a map of date string → doc data
+      const docMap = {};
+      snap.docs.forEach(d => { docMap[d.data().date] = d.data(); });
+
+      // Generate dates: yesterday back 30 days, extend to cover earliest record
+      const pst = getPST();
+      const todayY = pst.getFullYear(), todayM = pst.getMonth(), todayD = pst.getDate();
+      const dates = [];
+      const LOOKBACK = 30;
+      const earliestDoc = snap.docs.length ? snap.docs[snap.docs.length - 1].data().date : null;
+
+      for (let i = 1; i <= LOOKBACK; i++) {
+        const d = new Date(todayY, todayM, todayD - i);
+        const dateStr = `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+        dates.push(dateStr);
+        if (i >= LOOKBACK && earliestDoc && dateStr > earliestDoc) {
+          // Keep going until we pass the earliest recorded day
+          // (Loop limit handles this via LOOKBACK; extend if needed)
+        }
+      }
+      // If earliest doc is older than 30 days, extend the range
+      if (earliestDoc && earliestDoc < dates[dates.length - 1]) {
+        const [ey, em, ed] = earliestDoc.split('-').map(Number);
+        const baseDate = new Date(todayY, todayM, todayD);
+        const earlyDate = new Date(ey, em - 1, ed);
+        const diffDays = Math.round((baseDate - earlyDate) / 86400000);
+        for (let i = LOOKBACK + 1; i <= diffDays; i++) {
+          const d = new Date(todayY, todayM, todayD - i);
+          const dateStr = `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+          dates.push(dateStr);
+        }
+      }
+
+      if (dates.length === 0 && snap.empty) {
         body.innerHTML = '<div class="history-empty">No day history yet.<br>Press "End Day" to start recording.</div>';
         return;
       }
-      body.innerHTML = snap.docs.map(d => renderHistoryDay(d.data())).join('');
+
+      body.innerHTML = dates.map(dateStr => {
+        if (docMap[dateStr]) {
+          return renderHistoryDay(docMap[dateStr]);
+        } else {
+          return renderHistoryGapDay(dateStr);
+        }
+      }).join('');
     })
     .catch(err => {
       console.error('[Queue] History load failed:', err);
       body.innerHTML = '<div class="history-empty">Failed to load history.</div>';
     });
+}
+
+function renderHistoryGapDay(dateStr) {
+  const [y,m,d] = dateStr.split('-').map(Number);
+  const dateObj   = new Date(y, m-1, d);
+  const dateLabel = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  return `<div class="history-day-card hdc-gap-card" id="hdcGap_${dateStr.replace(/-/g,'')}">
+    <div class="hdc-header">
+      <div class="hdc-date">${dateLabel}</div>
+      <div class="hdc-gap-actions">
+        <button class="hdc-gap-btn" onclick="markHistoryDay('${dateStr}','dayOff')">Day Off</button>
+        <button class="hdc-gap-btn" onclick="markHistoryDay('${dateStr}','notTracked')">Not Tracked</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+export function markHistoryDay(dateStr, type) {
+  if (!state.db || !state.currentUser) return;
+  const data = { date: dateStr, savedAt: Date.now() };
+  if (type === 'dayOff')     data.dayOff       = true;
+  if (type === 'notTracked') data.dayNotTracked = true;
+  state.db.collection('users').doc(state.currentUser.uid).collection('history')
+    .doc(dateStr)
+    .set(data)
+    .then(() => {
+      // Replace the gap card with the appropriate badge card
+      const gapEl = document.getElementById(`hdcGap_${dateStr.replace(/-/g,'')}`);
+      if (gapEl) gapEl.outerHTML = renderHistoryDay(data);
+    })
+    .catch(err => console.error('[Queue] markHistoryDay failed:', err));
 }
 
 export function closeHistoryOverlay() {
@@ -556,6 +627,15 @@ export function renderHistoryDay(day) {
       <div class="hdc-header">
         <div class="hdc-date">${dateLabel}</div>
         <div class="hdc-day-off-badge">Day Off</div>
+      </div>
+    </div>`;
+  }
+
+  if (day.dayNotTracked) {
+    return `<div class="history-day-card">
+      <div class="hdc-header">
+        <div class="hdc-date">${dateLabel}</div>
+        <div class="hdc-not-tracked-badge">Not Tracked</div>
       </div>
     </div>`;
   }

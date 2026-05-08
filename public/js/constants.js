@@ -17,13 +17,14 @@ export const CAT_TALLY_COLORS = ['#7ec8e3','#9863f3','#f0d060','#7fd4a8','#ffaa6
 
 export const STRESS_DEFAULTS = { hours: 6, volume: 2, urgency: 1 };
 
-export const APP_VERSION  = '0.1.20';
-export const APP_DEPLOYED = 'May 7, 2026';
+export const APP_VERSION  = '0.1.21';
+export const APP_DEPLOYED = 'May 8, 2026';
 export const APP_CHANGES  = [
-  'Fixed auto-updater dialog not appearing on launch',
-  'Streak counter now updates correctly after ending, resuming, or wrapping up a day',
-  'Wrap-up prompt shows your current streak as motivation to finish',
-  'Refactored codebase into shared CSS and JS modules',
+  'Sync toggle in Settings: disable cloud sync to work offline',
+  'About tab added to Settings',
+  'Streak counter now visible on mobile',
+  'Ctrl+Z / Cmd+Z undoes the last completed task',
+  'Fixed auto-updater: now properly installs updates on macOS',
 ];
 
 export const GCAL_CLIENT_ID = '98725644783-jrc447s324kbmc1060c8ic5f7crm75js.apps.googleusercontent.com';

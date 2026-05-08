@@ -34,4 +34,7 @@ export const state = {
   // Form transient state
   selPriority: null, schedAnchor: 'start',
   selectedRecurringDays: new Set(),
+
+  // Sync toggle (authenticated users can disable Firestore sync)
+  syncEnabled: true,
 };
