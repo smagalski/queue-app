@@ -169,6 +169,9 @@ pub fn run() {
         .setup(|app| {
             let handle = app.handle().clone();
             tauri::async_runtime::spawn(async move {
+                // Wait for the main window to be fully shown before displaying
+                // any update dialog — macOS suppresses dialogs launched too early.
+                tokio::time::sleep(std::time::Duration::from_secs(3)).await;
                 check_for_updates(handle).await;
             });
 
