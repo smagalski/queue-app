@@ -407,7 +407,10 @@ export function render() {
         </div>`).join('');
 
   const undoBtn = document.getElementById('titlebarUndoBtn');
-  if (undoBtn) undoBtn.style.display = state.doneTasks.length > 0 ? '' : 'none';
+  if (undoBtn) {
+    undoBtn.disabled = state.doneTasks.length === 0;
+    undoBtn.style.opacity = state.doneTasks.length === 0 ? '0.25' : '';
+  }
 
   _hooks.updateBreakUI();
   _refreshBlockDetail();
