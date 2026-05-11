@@ -37,4 +37,7 @@ export const state = {
 
   // Sync toggle (authenticated users can disable Firestore sync)
   syncEnabled: true,
+
+  // Timezone (IANA string; defaults to device TZ, persisted per-uid)
+  timezone: '',
 };

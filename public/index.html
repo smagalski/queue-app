@@ -28,6 +28,7 @@
 
 <div class="titlebar">
   <span class="app-name">Queue</span>
+  <span class="mobile-clock" id="mobileClock"></span>
   <div class="titlebar-right">
     <span class="queue-count" id="queueCount">empty</span>
     <span class="sync-dot syncing" id="syncDot"></span>
@@ -53,6 +54,8 @@
         <div class="gear-menu-divider"></div>
         <button class="gear-menu-item" onclick="openSettings();closeGearMenu()">Settings</button>
         <button class="gear-menu-item" onclick="openSettings('about');closeGearMenu()">About</button>
+        <div class="gear-menu-divider"></div>
+        <button class="gear-menu-item" onclick="window.open('https://github.com/smagalski/Queue-App/releases/latest','_blank');closeGearMenu()">Download the Mac App</button>
         <div class="gear-menu-divider"></div>
         <button class="gear-menu-item" id="gearSignOutBtn" onclick="signOut()">Sign Out</button>
       </div>
@@ -274,6 +277,7 @@
         </div>
       </div>
       <div class="clock-date" id="clockDate">---</div>
+      <div class="clock-tz" id="clockTz"></div>
       <div class="streak-widget" id="streakWidget" style="display:none">
         <span class="streak-count" id="streakCount">0</span>
         <span class="streak-label">day streak</span>

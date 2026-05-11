@@ -72,7 +72,7 @@ import {
   initAuth, toggleAuthMode, submitAuth, signInWithGoogle, signOut,
   toggleGearMenu, closeGearMenu, openSettings, closeSettings, switchSettingsTab,
   checkForUpdates, closePasswordModal, submitPasswordModal, submitResetPassword,
-  toggleSync,
+  toggleSync, setTimezone,
 } from './firebase.js';
 
 // wrapup
@@ -170,7 +170,7 @@ Object.assign(window, {
   toggleAuthMode, submitAuth, signInWithGoogle, signOut,
   toggleGearMenu, closeGearMenu, openSettings, closeSettings, switchSettingsTab,
   checkForUpdates, closePasswordModal, submitPasswordModal, submitResetPassword,
-  toggleSync,
+  toggleSync, setTimezone,
 
   // streak
   refreshStreak,

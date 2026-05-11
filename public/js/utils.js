@@ -1,4 +1,5 @@
 import { DAYS, MONTHS } from './constants.js';
+import { state } from './state.js';
 
 // ── Smart time picker ──────────────────────────────────────────────────────
 
@@ -216,7 +217,8 @@ export function fmtTaskMins(mins) {
 // updateClock is defined in categories.js (it calls renderCategoryTally).
 // This helper is used by categories.js to render the clock digits.
 export function renderClockDisplay() {
-  const now = getPST();
+  const tz = state.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const now = new Date(new Date().toLocaleString('en-US', { timeZone: tz }));
   let h = now.getHours();
   const m = now.getMinutes();
   const ap = h >= 12 ? 'PM' : 'AM';
@@ -225,4 +227,9 @@ export function renderClockDisplay() {
   document.getElementById('clockAmpm').textContent = ap;
   document.getElementById('clockDate').textContent =
     `${DAYS[now.getDay()]}, ${MONTHS[now.getMonth()]} ${now.getDate()}`;
+  const short = new Date().toLocaleTimeString('en-US', { timeZone: tz, timeZoneName: 'short' }).split(' ').pop();
+  const tzEl = document.getElementById('clockTz');
+  if (tzEl) tzEl.textContent = short;
+  const mobileClockEl = document.getElementById('mobileClock');
+  if (mobileClockEl) mobileClockEl.textContent = `${h}:${pad2(m)} ${ap} ${short}`;
 }
