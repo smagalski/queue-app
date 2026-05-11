@@ -1,5 +1,6 @@
 import { state } from './state.js';
 import { firebaseConfig, DEFAULT_CATEGORY_RULES, GCAL_DESKTOP_CLIENT_ID, GCAL_DESKTOP_CLIENT_SECRET, APP_VERSION, APP_DEPLOYED, APP_CHANGES } from './constants.js';
+import { renderClockDisplay } from './utils.js';
 import { esc } from './utils.js';
 import { setSyncStatus, load } from './persistence.js';
 import { render } from './render.js';
@@ -327,6 +328,86 @@ function _populatePasswordFields() {
   });
 }
 
+const TZ_LIST = [
+  ['US & Canada', [
+    ['America/New_York',       'Eastern Time (ET)'],
+    ['America/Chicago',        'Central Time (CT)'],
+    ['America/Denver',         'Mountain Time (MT)'],
+    ['America/Phoenix',        'Mountain Time – Arizona (no DST)'],
+    ['America/Los_Angeles',    'Pacific Time (PT)'],
+    ['America/Anchorage',      'Alaska Time (AKT)'],
+    ['Pacific/Honolulu',       'Hawaii Time (HT)'],
+  ]],
+  ['Europe', [
+    ['Europe/London',          'London (GMT/BST)'],
+    ['Europe/Dublin',          'Dublin (GMT/IST)'],
+    ['Europe/Lisbon',          'Lisbon (WET/WEST)'],
+    ['Europe/Paris',           'Central European (CET/CEST)'],
+    ['Europe/Berlin',          'Berlin (CET/CEST)'],
+    ['Europe/Rome',            'Rome (CET/CEST)'],
+    ['Europe/Madrid',          'Madrid (CET/CEST)'],
+    ['Europe/Amsterdam',       'Amsterdam (CET/CEST)'],
+    ['Europe/Brussels',        'Brussels (CET/CEST)'],
+    ['Europe/Stockholm',       'Stockholm (CET/CEST)'],
+    ['Europe/Helsinki',        'Helsinki (EET/EEST)'],
+    ['Europe/Athens',          'Athens (EET/EEST)'],
+    ['Europe/Bucharest',       'Bucharest (EET/EEST)'],
+    ['Europe/Istanbul',        'Istanbul (TRT)'],
+    ['Europe/Moscow',          'Moscow (MSK)'],
+  ]],
+  ['Americas', [
+    ['America/Toronto',        'Toronto (ET)'],
+    ['America/Vancouver',      'Vancouver (PT)'],
+    ['America/Halifax',        'Halifax (AT)'],
+    ['America/St_Johns',       'Newfoundland (NT)'],
+    ['America/Mexico_City',    'Mexico City (CST/CDT)'],
+    ['America/Bogota',         'Bogotá (COT)'],
+    ['America/Lima',           'Lima (PET)'],
+    ['America/Caracas',        'Caracas (VET)'],
+    ['America/Santiago',       'Santiago (CLT/CLST)'],
+    ['America/Buenos_Aires',   'Buenos Aires (ART)'],
+    ['America/Sao_Paulo',      'São Paulo (BRT/BRST)'],
+  ]],
+  ['Middle East & Africa', [
+    ['Asia/Dubai',             'Dubai (GST)'],
+    ['Asia/Riyadh',            'Riyadh (AST)'],
+    ['Asia/Jerusalem',         'Jerusalem (IST/IDT)'],
+    ['Africa/Cairo',           'Cairo (EET)'],
+    ['Africa/Nairobi',         'Nairobi (EAT)'],
+    ['Africa/Johannesburg',    'Johannesburg (SAST)'],
+    ['Africa/Lagos',           'Lagos (WAT)'],
+    ['Africa/Casablanca',      'Casablanca (WET)'],
+  ]],
+  ['Asia & Pacific', [
+    ['Asia/Kolkata',           'India (IST)'],
+    ['Asia/Dhaka',             'Dhaka (BST)'],
+    ['Asia/Karachi',           'Karachi (PKT)'],
+    ['Asia/Tashkent',          'Tashkent (UZT)'],
+    ['Asia/Almaty',            'Almaty (ALMT)'],
+    ['Asia/Bangkok',           'Bangkok (ICT)'],
+    ['Asia/Singapore',         'Singapore (SGT)'],
+    ['Asia/Hong_Kong',         'Hong Kong (HKT)'],
+    ['Asia/Shanghai',          'China (CST)'],
+    ['Asia/Taipei',            'Taipei (CST)'],
+    ['Asia/Tokyo',             'Tokyo (JST)'],
+    ['Asia/Seoul',             'Seoul (KST)'],
+    ['Australia/Sydney',       'Sydney (AEST/AEDT)'],
+    ['Australia/Melbourne',    'Melbourne (AEST/AEDT)'],
+    ['Australia/Brisbane',     'Brisbane (AEST)'],
+    ['Australia/Perth',        'Perth (AWST)'],
+    ['Pacific/Auckland',       'Auckland (NZST/NZDT)'],
+    ['Pacific/Fiji',           'Fiji (FJT)'],
+  ]],
+];
+
+function _buildTzOptions(current) {
+  return TZ_LIST.map(([group, zones]) =>
+    `<optgroup label="${group}">${zones.map(([val, label]) =>
+      `<option value="${val}"${val === current ? ' selected' : ''}>${label}</option>`
+    ).join('')}</optgroup>`
+  ).join('');
+}
+
 function _populateAccountPanel() {
   if (!state.currentUser) return;
   const email   = state.currentUser.email || '(no email)';
@@ -350,6 +431,18 @@ function _populateAccountPanel() {
         <input type="checkbox" id="syncToggleInput" ${syncOn ? 'checked' : ''} onchange="toggleSync(this.checked)">
         <span class="toggle-slider"></span>
       </label>
+    </div>
+
+    <div class="account-section-divider"></div>
+
+    <div class="account-sync-row">
+      <div class="account-sync-info">
+        <div class="account-sync-label">Time zone</div>
+        <div class="account-sync-desc">Used for the clock display and day boundaries</div>
+      </div>
+      <select id="tzSelect" onchange="setTimezone(this.value)" style="background:var(--surface-2,#2a2a3a);color:#fff;border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:12px;cursor:pointer">
+        ${_buildTzOptions(state.timezone)}
+      </select>
     </div>
 
     <div class="account-section-divider"></div>
@@ -440,6 +533,14 @@ export function toggleSync(enabled) {
   if (input) input.checked = !!enabled;
 }
 
+export function setTimezone(tz) {
+  const uid = state.currentUser?.uid;
+  if (!uid || !tz) return;
+  state.timezone = tz;
+  localStorage.setItem(`q_tz_${uid}`, tz);
+  renderClockDisplay();
+}
+
 function setUserDoc(user) {
   state.currentUser = user;
   state.stateDoc = user ? state.db.collection('users').doc(user.uid).collection('queue').doc('state') : null;
@@ -468,6 +569,8 @@ export function initAuth() {
     setUserDoc(user);
     // Restore sync preference for this user
     state.syncEnabled = localStorage.getItem(`q_sync_off_${user.uid}`) !== '1';
+    // Restore timezone preference for this user
+    state.timezone = localStorage.getItem(`q_tz_${user.uid}`) || Intl.DateTimeFormat().resolvedOptions().timeZone;
     showAuthScreen(false);
     document.getElementById('approvalScreen').classList.add('hidden');
     load();

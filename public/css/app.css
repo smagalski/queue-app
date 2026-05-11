@@ -37,6 +37,7 @@
     position: relative; z-index: 10000;
   }
   .app-name { font-weight: 800; font-size: 12px; letter-spacing: 0.2em; color: #fff; text-transform: uppercase; }
+  .mobile-clock { display: none; }
   .titlebar-right { display: flex; align-items: center; gap: 12px; }
   .queue-count { font-size: 10px; color: var(--text-dim); letter-spacing: 0.06em; }
 
@@ -1334,6 +1335,13 @@
   /* Day section: keep visible on mobile, no label, full-width stacked buttons */
   body.mobile-view #bottomSectionDay { border-top: none; padding-top: 0; }
   body.mobile-view #bottomSectionDay .bottom-section-label { display: none; }
+
+  body.mobile-view .mobile-clock {
+    display: block;
+    position: absolute; left: 50%; transform: translateX(-50%);
+    font-size: 13px; font-weight: 700; letter-spacing: 0.04em; color: #fff;
+    white-space: nowrap;
+  }
 
   /* Undo button: rotate glyph to correct orientation on mobile */
   body.mobile-view .titlebar-undo-btn {

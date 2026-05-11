@@ -17,14 +17,13 @@ export const CAT_TALLY_COLORS = ['#7ec8e3','#9863f3','#f0d060','#7fd4a8','#ffaa6
 
 export const STRESS_DEFAULTS = { hours: 6, volume: 2, urgency: 1 };
 
-export const APP_VERSION  = '0.1.21';
-export const APP_DEPLOYED = 'May 8, 2026';
+export const APP_VERSION  = '0.1.22';
+export const APP_DEPLOYED = 'May 11, 2026';
 export const APP_CHANGES  = [
-  'Sync toggle in Settings: disable cloud sync to work offline',
-  'About tab added to Settings',
-  'Streak counter now visible on mobile',
-  'Ctrl+Z / Cmd+Z undoes the last completed task',
-  'Fixed auto-updater: now properly installs updates on macOS',
+  'Time zone display: current TZ shown next to the clock',
+  'Time zone setting in Account preferences (manual override)',
+  'Clock visible in both tabs on mobile',
+  'Download the Mac App link in the gear menu',
 ];
 
 export const GCAL_CLIENT_ID = '98725644783-jrc447s324kbmc1060c8ic5f7crm75js.apps.googleusercontent.com';
