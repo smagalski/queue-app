@@ -1177,6 +1177,14 @@
 
   /* DAY buttons: stack full-width */
   body.mobile-view .end-btns-row { flex-direction: column; gap: 6px; }
+
+  /* Break controls: larger text, stack sections vertically */
+  body.mobile-view #breakControlsRow { flex-direction: column; gap: 14px; padding: 14px 0 0; }
+  body.mobile-view .bcr-section { flex: none; }
+  body.mobile-view .bcr-label { font-size: 11px; }
+  body.mobile-view #breakControlsRow .bbp-select { font-size: 14px; }
+  body.mobile-view .bbp-tally { font-size: 11px; }
+  body.mobile-view .bottom-section-label { font-size: 11px; }
   body.mobile-view .end-btns-row .end-day-btn { width: 100%; }
 
   /* History overlay: stack header vertically and expand actions on mobile */
