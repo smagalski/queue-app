@@ -17,13 +17,21 @@ export const CAT_TALLY_COLORS = ['#7ec8e3','#9863f3','#f0d060','#7fd4a8','#ffaa6
 
 export const STRESS_DEFAULTS = { hours: 6, volume: 2, urgency: 1 };
 
-export const APP_VERSION  = '0.1.24';
+export const APP_VERSION  = '0.2.00';
 export const APP_DEPLOYED = 'May 12, 2026';
 export const APP_CHANGES  = [
+  'Day History: gap days now show "Unfinished" or "No Data" badge',
+  'Day History: "Wrap Up →" button on unresolved days launches the wizard',
+  'Day History: Day Off / Not Tracked badges are clickable to change selection',
   'Wrap-up wizard: always offered when a previous day is unresolved',
-  "Wrap-up wizard: timeline shows yesterday's tasks even without a saved history doc",
-  'Workday (Not Tracked) no longer breaks your streak',
-  'Mac App auto-updater: fixed tarball packaging so updates install correctly',
+  'Wrap-up wizard: timeline uses yesterday\'s tasks even without a saved record',
+  'Mobile: settings panel is now a scrollable bottom sheet',
+  'Mobile: timeline icon in nav bar replaced with custom SVG',
+  'Mobile: fixed missing + FAB button that reveals add options',
+  'Mobile: Day Start/End selectors and Break controls properly sized',
+  'Mobile: wrap-up wizard hides the timeline panel for better fit',
+  'Mobile: fixed timeline pushed left by saved desktop panel width',
+  'Bug fix: wrap-up prompt and wizard now work correctly on mobile',
 ];
 
 export const GCAL_CLIENT_ID = '98725644783-jrc447s324kbmc1060c8ic5f7crm75js.apps.googleusercontent.com';

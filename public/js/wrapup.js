@@ -59,7 +59,6 @@ async function getIncompletePastDays() {
 
 function openWrapUpPrompt(incompleteDays) {
   const newest  = incompleteDays[0];
-  const hasDoc  = newest.doc !== null;
   const eyebrow = document.getElementById('wupPromptEyebrow');
   const actions = document.getElementById('wupPromptActions');
   eyebrow.textContent = _wupFmtDate(newest.date).toUpperCase();
@@ -107,10 +106,27 @@ export function openWrapUpWizard() {
   if (state.currentUser) localStorage.setItem(`q_wrapup_prompt_date_${state.currentUser.uid}`, todayPstDateStr());
   const newest    = incompleteDays[0];
   const olderDays = incompleteDays.slice(1);
+  _launchWizard(newest.date, newest.doc, olderDays);
+}
+
+export async function openWrapUpWizardForDate(dateStr) {
+  document.getElementById('historyOverlay').classList.remove('active');
+  let historyDoc = null;
+  if (state.db && state.currentUser) {
+    try {
+      const snap = await state.db.collection('users').doc(state.currentUser.uid)
+        .collection('history').doc(dateStr).get();
+      if (snap.exists) historyDoc = snap.data();
+    } catch(e) { console.error('[Queue] openWrapUpWizardForDate fetch failed:', e); }
+  }
+  _launchWizard(dateStr, historyDoc, []);
+}
+
+function _launchWizard(date, historyDoc, olderDays) {
   _wup = {
-    date:        newest.date,
-    historyDoc:  newest.doc,
-    steps:       buildWizardSteps(newest.doc, olderDays),
+    date,
+    historyDoc,
+    steps:       buildWizardSteps(historyDoc, olderDays),
     stepIdx:     0,
     taskAnswers: {},
     addedTasks:  [],
@@ -413,8 +429,8 @@ function renderWrapUpTimeline() {
   const wupY     = mins => (mins - calStart) * WUP_PX_PER_MIN + 8;
   const blocks   = [];
 
-  // If no history doc exists (gap day), fall back to state.doneTasks filtered to this date
   const tz = state.timezone || 'America/Los_Angeles';
+  const pad2 = n => String(n).padStart(2, '0');
   const sourceTasks = histDoc?.doneTasks ?? state.doneTasks.filter(t => {
     if (!t.doneAt) return false;
     const p = new Date(new Date(t.doneAt).toLocaleString('en-US', { timeZone: tz }));
