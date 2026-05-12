@@ -115,13 +115,17 @@ export function getAllSorted(flex) {
   const result    = [];
 
   for (const sched of future) {
-    while (flexQueue.length > 0) {
+    let i = 0;
+    while (i < flexQueue.length) {
       const gap = (sched._stMins ?? cursor) - cursor;
-      const dur = flexQueue[0].duration ?? DEFAULT_DUR;
-      if (dur > gap) break;
-      const task = flexQueue.shift();
-      result.push(task);
-      cursor += dur;
+      const dur = flexQueue[i].duration ?? DEFAULT_DUR;
+      if (dur <= gap) {
+        const [task] = flexQueue.splice(i, 1);
+        result.push(task);
+        cursor += dur;
+      } else {
+        i++;
+      }
     }
     result.push(sched);
     if (sched._etMins != null && sched._etMins > cursor) cursor = sched._etMins;
@@ -305,6 +309,7 @@ export function updateDoneBlockTime() {
   const startVal = (document.getElementById('bdStartTime') || {}).value;
   const endVal   = (document.getElementById('bdEndTime')   || {}).value;
   if (!startVal || !endVal) return;
+  if (startVal >= endVal) return;
   const doneTask = state.doneTasks.find(t => t.id === _detailBlock.task.id);
   if (!doneTask) return;
   doneTask.startTime = `${_detailDp}T${startVal}`;
@@ -438,6 +443,6 @@ export function startDoneTitleEdit(id, el) {
     inp.replaceWith(div);
     if (v) { save(); _refreshBlockDetail(); }
   };
-  inp.addEventListener('blur', commit);
+  inp.addEventListener('blur', commit, { once: true });
   inp.addEventListener('keydown', e => { if (e.key === 'Enter') inp.blur(); if (e.key === 'Escape') { inp.value = task.title; inp.blur(); } });
 }
