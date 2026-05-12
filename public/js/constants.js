@@ -17,7 +17,7 @@ export const CAT_TALLY_COLORS = ['#7ec8e3','#9863f3','#f0d060','#7fd4a8','#ffaa6
 
 export const STRESS_DEFAULTS = { hours: 6, volume: 2, urgency: 1 };
 
-export const APP_VERSION  = '0.2.00';
+export const APP_VERSION  = '0.2.0';
 export const APP_DEPLOYED = 'May 12, 2026';
 export const APP_CHANGES  = [
   'Day History: gap days now show "Unfinished" or "No Data" badge',
