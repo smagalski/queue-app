@@ -507,7 +507,7 @@ function renderHistoryGapDay(dateStr) {
     const p = new Date(new Date(t.doneAt).toLocaleString('en-US', { timeZone: tz }));
     return `${p.getFullYear()}-${pad2(p.getMonth() + 1)}-${pad2(p.getDate())}` === dateStr;
   });
-  const badge     = hasData ? 'Unfinished' : 'Not Tracked';
+  const badge     = hasData ? 'Unfinished' : 'No Data';
   const wrapLabel = hasData ? 'Wrap Up Tracking →' : 'Wrap Up →';
   return `<div class="history-day-card hdc-gap-card" id="hdcGap_${dateStr.replace(/-/g,'')}">
     <div class="hdc-header">

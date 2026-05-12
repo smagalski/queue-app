@@ -376,11 +376,13 @@ function _panelWidthKey() {
 }
 
 function _applyPanelWidth(w) {
+  if (document.body.classList.contains('mobile-view')) return;
   const lp = document.querySelector('.left-panel');
   if (lp) lp.style.width = w + 'px';
 }
 
 export function loadPanelWidth() {
+  if (document.body.classList.contains('mobile-view')) return;
   const saved = localStorage.getItem(_panelWidthKey());
   if (saved) _applyPanelWidth(parseInt(saved, 10));
 }
