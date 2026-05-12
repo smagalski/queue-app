@@ -533,11 +533,17 @@ export function markHistoryDay(dateStr, type) {
     .doc(dateStr)
     .set(data)
     .then(() => {
-      // Replace the gap card with the appropriate badge card
-      const gapEl = document.getElementById(`hdcGap_${dateStr.replace(/-/g,'')}`);
-      if (gapEl) gapEl.outerHTML = renderHistoryDay(data);
+      const key = dateStr.replace(/-/g,'');
+      const el = document.getElementById(`hdcGap_${key}`) || document.getElementById(`hdcResolved_${key}`);
+      if (el) el.outerHTML = renderHistoryDay(data);
     })
     .catch(err => console.error('[Queue] markHistoryDay failed:', err));
+}
+
+export function changeHistoryDay(dateStr) {
+  const key = dateStr.replace(/-/g,'');
+  const el = document.getElementById(`hdcResolved_${key}`);
+  if (el) el.outerHTML = renderHistoryGapDay(dateStr);
 }
 
 export function closeHistoryOverlay() {
@@ -656,19 +662,19 @@ export function renderHistoryDay(day) {
   const dateLabel = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
   if (day.dayOff) {
-    return `<div class="history-day-card">
+    return `<div class="history-day-card" id="hdcResolved_${day.date.replace(/-/g,'')}">
       <div class="hdc-header">
         <div class="hdc-date">${dateLabel}</div>
-        <div class="hdc-day-off-badge">Day Off</div>
+        <div class="hdc-day-off-badge hdc-resolved-badge" onclick="changeHistoryDay('${day.date}')">Day Off ✎</div>
       </div>
     </div>`;
   }
 
   if (day.dayNotTracked) {
-    return `<div class="history-day-card">
+    return `<div class="history-day-card" id="hdcResolved_${day.date.replace(/-/g,'')}">
       <div class="hdc-header">
         <div class="hdc-date">${dateLabel}</div>
-        <div class="hdc-not-tracked-badge">Not Tracked</div>
+        <div class="hdc-not-tracked-badge hdc-resolved-badge" onclick="changeHistoryDay('${day.date}')">Not Tracked ✎</div>
       </div>
     </div>`;
   }

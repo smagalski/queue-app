@@ -1683,6 +1683,10 @@
     font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
     color: var(--text-dim); background: rgba(255,255,255,0.06); border-radius: 20px; padding: 4px 10px;
   }
+  .hdc-resolved-badge {
+    cursor: pointer; transition: background 0.15s, color 0.15s;
+  }
+  .hdc-resolved-badge:hover { background: rgba(255,255,255,0.13); color: rgba(255,255,255,0.7); }
 
   /* ── HISTORY GAP CARD (days with no record) ──────────────────────────── */
   .hdc-gap-card {

@@ -48,7 +48,7 @@ import {
   commitEndDay, updateTodayHistory, resumeDay,
   checkDayEndedReset, checkDayEndedFirestore,
   showDayOffOverlay, enterDayOff, cancelDayOff, checkDayOffState, checkDayOffFirestore,
-  openHistoryOverlay, closeHistoryOverlay, markHistoryDay,
+  openHistoryOverlay, closeHistoryOverlay, markHistoryDay, changeHistoryDay,
   hdcDragStart, hdcDragEnd, hdcDragOver, hdcDragLeave, hdcDrop,
 } from './endday.js';
 
@@ -148,7 +148,7 @@ Object.assign(window, {
   edmDragStart, edmDragEnd, edmDragOver, edmDragLeave, edmDrop,
   commitEndDay, resumeDay,
   showDayOffOverlay, enterDayOff, cancelDayOff,
-  openHistoryOverlay, closeHistoryOverlay, markHistoryDay,
+  openHistoryOverlay, closeHistoryOverlay, markHistoryDay, changeHistoryDay,
   hdcDragStart, hdcDragEnd, hdcDragOver, hdcDragLeave, hdcDrop,
 
   // categories
