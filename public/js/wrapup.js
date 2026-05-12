@@ -69,7 +69,7 @@ function openWrapUpPrompt(incompleteDays) {
     : '';
   actions.innerHTML = `
     ${streakLine}
-    ${hasDoc ? `<button class="wup-btn-primary" onclick="openWrapUpWizard()">Yes, let's wrap up</button>` : ''}
+    <button class="wup-btn-primary" onclick="openWrapUpWizard()">Yes, let's wrap up</button>
     <button class="wup-btn-secondary" onclick="markDayResolvedFromPrompt('dayOff')">Mark as Day Off</button>
     <button class="wup-btn-secondary" onclick="markDayResolvedFromPrompt('dayNotTracked')">Workday (not tracked)</button>
     <button class="wup-btn-ghost" style="text-align:left" onclick="closeWrapUpPrompt()">Maybe later</button>
@@ -131,7 +131,7 @@ function buildWizardSteps(historyDoc, olderDays) {
   for (const task of incomplete) {
     steps.push({ type: 'task', task });
   }
-  steps.push({ type: 'add-tasks', allCompleted: incomplete.length === 0 });
+  steps.push({ type: 'add-tasks', allCompleted: historyDoc !== null && incomplete.length === 0 });
   steps.push({ type: 'confirm' });
   return steps;
 }
@@ -413,7 +413,15 @@ function renderWrapUpTimeline() {
   const wupY     = mins => (mins - calStart) * WUP_PX_PER_MIN + 8;
   const blocks   = [];
 
-  for (const task of (histDoc?.doneTasks || [])) {
+  // If no history doc exists (gap day), fall back to state.doneTasks filtered to this date
+  const tz = state.timezone || 'America/Los_Angeles';
+  const sourceTasks = histDoc?.doneTasks ?? state.doneTasks.filter(t => {
+    if (!t.doneAt) return false;
+    const p = new Date(new Date(t.doneAt).toLocaleString('en-US', { timeZone: tz }));
+    return `${p.getFullYear()}-${pad2(p.getMonth() + 1)}-${pad2(p.getDate())}` === date;
+  });
+
+  for (const task of sourceTasks) {
     if (task.isBreak) continue;
     let startMins, endMins;
     if (task.startTime && task.endTime) {

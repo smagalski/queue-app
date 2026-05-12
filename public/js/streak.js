@@ -33,7 +33,7 @@ export async function computeStreak() {
   while (true) {
     const day = histMap[cursor];
     if (!day) break;
-    if (!day.dayEnded && !day.dayOff) break;
+    if (!day.dayEnded && !day.dayOff && !day.dayNotTracked) break;
     count++;
     cursor = prevDateStr(cursor);
   }
