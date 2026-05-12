@@ -1112,7 +1112,7 @@
 
   /* Day bounds pinned to bottom of timeline slide */
   body.mobile-view .cal-bounds-section {
-    padding: 10px 12px;
+    padding: 12px 16px;
     order: unset;
     flex-shrink: 0;
     position: static;
@@ -1120,7 +1120,11 @@
     background: var(--bg);
     border-top: 1px solid var(--border);
     z-index: 1;
+    flex-direction: row; gap: 0; justify-content: space-between; align-items: center;
   }
+  body.mobile-view .bbp-label { font-size: 11px; }
+  body.mobile-view .bbp-select { font-size: 13px; }
+  body.mobile-view .bbp-header { gap: 6px; }
   body.mobile-view .clock-section    { order: unset; }
   body.mobile-view .calendar-section { order: unset; }
 
