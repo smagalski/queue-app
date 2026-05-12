@@ -15,8 +15,13 @@ VERSION=$(jq -r '.version' "$DESKTOP_DIR/src-tauri/tauri.conf.json")
 echo "Building Queue v$VERSION..."
 
 # ── Build ─────────────────────────────────────────────────────────────────
+TAURI_BIN="$DESKTOP_DIR/node_modules/.bin/tauri"
+if [ ! -f "$TAURI_BIN" ]; then
+  echo "Installing Tauri CLI dependencies..."
+  cd "$DESKTOP_DIR" && npm install
+fi
 cd "$DESKTOP_DIR"
-cargo tauri build
+"$TAURI_BIN" build
 
 # ── Locate build artifacts ────────────────────────────────────────────────
 APP_BUNDLE="$BUNDLE_DIR/macos/Queue.app"
@@ -59,28 +64,27 @@ fi
 PUB_DATE=$(date -u +"%Y-%m-%dT00:00:00Z")
 TARBALL_URL="https://github.com/smagalski/Queue-App/releases/download/v${VERSION}/${TARBALL_NAME}"
 
-# Read release notes from constants.js APP_CHANGES array
-NOTES=$(node -e "
-const src = require('fs').readFileSync('$REPO_ROOT/public/js/constants.js', 'utf8');
+# Build latest.json via Node so JSON.stringify handles all escaping (newlines, quotes, etc.)
+node -e "
+const fs = require('fs');
+const src = fs.readFileSync('$REPO_ROOT/public/js/constants.js', 'utf8');
 const m = src.match(/APP_CHANGES\s*=\s*\[([\s\S]*?)\];/);
-if (!m) { console.log('No changes found'); process.exit(0); }
-const items = m[1].match(/'([^']+)'/g) || [];
-console.log(items.map(s => s.slice(1,-1)).join('. ') + '.\n\n⚠️ This app is a work in progress and may experience errors.');
-" 2>/dev/null || echo "Queue v${VERSION}\n\n⚠️ This app is a work in progress and may experience errors.")
-
-cat > "$REPO_ROOT/latest.json" <<JSON
-{
-  "version": "$VERSION",
-  "notes": "$NOTES",
-  "pub_date": "$PUB_DATE",
-  "platforms": {
-    "darwin-x86_64": {
-      "signature": "$TARBALL_SIG",
-      "url": "$TARBALL_URL"
+const items = m ? (m[1].match(/'([^']+)'/g) || []).map(s => s.slice(1,-1)) : [];
+const notes = (items.length ? items.join('\n') : 'Queue v$VERSION') +
+  '\n\n⚠️ This app is a work in progress and may experience errors.';
+const obj = {
+  version: '$VERSION',
+  notes,
+  pub_date: '$PUB_DATE',
+  platforms: {
+    'darwin-x86_64': {
+      signature: '$TARBALL_SIG',
+      url: '$TARBALL_URL',
     }
   }
-}
-JSON
+};
+fs.writeFileSync('$REPO_ROOT/latest.json', JSON.stringify(obj, null, 2) + '\n');
+"
 echo "latest.json updated."
 
 # ── Create GitHub release ─────────────────────────────────────────────────

@@ -1,11 +1,11 @@
 {
-  "version": "0.1.20",
-  "notes": "Fixed auto-updater dialog not appearing on launch. Streak counter now updates correctly. Wrap-up prompt shows your current streak as motivation.\n\n⚠️ This app is a work in progress and may experience errors.",
-  "pub_date": "2026-05-07T00:00:00Z",
+  "version": "0.1.22",
+  "notes": "Time zone display: current TZ shown next to the clock. Time zone setting in Account preferences (manual override). Clock visible in both tabs on mobile. Download the Mac App link in the gear menu.\n\n⚠️ This app is a work in progress and may experience errors.",
+  "pub_date": "2026-05-11T00:00:00Z",
   "platforms": {
     "darwin-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUZnpsRGtodXF6dUk4dGdSRWthZ25xWWZVc3pxN3VRMUYvdDZ2S3ZvS01nOWJxc3FiZCtyam1HemJaeTAvdEtpYzRVcFNsa3RrK1BTdmNjVmpxV1labS9jMkRqb0hwZ0FvPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc4MjExODI5CWZpbGU6UXVldWVfMC4xLjIwX3g2NC5hcHAudGFyLmd6ClRhd0N0VjZ4b28vUUtOUEdTdUg2UTkvcWcwSy92b2dIeHpNODRLTlJyWFdPWTlROTVVdUErcEZyYkRXYWhJa2dSa21UZEI3ZE0xcXRNV1Y0UytrWEJ3PT0K",
-      "url": "https://github.com/smagalski/Queue-App/releases/download/v0.1.20/Queue_0.1.20_x64.app.tar.gz"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUZnpsRGtodXF6dUlRam9OOGx6dHdRdTBRZXN0Si9nRG16aUxvaThkNHBEb01US3FaRzBqTVJUOWNSQW1tQzRkSk9kc1NGeUVKVTlvQlFGQ1h6OWg4Uk9LV3dwQ1h3Z0FBPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc4NTQwNDY0CWZpbGU6UXVldWVfMC4xLjIyX3g2NC5hcHAudGFyLmd6CmVuSFoxRkoyRGFQRWduVk5LcXJseFkxeU5LUFhkMC9JTERNWkNaRTI3ajFNZzRKamt4cE5HSHYzS1dpbGNhRHZRSk45MkdMamJDdVk0d0xjWFlSREJ3PT0K",
+      "url": "https://github.com/smagalski/Queue-App/releases/download/v0.1.22/Queue_0.1.22_x64.app.tar.gz"
     }
   }
 }
