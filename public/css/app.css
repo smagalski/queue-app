@@ -1970,6 +1970,33 @@
     margin: -32px -32px 24px; border-radius: 0; border-top: none;
   }
 
+  /* ── SETTINGS: MOBILE ───────────────────────────────────────────────────── */
+  body.mobile-view .settings-overlay { padding: 0; align-items: flex-end; }
+  body.mobile-view .settings-inner {
+    flex-direction: column; max-width: 100%; width: 100%;
+    max-height: 92vh; border-radius: 16px 16px 0 0; border-bottom: none;
+  }
+  body.mobile-view .settings-sidebar {
+    width: 100%; flex-direction: row; border-right: none;
+    border-bottom: 1px solid var(--border); padding: 12px 12px 0;
+    gap: 0; overflow-x: auto; background: var(--surface2);
+    flex-shrink: 0;
+  }
+  body.mobile-view .settings-sidebar-title { display: none; }
+  body.mobile-view .settings-tab {
+    flex-shrink: 0; width: auto; padding: 8px 14px 10px; font-size: 13px;
+    border-bottom: 2px solid transparent; border-radius: 0;
+  }
+  body.mobile-view .settings-tab.active {
+    background: none; border-bottom-color: #fff;
+  }
+  body.mobile-view .settings-close-btn {
+    display: none;
+  }
+  body.mobile-view .settings-content { padding: 20px 16px; }
+  body.mobile-view .settings-panel .app-details-masthead {
+    margin: -20px -16px 20px;
+  }
 
   /* ── WRAP-UP PROMPT ─────────────────────────────────────────────────────── */
   .wup-prompt-overlay {

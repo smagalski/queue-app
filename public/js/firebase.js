@@ -262,7 +262,16 @@ export function closeSettings() {
 export function switchSettingsTab(tab) {
   document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.settings-panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('stab-' + tab).classList.add('active');
+  const activeTab = document.getElementById('stab-' + tab);
+  activeTab.classList.add('active');
+  requestAnimationFrame(() => {
+    const sidebar = activeTab.closest('.settings-sidebar');
+    if (sidebar) {
+      const tr = activeTab.getBoundingClientRect();
+      const sr = sidebar.getBoundingClientRect();
+      sidebar.scrollLeft += (tr.left - sr.left) - (sr.width / 2 - tr.width / 2);
+    }
+  });
   document.getElementById('settingsPanel-' + tab).classList.add('active');
   if (tab === 'categories') {
     if (!state.categoryRules.length) state.categoryRules = JSON.parse(JSON.stringify(DEFAULT_CATEGORY_RULES));
