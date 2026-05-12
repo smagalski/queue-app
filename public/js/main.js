@@ -77,7 +77,7 @@ import {
 
 // wrapup
 import {
-  closeWrapUpPrompt, markDayResolvedFromPrompt, openWrapUpWizard, commitWrapUp,
+  closeWrapUpPrompt, markDayResolvedFromPrompt, openWrapUpWizard, openWrapUpWizardForDate, commitWrapUp,
   _wupGoBack, _wupBackInTask, _wupAdvance, _wupResolveOlderDay,
   _wupAnswerTask, _wupSubmitFinishTime, _wupAnswerCarry,
   _wupOpenAddForm, _wupCancelAddForm, _wupSubmitAddTask, _wupRemoveAdded, _wupMaybeLater,
@@ -176,7 +176,7 @@ Object.assign(window, {
   refreshStreak,
 
   // wrapup
-  closeWrapUpPrompt, markDayResolvedFromPrompt, openWrapUpWizard, commitWrapUp,
+  closeWrapUpPrompt, markDayResolvedFromPrompt, openWrapUpWizard, openWrapUpWizardForDate, commitWrapUp,
   _wupGoBack, _wupBackInTask, _wupAdvance, _wupResolveOlderDay,
   _wupAnswerTask, _wupSubmitFinishTime, _wupAnswerCarry,
   _wupOpenAddForm, _wupCancelAddForm, _wupSubmitAddTask, _wupRemoveAdded, _wupMaybeLater,

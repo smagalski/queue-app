@@ -59,7 +59,6 @@ async function getIncompletePastDays() {
 
 function openWrapUpPrompt(incompleteDays) {
   const newest  = incompleteDays[0];
-  const hasDoc  = newest.doc !== null;
   const eyebrow = document.getElementById('wupPromptEyebrow');
   const actions = document.getElementById('wupPromptActions');
   eyebrow.textContent = _wupFmtDate(newest.date).toUpperCase();
@@ -69,7 +68,7 @@ function openWrapUpPrompt(incompleteDays) {
     : '';
   actions.innerHTML = `
     ${streakLine}
-    ${hasDoc ? `<button class="wup-btn-primary" onclick="openWrapUpWizard()">Yes, let's wrap up</button>` : ''}
+    <button class="wup-btn-primary" onclick="openWrapUpWizard()">Yes, let's wrap up</button>
     <button class="wup-btn-secondary" onclick="markDayResolvedFromPrompt('dayOff')">Mark as Day Off</button>
     <button class="wup-btn-secondary" onclick="markDayResolvedFromPrompt('dayNotTracked')">Workday (not tracked)</button>
     <button class="wup-btn-ghost" style="text-align:left" onclick="closeWrapUpPrompt()">Maybe later</button>
@@ -107,10 +106,27 @@ export function openWrapUpWizard() {
   if (state.currentUser) localStorage.setItem(`q_wrapup_prompt_date_${state.currentUser.uid}`, todayPstDateStr());
   const newest    = incompleteDays[0];
   const olderDays = incompleteDays.slice(1);
+  _launchWizard(newest.date, newest.doc, olderDays);
+}
+
+export async function openWrapUpWizardForDate(dateStr) {
+  document.getElementById('historyOverlay').classList.remove('active');
+  let historyDoc = null;
+  if (state.db && state.currentUser) {
+    try {
+      const snap = await state.db.collection('users').doc(state.currentUser.uid)
+        .collection('history').doc(dateStr).get();
+      if (snap.exists) historyDoc = snap.data();
+    } catch(e) { console.error('[Queue] openWrapUpWizardForDate fetch failed:', e); }
+  }
+  _launchWizard(dateStr, historyDoc, []);
+}
+
+function _launchWizard(date, historyDoc, olderDays) {
   _wup = {
-    date:        newest.date,
-    historyDoc:  newest.doc,
-    steps:       buildWizardSteps(newest.doc, olderDays),
+    date,
+    historyDoc,
+    steps:       buildWizardSteps(historyDoc, olderDays),
     stepIdx:     0,
     taskAnswers: {},
     addedTasks:  [],
@@ -131,7 +147,7 @@ function buildWizardSteps(historyDoc, olderDays) {
   for (const task of incomplete) {
     steps.push({ type: 'task', task });
   }
-  steps.push({ type: 'add-tasks', allCompleted: incomplete.length === 0 });
+  steps.push({ type: 'add-tasks', allCompleted: historyDoc !== null && incomplete.length === 0 });
   steps.push({ type: 'confirm' });
   return steps;
 }
@@ -413,7 +429,15 @@ function renderWrapUpTimeline() {
   const wupY     = mins => (mins - calStart) * WUP_PX_PER_MIN + 8;
   const blocks   = [];
 
-  for (const task of (histDoc?.doneTasks || [])) {
+  const tz = state.timezone || 'America/Los_Angeles';
+  const pad2 = n => String(n).padStart(2, '0');
+  const sourceTasks = histDoc?.doneTasks ?? state.doneTasks.filter(t => {
+    if (!t.doneAt) return false;
+    const p = new Date(new Date(t.doneAt).toLocaleString('en-US', { timeZone: tz }));
+    return `${p.getFullYear()}-${pad2(p.getMonth() + 1)}-${pad2(p.getDate())}` === date;
+  });
+
+  for (const task of sourceTasks) {
     if (task.isBreak) continue;
     let startMins, endMins;
     if (task.startTime && task.endTime) {
