@@ -1998,6 +1998,16 @@
     margin: -20px -16px 20px;
   }
 
+  /* ── WRAP-UP WIZARD: MOBILE ─────────────────────────────────────────────── */
+  body.mobile-view .wup-modal {
+    width: calc(100vw - 24px); height: calc(100vh - 80px);
+    flex-direction: column;
+  }
+  body.mobile-view .wup-timeline-panel { display: none; }
+  body.mobile-view .wup-wizard-panel { padding: 20px 16px 16px; }
+  body.mobile-view .wup-nav { gap: 8px; }
+  body.mobile-view .wup-nav-back { font-size: 13px; }
+
   /* ── WRAP-UP PROMPT ─────────────────────────────────────────────────────── */
   .wup-prompt-overlay {
     display: none; position: fixed; inset: 0; z-index: 9200;
