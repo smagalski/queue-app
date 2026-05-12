@@ -683,6 +683,33 @@
   </div>
 </div>
 
+<!-- WRAP-UP PROMPT -->
+<div class="wup-prompt-overlay" id="wupPromptOverlay">
+  <div class="wup-prompt-modal">
+    <div class="wup-prompt-eyebrow" id="wupPromptEyebrow"></div>
+    <div class="wup-prompt-heading">You didn't wrap up this day.</div>
+    <div class="wup-prompt-sub">Would you like to finish your tracking?</div>
+    <div class="wup-prompt-actions" id="wupPromptActions"></div>
+  </div>
+</div>
+
+<!-- WRAP-UP WIZARD -->
+<div class="wup-overlay" id="wupOverlay" onclick="if(event.target===this)_wupMaybeLater()">
+  <div class="wup-modal">
+    <div class="wup-timeline-panel">
+      <div class="wup-timeline-header" id="wupTimelineDate"></div>
+      <div class="wup-cal-section" id="wupCalSection">
+        <div class="cal-container wup-cal-container" id="wupCalContainer"></div>
+      </div>
+    </div>
+    <div class="wup-wizard-panel">
+      <div class="wup-progress" id="wupProgress"></div>
+      <div class="wup-step-body" id="wupStepBody"></div>
+      <div class="wup-nav" id="wupNav"></div>
+    </div>
+  </div>
+</div>
+
 <!-- PRIORITY DROPDOWN (shared, positioned by JS) -->
 <div class="p-dropdown" id="priorityDropdown" onclick="event.stopPropagation()">
   <button class="pd-btn pd-btn-1" onclick="changeTaskPriority(1)">Urgent</button>
