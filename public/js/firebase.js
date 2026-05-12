@@ -447,11 +447,11 @@ function _populateAccountPanel() {
 
     <div class="account-section-divider"></div>
 
-    <div class="settings-panel-title" style="font-size:13px;margin-bottom:4px">${hasPass ? 'Change Password' : 'Set Password'}</div>
+    <div class="settings-panel-title" style="font-size:13px">${hasPass ? 'Change Password' : 'Set Password'}</div>
     <div class="pw-modal-subtitle" id="pwModalSubtitle">${hasPass
       ? 'Enter your current password to verify, then choose a new one.'
       : 'Add a password so you can sign in without Google.'}</div>
-    <div class="pw-modal-fields" id="pwModalFields" style="margin-top:12px;"></div>
+    <div class="pw-modal-fields" id="pwModalFields"></div>
     <div class="pw-modal-error" id="pwModalError"></div>
     <div class="pw-modal-actions">
       <button class="pw-modal-submit" id="pwModalSubmit" onclick="submitPasswordModal()">Save</button>

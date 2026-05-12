@@ -6,6 +6,12 @@ import { render, isScheduled } from './render.js';
 import { getCategoryForTask, getStressWeights, getStressExcludedCats, _recomputeStressScore } from './categories.js';
 import { refreshStreak } from './streak.js';
 
+// Per-user localStorage key helper
+function _lsKey(base) {
+  const uid = state.currentUser?.uid;
+  return uid ? `q_${base}_${uid}` : null;
+}
+
 // Module-local state
 let _edmDragTaskId = null;
 let _edmOverrides  = {};
@@ -46,7 +52,7 @@ export function computeDayReport() {
   const today     = todayPstDateStr();
   const todayDone = state.doneTasks.filter(t => {
     const ts = t.doneAt || 0;
-    const p  = new Date(new Date(ts).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+    const p  = new Date(new Date(ts).toLocaleString('en-US', { timeZone: state.timezone || 'America/Los_Angeles' }));
     return `${p.getFullYear()}-${pad2(p.getMonth()+1)}-${pad2(p.getDate())}` === today;
   });
 
@@ -277,7 +283,8 @@ export function commitEndDay(choice) {
   }
 
   document.getElementById('endDayOverlay').classList.remove('active');
-  localStorage.setItem('q_dayEndedChoice', choice);
+  const choiceKey = _lsKey('dayEndedChoice');
+  if (choiceKey) localStorage.setItem(choiceKey, choice);
   setDayEndedState(true);
   refreshStreak();
   save(); render();
@@ -303,9 +310,11 @@ function saveDayHistory(date, dayDone, incomplete, choice, stressScore, priority
 
 export function updateTodayHistory() {
   const today = todayPstDateStr();
-  const ended = localStorage.getItem('q_dayEnded');
+  const endedKey = _lsKey('dayEnded');
+  const ended = endedKey ? localStorage.getItem(endedKey) : null;
   if (ended !== today || !state.db || !state.currentUser) return;
-  const choice = localStorage.getItem('q_dayEndedChoice') || null;
+  const choiceKey = _lsKey('dayEndedChoice');
+  const choice = (choiceKey ? localStorage.getItem(choiceKey) : null) || null;
   const report = computeDayReport();
   saveDayHistory(today, report.todayDone, report.incompleteTasks, choice, report.stressScore, report.priorityBreakdown, report.timePerTask, _edmOverrides);
 }
@@ -314,13 +323,15 @@ export function updateTodayHistory() {
 
 export function setDayEndedState(ended) {
   document.getElementById('dayEndedOverlay').classList.toggle('active', ended);
+  const endedKey  = _lsKey('dayEnded');
+  const choiceKey = _lsKey('dayEndedChoice');
   if (ended) {
     document.body.classList.add('day-ended');
-    localStorage.setItem('q_dayEnded', todayPstDateStr());
+    if (endedKey) localStorage.setItem(endedKey, todayPstDateStr());
   } else {
     document.body.classList.remove('day-ended');
-    localStorage.removeItem('q_dayEnded');
-    localStorage.removeItem('q_dayEndedChoice');
+    if (endedKey)  localStorage.removeItem(endedKey);
+    if (choiceKey) localStorage.removeItem(choiceKey);
   }
 }
 
@@ -343,8 +354,10 @@ export function checkDayEndedFirestore() {
     .get()
     .then(doc => {
       if (doc.exists && doc.data().dayEnded) {
-        localStorage.setItem('q_dayEnded', today);
-        localStorage.setItem('q_dayEndedChoice', doc.data().choice || 'carry');
+        const endedKey  = _lsKey('dayEnded');
+        const choiceKey = _lsKey('dayEndedChoice');
+        if (endedKey)  localStorage.setItem(endedKey, today);
+        if (choiceKey) localStorage.setItem(choiceKey, doc.data().choice || 'carry');
         setDayEndedState(true);
       }
     })
@@ -352,7 +365,9 @@ export function checkDayEndedFirestore() {
 }
 
 export function checkDayEndedReset() {
-  const ended = localStorage.getItem('q_dayEnded');
+  const uid = state.currentUser?.uid;
+  if (!uid) return;
+  const ended = localStorage.getItem(`q_dayEnded_${uid}`);
   if (ended && ended < todayPstDateStr()) {
     setDayEndedState(false);
     injectRecurringTasks();
@@ -370,7 +385,8 @@ export function showDayOffOverlay() {
 
 export function enterDayOff() {
   const today = todayPstDateStr();
-  localStorage.setItem('q_dayOff', today);
+  const dayOffKey = _lsKey('dayOff');
+  if (dayOffKey) localStorage.setItem(dayOffKey, today);
   showDayOffOverlay();
   if (state.db && state.currentUser) {
     state.db.collection('users').doc(state.currentUser.uid).collection('history').doc(today).set({
@@ -380,8 +396,9 @@ export function enterDayOff() {
 }
 
 export function cancelDayOff() {
-  const today = localStorage.getItem('q_dayOff') || todayPstDateStr();
-  localStorage.removeItem('q_dayOff');
+  const dayOffKey = _lsKey('dayOff');
+  const today = (dayOffKey ? localStorage.getItem(dayOffKey) : null) || todayPstDateStr();
+  if (dayOffKey) localStorage.removeItem(dayOffKey);
   document.getElementById('dayOffOverlay').classList.remove('active');
   if (state.db && state.currentUser) {
     state.db.collection('users').doc(state.currentUser.uid).collection('history').doc(today)
@@ -391,10 +408,12 @@ export function cancelDayOff() {
 }
 
 export function checkDayOffState() {
-  const stored = localStorage.getItem('q_dayOff');
+  const uid = state.currentUser?.uid;
+  if (!uid) return;
+  const stored = localStorage.getItem(`q_dayOff_${uid}`);
   const today  = todayPstDateStr();
   if (stored === today) showDayOffOverlay();
-  else if (stored && stored < today) localStorage.removeItem('q_dayOff');
+  else if (stored && stored < today) localStorage.removeItem(`q_dayOff_${uid}`);
 }
 
 export function checkDayOffFirestore() {
@@ -404,7 +423,8 @@ export function checkDayOffFirestore() {
     .get()
     .then(doc => {
       if (doc.exists && doc.data().dayOff) {
-        localStorage.setItem('q_dayOff', today);
+        const dayOffKey = _lsKey('dayOff');
+        if (dayOffKey) localStorage.setItem(dayOffKey, today);
         showDayOffOverlay();
       }
     })

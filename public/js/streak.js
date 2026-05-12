@@ -25,14 +25,15 @@ export async function computeStreak() {
   const histMap = {};
   for (const doc of snap.docs) histMap[doc.data().date] = doc.data();
   const today       = todayPstDateStr();
-  const todayEnded  = localStorage.getItem('q_dayEnded') === today;
-  const todayDayOff = localStorage.getItem('q_dayOff')   === today;
+  const uid         = state.currentUser?.uid;
+  const todayEnded  = uid ? localStorage.getItem(`q_dayEnded_${uid}`)  === today : false;
+  const todayDayOff = uid ? localStorage.getItem(`q_dayOff_${uid}`)    === today : false;
   let count  = 0;
   let cursor = (todayEnded || todayDayOff) ? today : prevDateStr(today);
   while (true) {
     const day = histMap[cursor];
     if (!day) break;
-    if (!day.dayEnded && !day.dayOff && !day.dayNotTracked) break;
+    if (!day.dayEnded && !day.dayOff) break;
     count++;
     cursor = prevDateStr(cursor);
   }

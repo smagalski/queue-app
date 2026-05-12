@@ -100,14 +100,16 @@ export function initSmartTime(id) {
   });
 }
 
-// ── PST helpers ────────────────────────────────────────────────────────────
+// ── Timezone-aware helpers ──────────────────────────────────────────────────
+
+function _tz() { return state.timezone || 'America/Los_Angeles'; }
 
 export function getPST() {
-  return new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+  return new Date(new Date().toLocaleString('en-US', { timeZone: _tz() }));
 }
 
 export function dateToMinsPST(date) {
-  const p = new Date(date.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+  const p = new Date(date.toLocaleString('en-US', { timeZone: _tz() }));
   return p.getHours() * 60 + p.getMinutes();
 }
 
@@ -129,7 +131,7 @@ export function fmtTimePST(dtStr) {
   }
   const d = new Date(dtStr);
   if (isNaN(d)) return null;
-  const p = new Date(d.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+  const p = new Date(d.toLocaleString('en-US', { timeZone: _tz() }));
   let h = p.getHours(), m = p.getMinutes();
   const ap = h >= 12 ? 'pm' : 'am';
   h = h % 12 || 12;
@@ -137,7 +139,7 @@ export function fmtTimePST(dtStr) {
 }
 
 export function msMinsToCalMins(ms) {
-  const p = new Date(new Date(ms).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+  const p = new Date(new Date(ms).toLocaleString('en-US', { timeZone: _tz() }));
   return p.getHours() * 60 + p.getMinutes();
 }
 

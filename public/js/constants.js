@@ -17,13 +17,14 @@ export const CAT_TALLY_COLORS = ['#7ec8e3','#9863f3','#f0d060','#7fd4a8','#ffaa6
 
 export const STRESS_DEFAULTS = { hours: 6, volume: 2, urgency: 1 };
 
-export const APP_VERSION  = '0.1.22';
+export const APP_VERSION  = '0.1.23';
 export const APP_DEPLOYED = 'May 11, 2026';
 export const APP_CHANGES  = [
-  'Time zone display: current TZ shown next to the clock',
-  'Time zone setting in Account preferences (manual override)',
-  'Clock visible in both tabs on mobile',
-  'Download the Mac App link in the gear menu',
+  'Draggable divider between timeline and queue panels',
+  'Mac App download link goes directly to the DMG',
+  'Full timezone support across all time calculations',
+  'Mobile view: updated edit sheet, timezone in clock',
+  'Undo now correctly restores flex tasks without stale timestamps',
 ];
 
 export const GCAL_CLIENT_ID = '98725644783-jrc447s324kbmc1060c8ic5f7crm75js.apps.googleusercontent.com';

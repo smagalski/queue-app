@@ -46,9 +46,18 @@
 
   /* ── LEFT PANEL ───────────────────────────────────────────────────────── */
   .left-panel {
-    width: 200px; flex-shrink: 0; border-right: 1px solid var(--border);
+    width: 200px; flex-shrink: 0;
     display: flex; flex-direction: column; overflow: hidden;
   }
+  .panel-resizer {
+    width: 9px; flex-shrink: 0; cursor: col-resize; position: relative;
+    background: linear-gradient(to right, transparent 4px, var(--border) 4px, var(--border) 5px, transparent 5px);
+    transition: background 0.15s;
+  }
+  .panel-resizer:hover, .panel-resizer.dragging {
+    background: linear-gradient(to right, transparent 3px, rgba(255,255,255,0.18) 3px, rgba(255,255,255,0.18) 6px, transparent 6px);
+  }
+  body.mobile-view .panel-resizer { display: none; }
 
   .clock-section {
     flex-shrink: 0; display: flex; flex-direction: column; align-items: center;
@@ -1916,7 +1925,8 @@
   }
   .settings-data-confirm-no:hover { color: #fff; border-color: rgba(255,255,255,0.3); }
   /* Account panel tweaks */
-  .settings-panel .pw-modal-actions { margin-top: 4px; }
+  .settings-panel .pw-modal-subtitle { margin-top: 2px; }
+  .settings-panel .pw-modal-actions { margin-top: 8px; }
   /* About panel tweaks */
   .settings-panel .app-details-masthead {
     margin: -32px -32px 24px; border-radius: 0; border-top: none;

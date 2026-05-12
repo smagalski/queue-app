@@ -14,13 +14,16 @@ export function isMobileDevice() {
 export function applyViewMode(mobile) {
   const segDesktop = document.getElementById('segDesktop');
   const segMobile  = document.getElementById('segMobile');
+  const lp = document.querySelector('.left-panel');
   if (mobile) {
     document.body.classList.add('mobile-view');
+    if (lp) lp.style.width = '';  // let mobile CSS take over
     if (segDesktop) segDesktop.classList.remove('active');
     if (segMobile)  segMobile.classList.add('active');
   } else {
     document.body.classList.remove('mobile-view');
     closeCalDrawer();
+    if (lp) _applyPanelWidth(parseInt(localStorage.getItem(_panelWidthKey()) || '200', 10));
     if (segDesktop) segDesktop.classList.add('active');
     if (segMobile)  segMobile.classList.remove('active');
   }
@@ -324,7 +327,7 @@ let _overlayEnabled = false;
   const wrap = document.getElementById('overlayToggleWrap');
   if (wrap) wrap.style.display = 'flex';
 
-  // Restore saved preference and sync checkbox
+  // Restore saved preference and sync checkbox (re-loaded per-user after auth in loadOverlayMode)
   _overlayEnabled = localStorage.getItem('overlayMode') === '1';
   const input = document.getElementById('overlayToggleInput');
   if (input) input.checked = _overlayEnabled;
@@ -341,12 +344,78 @@ let _overlayEnabled = false;
   });
 })();
 
+export function loadOverlayMode() {
+  if (!window.__TAURI__) return;
+  const uid = state.currentUser?.uid;
+  if (!uid) return;
+  const val = localStorage.getItem(`q_overlay_${uid}`);
+  if (val === null) return; // no uid-scoped pref yet; keep current
+  _overlayEnabled = val === '1';
+  const input = document.getElementById('overlayToggleInput');
+  if (input) input.checked = _overlayEnabled;
+}
+
 export function overlayModeChanged(enabled) {
   _overlayEnabled = enabled;
-  localStorage.setItem('overlayMode', enabled ? '1' : '0');
+  const uid = state.currentUser?.uid;
+  if (uid) localStorage.setItem(`q_overlay_${uid}`, enabled ? '1' : '0');
+  else localStorage.setItem('overlayMode', enabled ? '1' : '0');
   if (!enabled && window.__TAURI__) {
     window.__TAURI__.core.invoke('hide_overlay').catch(() => {});
   }
+}
+
+// ── Panel resizer ──────────────────────────────────────────────────────────
+
+const PANEL_LEFT_MIN  = 140;
+const PANEL_RIGHT_MIN = 300;
+
+function _panelWidthKey() {
+  const uid = state.currentUser?.uid;
+  return uid ? `q_panelW_${uid}` : 'q_panelW';
+}
+
+function _applyPanelWidth(w) {
+  const lp = document.querySelector('.left-panel');
+  if (lp) lp.style.width = w + 'px';
+}
+
+export function loadPanelWidth() {
+  const saved = localStorage.getItem(_panelWidthKey());
+  if (saved) _applyPanelWidth(parseInt(saved, 10));
+}
+
+export function initPanelResizer() {
+  const resizer = document.getElementById('panelResizer');
+  if (!resizer) return;
+  loadPanelWidth();
+  resizer.addEventListener('mousedown', e => {
+    if (document.body.classList.contains('mobile-view')) return;
+    e.preventDefault();
+    const lp = document.querySelector('.left-panel');
+    if (!lp) return;
+    const startX = e.clientX;
+    const startW = lp.offsetWidth;
+    resizer.classList.add('dragging');
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'col-resize';
+    const onMove = ev => {
+      const maxW = window.innerWidth - PANEL_RIGHT_MIN;
+      _applyPanelWidth(Math.max(PANEL_LEFT_MIN, Math.min(startW + ev.clientX - startX, maxW)));
+    };
+    const onUp = () => {
+      resizer.classList.remove('dragging');
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      const lp2 = document.querySelector('.left-panel');
+      if (lp2) localStorage.setItem(_panelWidthKey(), String(lp2.offsetWidth));
+      renderCalendar();
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
 }
 
 // ── Populate duration selects ──────────────────────────────────────────────

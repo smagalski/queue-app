@@ -8,6 +8,10 @@ const _hooks = {
   updateTodayHistory: () => {},
   updateBreakTimer: () => {},
   updateBreakUI: () => {},
+  loadBreakState: () => {},
+  loadCalBounds: () => {},
+  loadOverlayMode: () => {},
+  loadPanelWidth: () => {},
 };
 export function registerPersistenceHooks(hooks) { Object.assign(_hooks, hooks); }
 
@@ -66,12 +70,16 @@ export function load() {
   try { state.doneTasks = JSON.parse(localStorage.getItem(uid ? `q_done_${uid}`  : 'q_done')  || '[]'); } catch(e){ state.doneTasks=[]; }
   purgeDone();
   _hooks.render();
+  _hooks.loadPanelWidth();
 
   if (!state.stateDoc || !state.syncEnabled) {
     const status = !state.auth ? 'offline' : 'off';
     setSyncStatus(status);
     return;
   }
+  _hooks.loadBreakState();
+  _hooks.loadCalBounds();
+  _hooks.loadOverlayMode();
   setSyncStatus('connecting');
   if (state.unsubscribeSnapshot) state.unsubscribeSnapshot();
   state.unsubscribeSnapshot = state.stateDoc.onSnapshot(snap => {
@@ -90,8 +98,11 @@ export function load() {
     }
     purgeDone();
     try {
-      localStorage.setItem('q_tasks', JSON.stringify(state.tasks));
-      localStorage.setItem('q_done',  JSON.stringify(state.doneTasks));
+      const uid = state.currentUser?.uid;
+      if (uid) {
+        localStorage.setItem(`q_tasks_${uid}`, JSON.stringify(state.tasks));
+        localStorage.setItem(`q_done_${uid}`,  JSON.stringify(state.doneTasks));
+      }
     } catch(e) {}
     injectRecurringTasks();
     setSyncStatus('synced');
@@ -113,6 +124,7 @@ export function load() {
     } else if (!breakTask && state.breakStartMs) {
       state.breakStartMs = null;
       state.breakTaskId  = null;
+      state.breakIsAuto  = false;
       if (state.breakTimerInt) { clearInterval(state.breakTimerInt); state.breakTimerInt = null; }
       document.getElementById('breakOverlay').classList.remove('active');
       _hooks.updateBreakUI();

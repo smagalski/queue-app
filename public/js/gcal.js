@@ -42,7 +42,8 @@ function setGcalListMessage(msg) {
 }
 
 function _dateToMinsPST(date) {
-  const p = new Date(date.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+  const tz = state.timezone || 'America/Los_Angeles';
+  const p = new Date(date.toLocaleString('en-US', { timeZone: tz }));
   return p.getHours() * 60 + p.getMinutes();
 }
 
@@ -187,13 +188,17 @@ export function maybeShowGcalDailyPrompt() {
   if (!GCAL_CLIENT_ID) return;
   if (_gcalPromptShownThisSession) return;   // already shown this session
   const today = new Date().toDateString();
-  if (localStorage.getItem('q_gcal_prompt_date') === today) return;
+  const uid = state.currentUser?.uid;
+  const key = uid ? `q_gcal_prompt_date_${uid}` : 'q_gcal_prompt_date';
+  if (localStorage.getItem(key) === today) return;
   _gcalPromptShownThisSession = true;
   document.getElementById('gcalDailyPrompt').classList.add('active');
 }
 
 export function dismissGcalDailyPrompt(importNow) {
-  localStorage.setItem('q_gcal_prompt_date', new Date().toDateString());
+  const uid = state.currentUser?.uid;
+  const key = uid ? `q_gcal_prompt_date_${uid}` : 'q_gcal_prompt_date';
+  localStorage.setItem(key, new Date().toDateString());
   document.getElementById('gcalDailyPrompt').classList.remove('active');
   if (importNow) openGcalImport();
 }
@@ -242,10 +247,11 @@ export async function fetchGcalEvents() {
   document.getElementById('gcalConfirmBtn').style.display = 'none';
   overlay.classList.add('active');
 
-  // Build today's date range in PST/PDT with a timezone-independent offset computation.
+  // Build today's date range in user's timezone with a timezone-independent offset computation.
   const now   = new Date();
+  const tz    = state.timezone || 'America/Los_Angeles';
   const laStr = now.toLocaleString('en-US', {
-    timeZone: 'America/Los_Angeles',
+    timeZone: tz,
     year: 'numeric', month: '2-digit', day: '2-digit',
     hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
   });

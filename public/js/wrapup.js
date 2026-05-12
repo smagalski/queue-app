@@ -15,7 +15,8 @@ function _wupFmtDate(dateStr) {
 export async function checkPreviousDayWrapUp() {
   if (!state.db || !state.currentUser) return;
   const today = todayPstDateStr();
-  if (localStorage.getItem('q_wrapup_prompt_date') === today) return;
+  const wrapKey = `q_wrapup_prompt_date_${state.currentUser.uid}`;
+  if (localStorage.getItem(wrapKey) === today) return;
   // Run in parallel so streak cache is warm before openWrapUpPrompt calls getStreakCount()
   const [incomplete] = await Promise.all([
     getIncompletePastDays(),
@@ -87,7 +88,7 @@ export function markDayResolvedFromPrompt(type) {
   const days = overlay._incompleteDays || [];
   if (!days.length) return;
   markDayResolved(days[0].date, type);
-  localStorage.setItem('q_wrapup_prompt_date', todayPstDateStr());
+  if (state.currentUser) localStorage.setItem(`q_wrapup_prompt_date_${state.currentUser.uid}`, todayPstDateStr());
   overlay.classList.remove('active');
 }
 
@@ -103,7 +104,7 @@ export function openWrapUpWizard() {
   const incompleteDays = promptOverlay._incompleteDays || [];
   if (!incompleteDays.length) return;
   promptOverlay.classList.remove('active');
-  localStorage.setItem('q_wrapup_prompt_date', todayPstDateStr());
+  if (state.currentUser) localStorage.setItem(`q_wrapup_prompt_date_${state.currentUser.uid}`, todayPstDateStr());
   const newest    = incompleteDays[0];
   const olderDays = incompleteDays.slice(1);
   _wup = {
@@ -419,7 +420,7 @@ function renderWrapUpTimeline() {
       startMins = parseDateLocalMins(task.startTime);
       endMins   = parseDateLocalMins(task.endTime);
     } else {
-      const p = new Date(new Date(task.doneAt || 0).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+      const p = new Date(new Date(task.doneAt || 0).toLocaleString('en-US', { timeZone: state.timezone || 'America/Los_Angeles' }));
       endMins   = p.getHours() * 60 + p.getMinutes();
       startMins = endMins - (task.duration || 60);
     }

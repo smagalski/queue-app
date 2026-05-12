@@ -7,9 +7,12 @@ import { markDoneById } from './taskactions.js';
 
 // ── Break state persistence ────────────────────────────────────────────────
 
+function _breakKey() { return state.currentUser?.uid ? `q_break_${state.currentUser.uid}` : null; }
+
 export function loadBreakState() {
+  const key = _breakKey();
   try {
-    const s = JSON.parse(localStorage.getItem('q_break') || '{}');
+    const s = key ? JSON.parse(localStorage.getItem(key) || '{}') : {};
     const today = todayPstDateStr();
     state.breakBudgetMins    = s.budget ?? 60;
     state.autoBreakAfterTask = !!s.autoBreak;
@@ -27,8 +30,10 @@ export function loadBreakState() {
 }
 
 export function saveBreakState() {
+  const key = _breakKey();
+  if (!key) return;
   try {
-    localStorage.setItem('q_break', JSON.stringify({
+    localStorage.setItem(key, JSON.stringify({
       budget:        state.breakBudgetMins,
       used:          state.breakUsedMins,
       day:           state.breakDay || todayPstDateStr(),
@@ -261,7 +266,7 @@ export function computeBreakUsedMins() {
   let mins = 0;
   for (const t of state.doneTasks) {
     if (!t.isBreak) continue;
-    const donePst = new Date(new Date(t.doneAt).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+    const donePst = new Date(new Date(t.doneAt).toLocaleString('en-US', { timeZone: state.timezone || 'America/Los_Angeles' }));
     if (donePst.toDateString() !== todayStr) continue;
     if (t.startTime && t.endTime) {
       const s = parseDateLocalMins(t.startTime);

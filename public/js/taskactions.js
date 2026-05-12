@@ -67,7 +67,6 @@ export function showCategoryDropdown(taskId, event) {
 
 export function changeTaskCategory(catId) {
   if (!state.cdTargetId) return;
-  const inDone = !!state.doneTasks.find(t => t.id === state.cdTargetId);
   const task = state.tasks.find(t => t.id === state.cdTargetId) || state.doneTasks.find(t => t.id === state.cdTargetId);
   if (task) { task.categoryOverride = catId; save(); }
   hideCategoryDropdown();
@@ -190,7 +189,8 @@ export function showStartTimeDropdown(taskId, event) {
   state.stTargetId = taskId;
   const task = state.tasks.find(t => t.id === taskId);
   if (!task || !task.calStartTime) return;
-  const p = new Date(new Date(task.calStartTime).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+  const _tz = state.timezone || 'America/Los_Angeles';
+  const p = new Date(new Date(task.calStartTime).toLocaleString('en-US', { timeZone: _tz }));
   document.getElementById('stTimeInput').value = `${pad2(p.getHours())}:${pad2(p.getMinutes())}`;
   openDropdown(document.getElementById('startTimeDropdown'), event.target.getBoundingClientRect(), 160);
 }
@@ -566,8 +566,11 @@ export function unmarkDone(id) {
   if (!task) return;
   state.doneTasks = state.doneTasks.filter(t => t.id !== id);
   const { doneAt, ...restored } = task;
-  if (!isScheduled(restored) && restored.flexOrder === undefined) {
-    restored.flexOrder = getSorted().length;
+  if (!isScheduled(restored)) {
+    delete restored.startTime;
+    delete restored.endTime;
+    delete restored.calStartTime;
+    if (restored.flexOrder === undefined) restored.flexOrder = getSorted().length;
   }
   state.tasks.push(restored);
   save(); render();

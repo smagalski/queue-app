@@ -34,7 +34,7 @@ export function renderCategoryTally() {
   // Sum completed tasks for today
   for (const task of state.doneTasks) {
     if (task.isBreak) continue;
-    const donePst = new Date(new Date(task.doneAt).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+    const donePst = new Date(new Date(task.doneAt).toLocaleString('en-US', { timeZone: state.timezone || 'America/Los_Angeles' }));
     if (donePst.toDateString() !== todayStr) continue;
     let mins = 0;
     if (task.startTime && task.endTime) {
@@ -77,9 +77,14 @@ export function updateClock() {
 
 // ── Stress Score Weights ───────────────────────────────────────────────────
 
+function _stressKey(name) {
+  const uid = state.currentUser?.uid;
+  return uid ? `q_${name}_${uid}` : `q_${name}`;
+}
+
 export function getStressWeights() {
   try {
-    const saved = JSON.parse(localStorage.getItem('q_stress_weights') || 'null');
+    const saved = JSON.parse(localStorage.getItem(_stressKey('stress_weights')) || 'null');
     if (saved && typeof saved.hours === 'number') return saved;
   } catch(e) {}
   return { ...STRESS_DEFAULTS };
@@ -87,7 +92,7 @@ export function getStressWeights() {
 
 export function getStressExcludedCats() {
   try {
-    const saved = JSON.parse(localStorage.getItem('q_stress_excluded_cats') || 'null');
+    const saved = JSON.parse(localStorage.getItem(_stressKey('stress_excluded_cats')) || 'null');
     if (Array.isArray(saved)) return new Set(saved);
   } catch(e) {}
   return new Set(); // default: all categories included
@@ -97,7 +102,7 @@ export function onStressCatToggle(catId, checked) {
   const excluded = getStressExcludedCats();
   if (checked) excluded.delete(catId);
   else excluded.add(catId);
-  localStorage.setItem('q_stress_excluded_cats', JSON.stringify([...excluded]));
+  localStorage.setItem(_stressKey('stress_excluded_cats'), JSON.stringify([...excluded]));
 }
 
 export function _renderStressCatList() {
@@ -119,12 +124,12 @@ export function onStressSlider(factor, val) {
   document.getElementById('stressVal' + key).textContent = val;
   const w = getStressWeights();
   w[factor] = Number(val);
-  localStorage.setItem('q_stress_weights', JSON.stringify(w));
+  localStorage.setItem(_stressKey('stress_weights'), JSON.stringify(w));
 }
 
 export function resetStressWeights() {
-  localStorage.setItem('q_stress_weights', JSON.stringify(STRESS_DEFAULTS));
-  localStorage.removeItem('q_stress_excluded_cats');
+  localStorage.setItem(_stressKey('stress_weights'), JSON.stringify(STRESS_DEFAULTS));
+  localStorage.removeItem(_stressKey('stress_excluded_cats'));
   ['hours', 'volume', 'urgency'].forEach(k => {
     const key = k.charAt(0).toUpperCase() + k.slice(1);
     document.getElementById('stressSlider' + key).value = STRESS_DEFAULTS[k];

@@ -244,6 +244,7 @@
         <div class="clock-time" id="clockTime">--:--</div>
         <div class="clock-ampm-inline">
           <span class="clock-ampm" id="clockAmpm">--</span>
+          <span class="clock-tz" id="clockTz"></span>
         </div>
       </div>
       <div class="clock-date" id="clockDate">---</div>
@@ -290,6 +291,8 @@
 <div class="cal-drawer-overlay" id="calDrawerOverlay" onclick="closeCalDrawer()"></div>
 <div class="cal-drawer-panel" id="calDrawerPanel"></div>
 <button class="cal-drawer-close-btn" id="calDrawerCloseBtn" onclick="closeCalDrawer()">✕ Close</button>
+
+  <div class="panel-resizer" id="panelResizer"></div>
 
   <!-- RIGHT: TASK PANEL -->
   <div class="task-panel">
@@ -524,33 +527,30 @@
   </div>
 </div>
 
-<!-- MOBILE EDIT MODAL (double-tap) -->
-<div class="mobile-edit-overlay" id="mobileEditOverlay" onclick="if(event.target===this)closeMobileEditModal()">
-  <div class="mobile-edit-modal">
-    <div class="mem-header">
-      <span class="mem-title">Edit Task</span>
-      <button class="mem-close-btn" onclick="closeMobileEditModal()">✕</button>
+<!-- MOBILE TASK EDIT SHEET -->
+<div class="mobile-task-edit-overlay" id="mobileTaskEditOverlay" onclick="if(event.target===this)closeMobileTaskEdit()">
+  <div class="mobile-task-edit-sheet">
+    <div class="mte-handle"></div>
+    <div id="mteTitleSection">
+      <div class="mte-field-label">Task Name</div>
+      <input class="mte-input" id="mteTitle" type="text" placeholder="Task name" onkeydown="if(event.key==='Enter')saveMobileTaskEdit()"/>
     </div>
-    <div class="mem-body">
-      <div>
-        <label class="mem-label">Task Name</label>
-        <input class="task-input" id="memTitleInput" placeholder="Task name…" maxlength="120"
-               onkeydown="if(event.key==='Enter')saveMobileEdit()"/>
+    <div id="mtePrioritySection">
+      <div class="mte-field-label">Priority</div>
+      <div class="mte-priority-row">
+        <button class="mte-p-btn" data-p="1" onclick="mteSelectPriority(1)">Urgent</button>
+        <button class="mte-p-btn" data-p="2" onclick="mteSelectPriority(2)">High</button>
+        <button class="mte-p-btn" data-p="3" onclick="mteSelectPriority(3)">Medium</button>
+        <button class="mte-p-btn" data-p="4" onclick="mteSelectPriority(4)">Low</button>
       </div>
-      <div>
-        <label class="mem-label">Priority</label>
-        <div class="priority-group">
-          <button class="p-btn" id="memPb1" onclick="memSelectP(1)">Urgent</button>
-          <button class="p-btn" id="memPb2" onclick="memSelectP(2)">High</button>
-          <button class="p-btn" id="memPb3" onclick="memSelectP(3)">Medium</button>
-          <button class="p-btn" id="memPb4" onclick="memSelectP(4)">Low</button>
-        </div>
-      </div>
-      <div>
-        <label class="mem-label">Duration</label>
-        <select class="duration-select" id="memDurationSelect"></select>
-      </div>
-      <button class="mem-save-btn" id="memSaveBtn" onclick="saveMobileEdit()">Save Changes</button>
+    </div>
+    <div id="mteDurSection">
+      <div class="mte-field-label">Duration</div>
+      <input class="mte-input" id="mteDuration" type="text" placeholder="e.g. 1h, 30m, 1h 30m" onkeydown="if(event.key==='Enter')saveMobileTaskEdit()"/>
+    </div>
+    <div class="mte-actions">
+      <button class="mte-save-btn" onclick="saveMobileTaskEdit()">Save</button>
+      <button class="mte-delete-btn" onclick="deleteMobileTask()">Delete</button>
     </div>
   </div>
 </div>

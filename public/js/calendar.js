@@ -78,7 +78,7 @@ export function renderCalendar() {
   const occupied = [];
 
   for (const task of state.doneTasks) {
-    const donePst = new Date(new Date(task.doneAt).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+    const donePst = new Date(new Date(task.doneAt).toLocaleString('en-US', { timeZone: state.timezone || 'America/Los_Angeles' }));
     if (donePst.toDateString() !== todayStr) continue;
 
     let startMins, endMins;
@@ -129,7 +129,7 @@ export function renderCalendar() {
     let start, end;
     if (task.calStartTime && task.id === flexTasks[0].id) {
       const elapsedMins = (Date.now() - task.calStartTime) / 60000;
-      const calStart = Math.round((new Date(new Date(task.calStartTime).toLocaleString('en-US',{timeZone:'America/Los_Angeles'})).getHours()*60 + new Date(new Date(task.calStartTime).toLocaleString('en-US',{timeZone:'America/Los_Angeles'})).getMinutes()));
+      const calStart = Math.round((new Date(new Date(task.calStartTime).toLocaleString('en-US',{timeZone: state.timezone || 'America/Los_Angeles'})).getHours()*60 + new Date(new Date(task.calStartTime).toLocaleString('en-US',{timeZone: state.timezone || 'America/Los_Angeles'})).getMinutes()));
       if (elapsedMins >= dur) {
         start = findGap(Math.max(state.calStart, nowMins - dur), dur);
         end   = start + dur;
@@ -258,12 +258,20 @@ export function setCalBounds() {
   if (clampedEnd !== newEnd) endSel.value = String(clampedEnd);
   state.calStart = newStart;
   state.calEnd   = clampedEnd;
-  localStorage.setItem('q_calStart', String(state.calStart));
-  localStorage.setItem('q_calEnd',   String(state.calEnd));
+  const uid = state.currentUser?.uid;
+  localStorage.setItem(uid ? `q_calStart_${uid}` : 'q_calStart', String(state.calStart));
+  localStorage.setItem(uid ? `q_calEnd_${uid}`   : 'q_calEnd',   String(state.calEnd));
   renderCalendar();
 }
 
 export function loadCalBounds() {
+  const uid = state.currentUser?.uid;
+  if (uid) {
+    const s = localStorage.getItem(`q_calStart_${uid}`);
+    const e = localStorage.getItem(`q_calEnd_${uid}`);
+    if (s) state.calStart = parseInt(s);
+    if (e) state.calEnd   = parseInt(e);
+  }
   const startSel = document.getElementById('calStartSelect');
   const endSel   = document.getElementById('calEndSelect');
   if (startSel) startSel.value = String(state.calStart);

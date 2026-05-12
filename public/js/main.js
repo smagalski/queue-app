@@ -91,13 +91,13 @@ import {
   applyViewMode, toggleCalDrawer, showMobilePanel,
   openMobileAddSheet, closeMobileAddSheet,
   openMobileTaskEdit, closeMobileTaskEdit, mteSelectPriority, saveMobileTaskEdit, deleteMobileTask,
-  overlayModeChanged,
+  overlayModeChanged, loadOverlayMode, loadPanelWidth, initPanelResizer,
 } from './mobile.js';
 
 // ── Wire hooks ─────────────────────────────────────────────────────────────
 
-// persistence ← render, updateTodayHistory, updateBreakTimer, updateBreakUI
-registerPersistenceHooks({ render, updateTodayHistory, updateBreakTimer, updateBreakUI });
+// persistence ← render, updateTodayHistory, updateBreakTimer, updateBreakUI, loadBreakState, loadCalBounds, loadOverlayMode
+registerPersistenceHooks({ render, updateTodayHistory, updateBreakTimer, updateBreakUI, loadBreakState, loadCalBounds, loadOverlayMode, loadPanelWidth });
 
 // render ← renderCalendar, updateBreakUI
 setRenderHooks({ renderCalendar, updateBreakUI });
@@ -214,11 +214,16 @@ document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
   hideAllDropdowns();
   closeGearMenu();
+  // Overlays with dedicated close logic
+  const wupOverlay = document.getElementById('wupOverlay');
+  if (wupOverlay && wupOverlay.classList.contains('active')) { _wupMaybeLater(); return; }
+  const settingsOverlay = document.getElementById('settingsOverlay');
+  if (settingsOverlay && settingsOverlay.classList.contains('active')) { closeSettings(); return; }
   // Close any open overlay that has a dismiss button/class
-  ['addForm', 'schedForm', 'sidequestOverlay', 'breakOverlay',
-   'endDayOverlay', 'dayOffOverlay', 'historyOverlay',
+  ['addFormOverlay', 'addSchedFormOverlay', 'sidequestOverlay',
+   'endDayOverlay', 'dayOffOverlay', 'historyOverlay', 'recurringOverlay',
    'gcalOverlay', 'mobileActionSheetOverlay', 'mobileTaskEditOverlay',
-   'blockDetailOverlay',
+   'blockDetailOverlay', 'wupPromptOverlay',
   ].forEach(id => {
     const el = document.getElementById(id);
     if (el && (el.classList.contains('active') || el.classList.contains('open'))) {
@@ -264,6 +269,9 @@ initSmartTime('sdTimeInput');
 // Day-ended / day-off state
 checkDayEndedReset();
 checkDayOffState();
+
+// Panel resizer
+initPanelResizer();
 
 // Initial render + clock
 updateClock();
