@@ -1175,6 +1175,14 @@
   body.mobile-view .end-btns-row { flex-direction: column; gap: 6px; }
   body.mobile-view .end-btns-row .end-day-btn { width: 100%; }
 
+  /* History overlay: stack header vertically and expand actions on mobile */
+  body.mobile-view .history-inner { padding: 70px 12px 60px; gap: 10px; }
+  body.mobile-view .history-day-card { padding: 14px 14px; }
+  body.mobile-view .hdc-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+  body.mobile-view .hdc-gap-actions { width: 100%; }
+  body.mobile-view .hdc-wrap-btn,
+  body.mobile-view .hdc-gap-btn { flex: 1; text-align: center; padding: 8px 6px; font-size: 11px; }
+
   /* Hide the desktop footer on mobile — replaced by bottom nav */
   body.mobile-view .app-footer { display: none; }
 
