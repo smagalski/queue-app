@@ -268,23 +268,38 @@ export function hideConfirmClear7()   { document.getElementById('confirmClear7')
 export function showConfirmClearAll() { document.getElementById('confirmClearAll').classList.add('visible'); }
 export function hideConfirmClearAll() { document.getElementById('confirmClearAll').classList.remove('visible'); }
 
+let _historyToastTimer = null;
 function _showHistoryToast(msg) {
   let toast = document.getElementById('historyDeleteToast');
   if (!toast) {
     toast = document.createElement('div');
     toast.id = 'historyDeleteToast';
+    // Uses CSS variables so it matches the app theme automatically
     toast.style.cssText = `
       position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
-      background:#1e1b2e; border:1px solid rgba(255,255,255,0.15); color:#fff;
+      background:var(--surface2,#1e1b2e); border:1px solid var(--border,rgba(255,255,255,0.12)); color:#fff;
       padding:10px 20px; border-radius:8px; font-size:12px; font-weight:600;
       z-index:99999; opacity:0; transition:opacity 0.2s; pointer-events:none;
+      white-space:nowrap;
     `;
     document.body.appendChild(toast);
   }
   toast.textContent = msg;
   toast.style.opacity = '1';
-  clearTimeout(toast._t);
-  toast._t = setTimeout(() => { toast.style.opacity = '0'; }, 2500);
+  clearTimeout(_historyToastTimer);
+  _historyToastTimer = setTimeout(() => { toast.style.opacity = '0'; }, 2500);
+}
+
+// Firestore batches are limited to 500 writes — chunk deletes to stay under that.
+function _batchDeleteDocs(db, docs) {
+  const CHUNK = 500;
+  const chunks = [];
+  for (let i = 0; i < docs.length; i += CHUNK) chunks.push(docs.slice(i, i + CHUNK));
+  return chunks.reduce((p, chunk) => p.then(() => {
+    const batch = db.batch();
+    chunk.forEach(d => batch.delete(d.ref));
+    return batch.commit();
+  }), Promise.resolve());
 }
 
 export function clearOldHistory() {
@@ -299,10 +314,10 @@ export function clearOldHistory() {
     .get()
     .then(snap => {
       if (snap.empty) { _showHistoryToast('No history older than 7 days.'); return; }
-      const batch = state.db.batch();
-      snap.docs.forEach(d => batch.delete(d.ref));
-      return batch.commit().then(() => {
+      return _batchDeleteDocs(state.db, snap.docs).then(() => {
         _showHistoryToast(`Deleted ${snap.size} day${snap.size === 1 ? '' : 's'} of history.`);
+        // window.openHistoryOverlay is set by main.js — indirect call avoids a
+        // circular import between categories.js and endday.js.
         if (document.getElementById('historyOverlay').classList.contains('active')) {
           window.openHistoryOverlay?.();
         }
@@ -321,10 +336,9 @@ export function clearAllHistory() {
     .get()
     .then(snap => {
       if (snap.empty) { _showHistoryToast('No history to delete.'); return; }
-      const batch = state.db.batch();
-      snap.docs.forEach(d => batch.delete(d.ref));
-      return batch.commit().then(() => {
+      return _batchDeleteDocs(state.db, snap.docs).then(() => {
         _showHistoryToast(`Deleted all history (${snap.size} day${snap.size === 1 ? '' : 's'}).`);
+        // Same circular-import reasoning as clearOldHistory above.
         if (document.getElementById('historyOverlay').classList.contains('active')) {
           window.openHistoryOverlay?.();
         }

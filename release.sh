@@ -79,6 +79,22 @@ open "$APP_DEST"
 INSTALL_EOF
 chmod +x "$DMG_STAGING/Install Queue.command"
 
+# Add a plain-text readme so users know to run the installer, not drag the app
+cat > "$DMG_STAGING/HOW TO INSTALL.txt" << 'README_EOF'
+How to install Queue
+────────────────────
+1. Double-click "Install Queue.command" in this window.
+2. macOS will ask if you want to open it — click Open.
+3. Queue will be copied to /Applications and launched automatically.
+
+Why not just drag the app?
+──────────────────────────
+Queue is not yet signed with an Apple Developer certificate. Dragging
+Queue.app directly to Applications triggers a Gatekeeper warning ("Apple
+could not verify..."). The installer script handles this automatically by
+clearing the quarantine flag after copying.
+README_EOF
+
 # Pack into a compressed DMG
 hdiutil create \
   -volname "Queue $VERSION" \
@@ -116,6 +132,12 @@ const obj = {
 fs.writeFileSync('$REPO_ROOT/latest.json', JSON.stringify(obj, null, 2) + '\n');
 "
 echo "latest.json updated."
+
+# ── Extract release notes from latest.json for the GitHub release page ───────
+NOTES=$(node -e "
+const obj = JSON.parse(require('fs').readFileSync('$REPO_ROOT/latest.json','utf8'));
+process.stdout.write(obj.notes);
+")
 
 # ── Create GitHub release ─────────────────────────────────────────────────
 echo ""
