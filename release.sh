@@ -54,11 +54,41 @@ fi
 TARBALL_SIG=$(cat "$TARBALL_SIG_PATH")
 echo "Signature: $TARBALL_SIG"
 
-# ── Copy DMG to release dir ───────────────────────────────────────────────
-if [ -f "$DMG_FILE" ]; then
-  cp "$DMG_FILE" "$RELEASE_DIR/"
-  echo "DMG copied to $RELEASE_DIR"
-fi
+# ── Build custom DMG with installer script (bypasses Gatekeeper quarantine) ──
+CUSTOM_DMG="$RELEASE_DIR/Queue_${VERSION}_x64.dmg"
+DMG_STAGING="$RELEASE_DIR/dmg_staging"
+
+rm -rf "$DMG_STAGING"
+mkdir -p "$DMG_STAGING"
+
+# Copy app bundle into staging
+cp -R "$APP_BUNDLE" "$DMG_STAGING/Queue.app"
+
+# Create installer script that strips quarantine after copying to /Applications
+cat > "$DMG_STAGING/Install Queue.command" << 'INSTALL_EOF'
+#!/bin/bash
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+APP_SRC="$SCRIPT_DIR/Queue.app"
+APP_DEST="/Applications/Queue.app"
+echo "Installing Queue to /Applications..."
+[ -d "$APP_DEST" ] && rm -rf "$APP_DEST"
+cp -R "$APP_SRC" "$APP_DEST"
+xattr -cr "$APP_DEST"
+echo "Done! Launching Queue..."
+open "$APP_DEST"
+INSTALL_EOF
+chmod +x "$DMG_STAGING/Install Queue.command"
+
+# Pack into a compressed DMG
+hdiutil create \
+  -volname "Queue $VERSION" \
+  -srcfolder "$DMG_STAGING" \
+  -ov \
+  -format UDZO \
+  "$CUSTOM_DMG"
+
+rm -rf "$DMG_STAGING"
+echo "Custom DMG created: $CUSTOM_DMG"
 
 # ── Update latest.json ────────────────────────────────────────────────────
 PUB_DATE=$(date -u +"%Y-%m-%dT00:00:00Z")
