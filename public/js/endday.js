@@ -448,32 +448,22 @@ export function openHistoryOverlay() {
       const docMap = {};
       snap.docs.forEach(d => { docMap[d.data().date] = d.data(); });
 
-      // Generate dates: yesterday back 30 days, extend to cover earliest record
+      // Generate dates from yesterday back to the oldest existing record (inclusive).
+      // This means gap days only appear between real records — dates before the oldest
+      // record are never shown, so clearing old history shrinks the view correctly.
       const pst = getPST();
       const todayY = pst.getFullYear(), todayM = pst.getMonth(), todayD = pst.getDate();
       const dates = [];
-      const LOOKBACK = 30;
       const earliestDoc = snap.docs.length ? snap.docs[snap.docs.length - 1].data().date : null;
 
-      for (let i = 1; i <= LOOKBACK; i++) {
-        const d = new Date(todayY, todayM, todayD - i);
-        const dateStr = `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
-        dates.push(dateStr);
-        if (i >= LOOKBACK && earliestDoc && dateStr > earliestDoc) {
-          // Keep going until we pass the earliest recorded day
-          // (Loop limit handles this via LOOKBACK; extend if needed)
-        }
-      }
-      // If earliest doc is older than 30 days, extend the range
-      if (earliestDoc && earliestDoc < dates[dates.length - 1]) {
+      if (earliestDoc) {
         const [ey, em, ed] = earliestDoc.split('-').map(Number);
-        const baseDate = new Date(todayY, todayM, todayD);
+        const baseDate  = new Date(todayY, todayM, todayD);
         const earlyDate = new Date(ey, em - 1, ed);
-        const diffDays = Math.round((baseDate - earlyDate) / 86400000);
-        for (let i = LOOKBACK + 1; i <= diffDays; i++) {
+        const diffDays  = Math.round((baseDate - earlyDate) / 86400000);
+        for (let i = 1; i <= diffDays; i++) {
           const d = new Date(todayY, todayM, todayD - i);
-          const dateStr = `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
-          dates.push(dateStr);
+          dates.push(`${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`);
         }
       }
 

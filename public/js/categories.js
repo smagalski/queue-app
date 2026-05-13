@@ -268,6 +268,25 @@ export function hideConfirmClear7()   { document.getElementById('confirmClear7')
 export function showConfirmClearAll() { document.getElementById('confirmClearAll').classList.add('visible'); }
 export function hideConfirmClearAll() { document.getElementById('confirmClearAll').classList.remove('visible'); }
 
+function _showHistoryToast(msg) {
+  let toast = document.getElementById('historyDeleteToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'historyDeleteToast';
+    toast.style.cssText = `
+      position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+      background:#1e1b2e; border:1px solid rgba(255,255,255,0.15); color:#fff;
+      padding:10px 20px; border-radius:8px; font-size:12px; font-weight:600;
+      z-index:99999; opacity:0; transition:opacity 0.2s; pointer-events:none;
+    `;
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.opacity = '1';
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => { toast.style.opacity = '0'; }, 2500);
+}
+
 export function clearOldHistory() {
   hideConfirmClear7();
   if (!state.db || !state.currentUser) return;
@@ -279,16 +298,20 @@ export function clearOldHistory() {
     .where('date', '<', cutoffStr)
     .get()
     .then(snap => {
+      if (snap.empty) { _showHistoryToast('No history older than 7 days.'); return; }
       const batch = state.db.batch();
       snap.docs.forEach(d => batch.delete(d.ref));
-      return batch.commit();
+      return batch.commit().then(() => {
+        _showHistoryToast(`Deleted ${snap.size} day${snap.size === 1 ? '' : 's'} of history.`);
+        if (document.getElementById('historyOverlay').classList.contains('active')) {
+          window.openHistoryOverlay?.();
+        }
+      });
     })
-    .then(() => {
-      if (document.getElementById('historyOverlay').classList.contains('active')) {
-        window.openHistoryOverlay?.();
-      }
-    })
-    .catch(err => console.error('[Queue] Clear history failed:', err));
+    .catch(err => {
+      console.error('[Queue] Clear history failed:', err);
+      _showHistoryToast('Error deleting history. Please try again.');
+    });
 }
 
 export function clearAllHistory() {
@@ -297,14 +320,18 @@ export function clearAllHistory() {
   state.db.collection('users').doc(state.currentUser.uid).collection('history')
     .get()
     .then(snap => {
+      if (snap.empty) { _showHistoryToast('No history to delete.'); return; }
       const batch = state.db.batch();
       snap.docs.forEach(d => batch.delete(d.ref));
-      return batch.commit();
+      return batch.commit().then(() => {
+        _showHistoryToast(`Deleted all history (${snap.size} day${snap.size === 1 ? '' : 's'}).`);
+        if (document.getElementById('historyOverlay').classList.contains('active')) {
+          window.openHistoryOverlay?.();
+        }
+      });
     })
-    .then(() => {
-      if (document.getElementById('historyOverlay').classList.contains('active')) {
-        window.openHistoryOverlay?.();
-      }
-    })
-    .catch(err => console.error('[Queue] Clear all history failed:', err));
+    .catch(err => {
+      console.error('[Queue] Clear all history failed:', err);
+      _showHistoryToast('Error deleting history. Please try again.');
+    });
 }
