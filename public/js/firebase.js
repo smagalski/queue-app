@@ -195,6 +195,7 @@ export async function signInWithGoogle() {
 export function signOut() {
   if (!state.auth) return;
   localStorage.removeItem('q_signin_ts');
+  localStorage.removeItem('q_uid');
   state.auth.signOut().then(() => {
     state.tasks = []; state.doneTasks = [];
     try {
@@ -576,6 +577,7 @@ export function initAuth() {
 
   function _enterApp(user) {
     setUserDoc(user);
+    localStorage.setItem('q_uid', user.uid);
     // Restore sync preference for this user
     state.syncEnabled = localStorage.getItem(`q_sync_off_${user.uid}`) !== '1';
     // Restore timezone preference for this user

@@ -2,7 +2,7 @@ import { state } from './state.js';
 import { DEFAULT_DUR } from './constants.js';
 import { getPST, todayPstDateStr, fmtMins, msMinsToCalMins } from './utils.js';
 import { save } from './persistence.js';
-import { render, isScheduled, getAllSorted } from './render.js';
+import { render, isScheduled } from './render.js';
 import { markDoneById, openAddForm } from './taskactions.js';
 
 // Module-local state
@@ -12,9 +12,29 @@ let _sqPausedTask = null;
 let _sqTaskId     = null;
 let _sqPending    = false;
 
+// Captured at openSidequest() before addTask/render can disturb state
+let _sqInterruptedId       = null;
+let _sqInterruptedCalStart = null;
+
 export function openSidequest() {
   _sqPending = true;
+  // Snapshot the current NOW task before the add-form opens and render() runs
+  const curId   = state.currentNowId;
+  const curTask = curId ? state.tasks.find(t => t.id === curId && !isScheduled(t) && !t._ab) : null;
+  _sqInterruptedId       = curTask ? curTask.id           : null;
+  _sqInterruptedCalStart = curTask ? curTask.calStartTime : null;
   openAddForm();
+  // Style the form for sidequest context — priority is irrelevant since the task becomes scheduled
+  const modal = document.getElementById('addFormInner');
+  if (modal) {
+    modal.classList.add('sidequest-mode');
+    const titleEl = modal.querySelector('.add-form-modal-title');
+    if (titleEl) titleEl.textContent = 'Add Sidequest';
+    const addBtn = document.getElementById('addBtn');
+    if (addBtn) addBtn.textContent = 'Start Sidequest';
+    const priorityRow = document.querySelector('.priority-group')?.parentElement;
+    if (priorityRow) priorityRow.style.display = 'none';
+  }
 }
 
 // Called from main.js via setAfterAddHook — triggers after a flex task is added
@@ -25,19 +45,23 @@ export function _afterAddFlexTask(newTask) {
 }
 
 function _startSidequest(sqTask) {
-  const all     = getAllSorted();
-  const nowTask = all[0];
-  const pst     = getPST();
-  const nowMins = pst.getHours() * 60 + pst.getMinutes();
-  const dp      = todayPstDateStr();
+  const pst      = getPST();
+  const nowMins  = pst.getHours() * 60 + pst.getMinutes();
+  const dp       = todayPstDateStr();
   const startIso = `${dp}T${fmtMins(nowMins)}`;
 
-  if (nowTask && nowTask.id !== sqTask.id) {
+  // Use the id captured at openSidequest() — immune to render() calls during addTask()
+  const nowTask = (_sqInterruptedId && _sqInterruptedId !== sqTask.id)
+    ? state.tasks.find(t => t.id === _sqInterruptedId)
+    : null;
+
+  if (nowTask) {
     state.tasks = state.tasks.filter(t => t.id !== nowTask.id);
     const doneEntry = { ...nowTask, doneAt: Date.now() };
     delete doneEntry._eff; delete doneEntry._stMins; delete doneEntry._etMins; delete doneEntry._active;
-    if (!isScheduled(nowTask) && nowTask.calStartTime) {
-      doneEntry.startTime = `${dp}T${fmtMins(msMinsToCalMins(nowTask.calStartTime))}`;
+    const calStart = _sqInterruptedCalStart || nowTask.calStartTime;
+    if (!isScheduled(nowTask) && calStart) {
+      doneEntry.startTime = `${dp}T${fmtMins(msMinsToCalMins(calStart))}`;
       doneEntry.endTime   = startIso;
     } else if (isScheduled(nowTask) && nowTask.startTime) {
       doneEntry.endTime = startIso;
@@ -62,13 +86,17 @@ function _startSidequest(sqTask) {
   }
 
   if (_sqPausedTask) {
-    let remaining = _sqPausedTask.duration || DEFAULT_DUR;
-    if (!isScheduled(_sqPausedTask) && _sqPausedTask.calStartTime) {
-      const elapsed = Math.floor((Date.now() - _sqPausedTask.calStartTime) / 60000);
+    const calStart = _sqInterruptedCalStart || _sqPausedTask.calStartTime;
+    let remaining  = _sqPausedTask.duration || DEFAULT_DUR;
+    if (!isScheduled(_sqPausedTask) && calStart) {
+      const elapsed = Math.floor((Date.now() - calStart) / 60000);
       remaining = Math.max((_sqPausedTask.duration || DEFAULT_DUR) - elapsed, 1);
     }
     _sqPausedTask._sqRemaining = remaining;
   }
+
+  _sqInterruptedId       = null;
+  _sqInterruptedCalStart = null;
 
   _sqStartMs = Date.now();
   save(); render();

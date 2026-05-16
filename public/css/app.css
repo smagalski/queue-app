@@ -271,6 +271,7 @@
   .add-form-modal.pcolor-2 { border-color: rgba(255,170,96,0.5); }
   .add-form-modal.pcolor-3 { border-color: rgba(240,208,96,0.5); }
   .add-form-modal.pcolor-4 { border-color: rgba(127,212,168,0.5); }
+  .add-form-modal.sidequest-mode { border-color: rgba(240,100,180,0.55); }
   .add-form-modal-header {
     display: flex; align-items: center; justify-content: space-between;
   }
@@ -1635,7 +1636,7 @@
   .sidequest-overlay.active { display: flex; }
   .sq-heading {
     font-size: 11px; font-weight: 800; letter-spacing: 0.35em; text-transform: uppercase;
-    color: #7ec8e3;
+    color: #f064b4;
   }
   .sq-icon { font-size: 36px; line-height: 1; }
   .sq-task-title {
@@ -1644,7 +1645,7 @@
   }
   .sq-timer {
     font-size: 72px; font-weight: 800; letter-spacing: -0.03em;
-    font-variant-numeric: tabular-nums; color: #7ec8e3; line-height: 1;
+    font-variant-numeric: tabular-nums; color: #f064b4; line-height: 1;
   }
   .sq-paused-label {
     font-size: 11px; color: var(--text-dim); letter-spacing: 0.12em;
@@ -1655,7 +1656,7 @@
     max-width: 280px; line-height: 1.4;
   }
   .sq-end-btn {
-    background: #7ec8e3; border: none; border-radius: 6px; color: #0b0a0f;
+    background: #f064b4; border: none; border-radius: 6px; color: #0b0a0f;
     font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700;
     letter-spacing: 0.14em; text-transform: uppercase; padding: 13px 36px;
     cursor: pointer; transition: opacity 0.15s;

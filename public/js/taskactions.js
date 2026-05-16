@@ -227,6 +227,17 @@ export function openAddForm() {
 export function closeAddForm() {
   state.addOpen = false;
   document.getElementById('addFormOverlay').classList.remove('active');
+  // Restore form if it was in sidequest mode
+  const modal = document.getElementById('addFormInner');
+  if (modal && modal.classList.contains('sidequest-mode')) {
+    modal.classList.remove('sidequest-mode');
+    const titleEl = modal.querySelector('.add-form-modal-title');
+    if (titleEl) titleEl.textContent = 'Add Flex Task';
+    const addBtn = document.getElementById('addBtn');
+    if (addBtn) addBtn.textContent = 'Add Flex Task';
+    const priorityRow = document.querySelector('.priority-group')?.parentElement;
+    if (priorityRow) priorityRow.style.display = '';
+  }
 }
 
 export function selectP(n) {
@@ -557,6 +568,7 @@ export function markDoneById(id) {
   }
 
   state.doneTasks.unshift({ ...task, doneAt });
+  hideAllDropdowns();
   closeBlockDetail();
   save(); render();
 }
