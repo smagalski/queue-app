@@ -383,8 +383,11 @@
 
     function render(){
       try{
-        const tasks     = JSON.parse(localStorage.getItem('q_tasks')||'[]');
-        const doneTasks = JSON.parse(localStorage.getItem('q_done') ||'[]');
+        const uid       = localStorage.getItem('q_uid') || '';
+        const tasksKey  = uid ? `q_tasks_${uid}` : 'q_tasks';
+        const doneKey   = uid ? `q_done_${uid}`  : 'q_done';
+        const tasks     = JSON.parse(localStorage.getItem(tasksKey)||'[]');
+        const doneTasks = JSON.parse(localStorage.getItem(doneKey) ||'[]');
         const sorted    = getAllSorted(tasks);
         renderTimeline(tasks, doneTasks);
         document.getElementById('tasksPanel').innerHTML =

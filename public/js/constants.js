@@ -17,14 +17,14 @@ export const CAT_TALLY_COLORS = ['#7ec8e3','#9863f3','#f0d060','#7fd4a8','#ffaa6
 
 export const STRESS_DEFAULTS = { hours: 6, volume: 2, urgency: 1 };
 
-export const APP_VERSION  = '0.2.1';
-export const APP_DEPLOYED = 'May 13, 2026';
+export const APP_VERSION  = '0.2.2';
+export const APP_DEPLOYED = 'May 15, 2026';
 export const APP_CHANGES  = [
-  'Fix: "Delete history older than 7 days" now hides cleared dates (no more "No Data" ghost cards)',
-  'Fix: "Delete all history" handles large history safely (chunked batch deletes)',
-  'Fix: history delete now shows a confirmation toast with count of days removed',
-  'Desktop installer: DMG now includes setup script that bypasses Gatekeeper on first launch',
-  'Desktop installer: HOW TO INSTALL guide included in DMG',
+  'Fix: editing a task and marking it done no longer leaves dropdowns stuck open',
+  'Fix: desktop overlay now shows the correct tasks for the signed-in user',
+  'Fix: sidequests now properly split the interrupted task (first half logged, second half resumed)',
+  'Sidequest form no longer shows priority (irrelevant — sidequests become scheduled events)',
+  'Sidequest overlay and form are now pink',
 ];
 
 export const GCAL_CLIENT_ID = '98725644783-jrc447s324kbmc1060c8ic5f7crm75js.apps.googleusercontent.com';
