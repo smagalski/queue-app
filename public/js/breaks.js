@@ -110,11 +110,11 @@ export function takeBreak() {
     const bId = Date.now();
     const rId = bId + 1;
     const breakTask = {
-      id: bId, title: 'BREAK', priority: 1,
+      id: bId, title: 'BREAK', priority: 1, type: 'flex',
       addedAt: Date.now(), duration: state.breakBudgetMins, flexOrder: 0, isBreak: true,
     };
     const resumeTask = {
-      id: rId, title: nowTask.title,
+      id: rId, title: nowTask.title, type: 'flex',
       priority: nowTask.priority || 3,
       addedAt: Date.now() + 1, duration: remaining, flexOrder: 1,
     };
@@ -126,7 +126,7 @@ export function takeBreak() {
     });
     const bId = Date.now();
     const breakTask = {
-      id: bId, title: 'BREAK', priority: 1,
+      id: bId, title: 'BREAK', priority: 1, type: 'flex',
       addedAt: Date.now(), duration: state.breakBudgetMins, flexOrder: 0, isBreak: true,
     };
     state.tasks.push(breakTask);
