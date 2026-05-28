@@ -39,7 +39,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEI4QjNFQTg2RTQ1MENFREYKUldUZnpsRGtodXF6dUc5MnV1L3RWRTRWSzJOdCt4L09Qa3NueGpOY3BKSlQ0S3FlZTNTZXVaL04K",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEE3OTEyMTAyODZCRTgwOTYKUldTV2dMNkdBaUdScDlWaWFyMm0vdUZTT3o4emUrY1hBRVpPcXdXOGxsWjJPZkVnRVdCUzFTYnQK",
       "endpoints": [
         "https://github.com/smagalski/Queue-App/releases/latest/download/latest.json"
       ]
