@@ -578,7 +578,7 @@ export function unmarkDone(id) {
   if (!task) return;
   state.doneTasks = state.doneTasks.filter(t => t.id !== id);
   const { doneAt, ...restored } = task;
-  if (!isScheduled(restored)) {
+  if (restored.type !== 'scheduled') {
     delete restored.startTime;
     delete restored.endTime;
     delete restored.calStartTime;

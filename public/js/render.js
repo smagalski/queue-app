@@ -114,6 +114,16 @@ export function getAllSorted(flex) {
   const flexQueue = [...flex];
   const result    = [];
 
+  // The currently-active flex task (calStartTime set) must always stay before future
+  // scheduled tasks — increasing its duration cannot displace it in the queue.
+  if (flexQueue.length > 0 && flexQueue[0].calStartTime) {
+    const [nowTask] = flexQueue.splice(0, 1);
+    result.push(nowTask);
+    const elapsedMins = Math.floor((Date.now() - nowTask.calStartTime) / 60000);
+    const remaining   = Math.max(0, (nowTask.duration ?? DEFAULT_DUR) - elapsedMins);
+    cursor += remaining;
+  }
+
   for (const sched of future) {
     let i = 0;
     while (i < flexQueue.length) {
@@ -358,6 +368,19 @@ export function render() {
     if (topFlexId) {
       const taskObj = state.tasks.find(t => t.id === topFlexId);
       if (taskObj && !isScheduled(taskObj) && !taskObj._ab && !taskObj.calStartTime) {
+        taskObj.calStartTime = Date.now();
+        save();
+      }
+    }
+  }
+
+  // Reset stale calStartTime if the top task's stamp is from a previous PST day
+  if (topFlexId) {
+    const taskObj = state.tasks.find(t => t.id === topFlexId);
+    if (taskObj && !isScheduled(taskObj) && !taskObj._ab && taskObj.calStartTime) {
+      const _tz = state.timezone || 'America/Los_Angeles';
+      const startDay = new Date(new Date(taskObj.calStartTime).toLocaleString('en-US', { timeZone: _tz })).toDateString();
+      if (startDay !== getPST().toDateString()) {
         taskObj.calStartTime = Date.now();
         save();
       }
